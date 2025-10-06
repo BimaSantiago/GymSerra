@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# 🏆 GymSerra - Plataforma de Gestión Deportiva
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<div align="center">
 
-Currently, two official plugins are available:
+![React](https://img.shields.io/badge/React-18.2.0-61dafb?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-4.0-646CFF?style=for-the-badge&logo=vite)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Plataforma web moderna para la gestión integral de la Academia de Gimnasia Artística GymSerra**
 
-## React Compiler
+[Características](#-características) • [Instalación](#-instalación) • [Tecnologías](#-tecnologías)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+</div>
 
-## Expanding the ESLint configuration
+## 📋 Sobre el Proyecto
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+GymSerra es una aplicación web desarrollada en React diseñada específicamente para optimizar la gestión y experiencia de usuarios en nuestra academia de gimnasia artística. La plataforma permite una administración eficiente de atletas, horarios, pagos y comunicaciones.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ✨ Características
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 🎯 Módulos Principales
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Gestión de Atletas**: Registro y seguimiento completo de gimnastas
+- **Control de Horarios**: Programación inteligente de clases y entrenamientos
+- **Sistema de Pagos**: Gestión automatizada de mensualidades
+- **Comunicaciones**: Notificaciones y avisos a padres y atletas
+- **Panel Administrativo**: Dashboard integral para gestión centralizada
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 🚀 Experiencia de Usuario
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Interfaz intuitiva y responsive
+- Diseño moderno y accesible
+- Navegación fluida entre secciones
+- Optimizado para dispositivos móviles
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ Instalación
+
+### Prerrequisitos
+
+- Node.js 16.0 o superior
+- npm o yarn
+
+### Pasos de Instalación
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/tu-usuario/gymserra-frontend.git
+
+# Navegar al directorio
+cd gymserra-frontend
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
 ```
