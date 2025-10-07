@@ -44,10 +44,10 @@ GymSerra es una aplicación web desarrollada en React diseñada específicamente
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/gymserra-frontend.git
+git clone https://github.com/BimaSantiago/GymSerra.git
 
 # Navegar al directorio
-cd gymserra-frontend
+cd GymSerra
 
 # Instalar dependencias
 npm install

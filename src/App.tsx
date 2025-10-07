@@ -1,7 +1,12 @@
 import "./App.css";
+import Menu from "./components/menu/Menu";
 
 function App() {
-  return <></>;
+  return (
+    <>
+      <Menu />
+    </>
+  );
 }
 
 export default App;
