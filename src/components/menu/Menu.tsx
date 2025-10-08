@@ -1,4 +1,4 @@
-import TituloPrin from "../escenciales/TituloPrin";
+import TituloPrin from "../esenciales/TituloPrin";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SubmenuItems from "./SubmenuItems";
 import Nosotros from "../secciones/Nosotros";
