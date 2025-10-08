@@ -5,7 +5,7 @@ type Props = {
 };
 
 function Parrafos({ children }: Props) {
-  return <p>{children}</p>;
+  return <p className="max-w-3/4 text-lg my-3 mx-3 p-1">{children}</p>;
 }
 
 export default Parrafos;
