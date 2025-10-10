@@ -2,6 +2,7 @@ import TituloPrin from "../esenciales/TituloPrin";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SubmenuItems from "./SubmenuItems";
 import Nosotros from "../secciones/Nosotros";
+import Principal from "../secciones/Principal";
 
 const Menu = () => {
   return (
@@ -15,7 +16,7 @@ const Menu = () => {
         </nav>
         <TituloPrin title="ACADEMIA GYM SERRA" />
         <Routes>
-          <Route path="/" element={<h1>Principal</h1>}></Route>
+          <Route path="/" element={<Principal />}></Route>
           <Route path="/nosotros" element={<Nosotros></Nosotros>}></Route>
           <Route path="/comunidad" element={<h1>Comunidad</h1>}></Route>
           <Route path="/noticias" element={<h1>Noticias</h1>}></Route>

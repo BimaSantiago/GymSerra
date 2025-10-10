@@ -15,6 +15,12 @@ const Nosotros = () => {
     "Una vez levantada la contingencia se reabrieron las puertas de la academia y con ella iniciaba una nueva disciplina; El parkour, una actividad destinada para niñas y niños que disfrutaran correr, saltar y pasarla bien, consiste en trazar recorridos eficientes para poder llegar de un punto a otro de la manera más rápida posible y para los papás, se inició con las clases de crossfit y funcional para que hicieran actividad mientras esperaban a sus hijos e hijas.",
     "Actualmente en gimnasia se ha participado en eventos tanto estatales, regionales y copas en diversos lugares de la república como; Puebla, Toluca, Querétaro, Aguascalientes, Cuernavaca entre otros y en parkour se tienen ya niños afiliados ante la misma Federación y han participado en eventos estatales y nacionales, esperando se pueda participar en más eventos como estos y poder lograr grandes resultados como en nuestro ultimo Nacional, llevado a cabo en Xalapa, Veracruz obteniendo el segundo Lugar.",
   ];
+  const datosMision: string[] = [
+    "Formar integralmente a niñas y niños de 3 a 15 años a través de la gimnasia artística y el parkour, fomentando el desarrollo de sus habilidades físicas, emocionales y sociales. Buscamos que cada entrenamiento sea una oportunidad para fortalecer su carácter, disciplina, trabajo en equipo y respeto, construyendo así personas seguras, responsables y con valores sólidos.",
+  ];
+  const datosVision: string[] = [
+    "Ser una academia de gimnasia artística de mayor referencia en nuestro municipio, reconocido por ofrecer un espacio seguro, motivador y de excelencia, donde niñas y niños desarrollen no solo su talento deportivo, sino también su confianza, resiliencia y amor por un estilo de vida saludable, contribuyendo a formar ciudadanos íntegros y comprometidos con su entorno.",
+  ];
   return (
     <>
       <SubSeccion title="Sobre Nosotros">
@@ -38,6 +44,26 @@ const Nosotros = () => {
             pie="Otra imagen que nos represente"
             alternativo=""
           ></Imagenes>
+        </SeccionPequenia2>
+      </SubSeccion>
+
+      <SubSeccion title="Mision">
+        <SeccionPequenia data={datosMision}>
+          <Imagenes
+            ruta={logo}
+            pie="Otra imagen que nos represente"
+            alternativo=""
+          />
+        </SeccionPequenia>
+      </SubSeccion>
+
+      <SubSeccion title="Vision">
+        <SeccionPequenia2 data={datosVision}>
+          <Imagenes
+            ruta={logo}
+            pie="Otra imagen que nos represente"
+            alternativo=""
+          />
         </SeccionPequenia2>
       </SubSeccion>
     </>
