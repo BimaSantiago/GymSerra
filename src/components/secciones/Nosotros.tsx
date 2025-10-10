@@ -3,6 +3,7 @@ import SubSeccion from "../esenciales/SubSeccion";
 import SeccionPequenia from "../esenciales/SeccionPequenia";
 import SeccionPequenia2 from "../esenciales/SeccionPequenia2";
 import Imagenes from "../esenciales/Imagenes";
+import logo from "../../assets/LogoGymSerra.png";
 const Nosotros = () => {
   const datosHistoria1: string[] = [
     "Academia Gym Serra inicio con sus actividades el 15 de mayo de 2018 con muy poco material y equipamiento, pero con muchas ganas de dar a conocer la gimnasia artística en el municipio; en ese entonces entrenábamos en un espacio muy pequeño y cada vez más se iba incrementando el número de alumnas en esta disciplina. ",
@@ -16,17 +17,27 @@ const Nosotros = () => {
   ];
   return (
     <>
-      <h1>Sobre nosotros</h1>
-      <Parrafos>
-        Aqui escribire el resumen de la seccion (luego con mas calma y tiempo,
-        ahorita tengo flojera)
-      </Parrafos>
+      <SubSeccion title="Sobre Nosotros">
+        <Parrafos>
+          Aqui escribire el resumen de la seccion (luego con mas calma y tiempo,
+          ahorita tengo flojera)
+        </Parrafos>
+      </SubSeccion>
+
       <SubSeccion title="Historia">
         <SeccionPequenia data={datosHistoria1}>
-          <Imagenes ruta="" pie="" alternativo=""></Imagenes>
+          <Imagenes
+            ruta={logo}
+            pie="Imagen representativa"
+            alternativo=""
+          ></Imagenes>
         </SeccionPequenia>
         <SeccionPequenia2 data={datosHistoria2}>
-          <Imagenes ruta="" pie="" alternativo=""></Imagenes>
+          <Imagenes
+            ruta={logo}
+            pie="Otra imagen que nos represente"
+            alternativo=""
+          ></Imagenes>
         </SeccionPequenia2>
       </SubSeccion>
     </>
