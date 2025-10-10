@@ -1,9 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --verde-feo: #92C575;
-  --rosa-feo: #F6D4ED;
-  --rosa-oscuro-feo: #D77E9E;
-  --azul-blanco-feo: #CCEEF0;
-  --azul-oscuro-feo: #2F797C;
-}
+      /*bases*/
+      --base-azul-feo: #CCEEF0;
+      --base-crema-feo: #d0fcb7;
+      --base-rosa-feo: #F6D4ED;
+      /*azules*/
+      --azul-claro-feo: #87d7da;
+      --azul-oscuro1-feo: #1C5C5F;
+      --azul-oscuro2-feo: #15474A;
+      --azul-neon-feo: #00eeff;
+      /*verde*/
+      --verde-claro-feo: #A9DA8A;
+      --verde-pasto-feo: #4F8A46;
+      --verde-hoja-feo: #2F5D2B;
+      --verde-neon-feo: #4CFF89;
+      --rosa-claro-feo: #eeb0dc;
+      /*rosas*/
+      --rosa-oscuro-feo: #c52266;
+      --rosa-claro-feo: #ff5ec4;
+      --rosa-morao-feo: #990e51;
+      --rosa-neon-feo: #ff00a2;
+      /*negros*/
+      --negro-feo: #000000;
+      --negro-claro-feo: #0f0f0f;
+      /*grises*/
+      --gris-oscuro-feo: #282a2b;
+      --gris-claro-feo: #797979;
+      --gris-medio-feo: #474747;
+    }
