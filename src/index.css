@@ -3,7 +3,7 @@
 :root {
       /*bases*/
       --base-azul-feo: #CCEEF0;
-      --base-crema-feo: #d0fcb7;
+      --base-verde-feo: #d0fcb7;
       --base-rosa-feo: #F6D4ED;
       /*azules*/
       --azul-claro-feo: #87d7da;
@@ -15,8 +15,8 @@
       --verde-pasto-feo: #4F8A46;
       --verde-hoja-feo: #2F5D2B;
       --verde-neon-feo: #4CFF89;
-      --rosa-claro-feo: #eeb0dc;
       /*rosas*/
+      --rosa-claro-feo: #eeb0dc;
       --rosa-oscuro-feo: #c52266;
       --rosa-claro-feo: #ff5ec4;
       --rosa-morao-feo: #990e51;
