@@ -1,27 +1,16 @@
 import TituloPrin from "../esenciales/TituloPrin";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SubmenuItems from "./SubmenuItems";
-import Nosotros from "../secciones/Nosotros";
-import Principal from "../secciones/Principal";
 
 const Menu = () => {
   return (
     <>
-      <BrowserRouter>
-        <nav className="bg-green-700 text-white p-1">
-          <SubmenuItems
-            data={["Inicio", "Sobre nosotros", "Comunidad", "Noticias"]}
-            paths={["/", "/nosotros", "/comunidad", "/noticias"]}
-          />
-        </nav>
-        <TituloPrin title="ACADEMIA GYM SERRA" />
-        <Routes>
-          <Route path="/" element={<Principal />}></Route>
-          <Route path="/nosotros" element={<Nosotros></Nosotros>}></Route>
-          <Route path="/comunidad" element={<h1>Comunidad</h1>}></Route>
-          <Route path="/noticias" element={<h1>Noticias</h1>}></Route>
-        </Routes>
-      </BrowserRouter>
+      <nav className="bg-green-700 text-white p-1">
+        <SubmenuItems
+          data={["Inicio", "Sobre nosotros", "Noticias", "Comunidad"]}
+          paths={["#principal", "#nosotros", "", ""]}
+        />
+      </nav>
+      <TituloPrin title="ACADEMIA GYM SERRA" />
     </>
   );
 };

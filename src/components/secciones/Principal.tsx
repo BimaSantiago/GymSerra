@@ -2,7 +2,7 @@ import Bienvenida from "../../assets/imgPrueba.jpg";
 
 const Principal = () => {
   return (
-    <>
+    <section id="principal">
       <figure className="flex text-center justify-center items-center">
         <h1 className="absolute text-white font-serif text-8xl font-bold">
           Bienvenido a Gym Serra
@@ -13,7 +13,7 @@ const Principal = () => {
           className="w-full h-screen"
         />
       </figure>
-    </>
+    </section>
   );
 };
 

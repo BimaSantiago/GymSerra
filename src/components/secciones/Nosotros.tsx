@@ -22,7 +22,7 @@ const Nosotros = () => {
     "Ser una academia de gimnasia artística de mayor referencia en nuestro municipio, reconocido por ofrecer un espacio seguro, motivador y de excelencia, donde niñas y niños desarrollen no solo su talento deportivo, sino también su confianza, resiliencia y amor por un estilo de vida saludable, contribuyendo a formar ciudadanos íntegros y comprometidos con su entorno.",
   ];
   return (
-    <>
+    <section id="nosotros">
       <SubSeccion title="Sobre Nosotros">
         <Parrafos>
           Aqui escribire el resumen de la seccion (luego con mas calma y tiempo,
@@ -66,7 +66,7 @@ const Nosotros = () => {
           />
         </SeccionPequenia2>
       </SubSeccion>
-    </>
+    </section>
   );
 };
 
