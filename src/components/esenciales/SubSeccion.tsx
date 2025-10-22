@@ -7,8 +7,10 @@ type Props = {
 
 const SubSeccion = ({ title, children }: Props) => {
   return (
-    <section className="mx-auto my-8 shadow-xl max-w-11/12 bg-green-50 rounded-2xl p-4">
-      <h2 className="text-3xl font-serif font-semibold text-center">{title}</h2>
+    <section className="mx-auto my-10 max-w-5xl bg-white p-6">
+      <h2 className="text-2xl font-sans font-bold text-gray-800 text-center mb-4">
+        {title}
+      </h2>
       {children}
     </section>
   );

@@ -8,13 +8,13 @@ type Props = {
 
 const SeccionPequenia = ({ children, data }: Props) => {
   return (
-    <article className="flex">
-      <div className="max-w-3/5 p-4">
+    <article className="flex flex-col md:flex-row gap-6 py-6">
+      <div className="md:w-3/5">
         {data.map((item, index) => (
           <Parrafos key={index}>{item}</Parrafos>
         ))}
       </div>
-      <div className="flex items-center justify-center p-4">{children}</div>
+      <div className="flex items-center justify-center">{children}</div>
     </article>
   );
 };

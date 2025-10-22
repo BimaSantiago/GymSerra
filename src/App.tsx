@@ -1,8 +1,9 @@
 import "./App.css";
-import Menu from "./components/menu/Menu";
-import Nosotros from "./components/secciones/Nosotros";
-import Principal from "./components/secciones/Principal";
-import Footer from "./components/secciones/Footer";
+import "@/index.css";
+import Menu from "@/components/menu/Menu";
+import Nosotros from "@/components/secciones/Nosotros";
+import Principal from "@/components/secciones/Principal";
+import Footer from "@/components/secciones/footer/Footer";
 
 function App() {
   return (
@@ -10,7 +11,7 @@ function App() {
       <Menu />
       <Principal />
       <Nosotros />
-      <Footer></Footer>
+      <Footer />
     </>
   );
 }

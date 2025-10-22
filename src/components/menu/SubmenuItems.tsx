@@ -5,20 +5,21 @@ type Props = {
 
 const SubmenuItems = ({ data, paths }: Props) => {
   return (
-    <>
-      <ul className="flex  list-none p-0 d-flex text-white justify-end m-0">
-        {data.map((item, index) => (
-          <li key={index} className=" hover:bg-green-600 rounded-md py-1.5">
-            <a
-              href={paths[index]}
-              className=" list-unstyled text-decoration-none text-white  px-6 py-2 rounded-md text-sm font-medium"
-            >
-              {item}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </>
+    <ul className="flex flex-col md:flex-row justify-center md:justify-end gap-4">
+      {data.map((item, index) => (
+        <li
+          key={index}
+          className="hover:bg-gray-700 rounded-md transition-colors"
+        >
+          <a
+            href={paths[index]}
+            className="block px-4 py-2 text-white text-sm font-sans font-medium"
+          >
+            {item}
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 };
 

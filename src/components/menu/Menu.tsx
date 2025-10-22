@@ -4,13 +4,13 @@ import SubmenuItems from "./SubmenuItems";
 const Menu = () => {
   return (
     <>
-      <nav className="bg-green-700 text-white p-1">
+      <nav className="bg-gray-800 text-white py-3 px-4">
         <SubmenuItems
           data={["Inicio", "Sobre nosotros", "Noticias", "Comunidad"]}
-          paths={["#principal", "#nosotros", "", ""]}
+          paths={["#principal", "#nosotros", "#noticias", "#comunidad"]}
         />
       </nav>
-      <TituloPrin title="ACADEMIA GYM SERRA" />
+      <TituloPrin title="Academia Gym Serra" />
     </>
   );
 };

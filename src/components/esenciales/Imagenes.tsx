@@ -7,14 +7,14 @@ type Props = {
 
 const Imagenes = ({ ruta, pie, alternativo, altura }: Props) => {
   return (
-    <figure>
+    <figure className="max-w-md mx-auto">
       <img
         src={ruta}
         alt={alternativo}
-        className="rounded-lg shadow-lg"
+        className="w-full h-auto object-cover rounded-md"
         height={altura}
       />
-      <figcaption className="text-center font-sans text-sm mt-1">
+      <figcaption className="text-center text-sm text-gray-600 mt-2">
         {pie}
       </figcaption>
     </figure>
