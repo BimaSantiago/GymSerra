@@ -4,6 +4,7 @@ import SeccionPequenia from "../esenciales/SeccionPequenia";
 import SeccionPequenia2 from "../esenciales/SeccionPequenia2";
 import Imagenes from "../esenciales/Imagenes";
 import logo from "../../assets/LogoGymSerra.png";
+import EventCalendar from "../esenciales/EventCalendar";
 
 const Nosotros = () => {
   const datosHistoria1: string[] = [
@@ -71,6 +72,14 @@ const Nosotros = () => {
           />
         </SeccionPequenia2>
       </SubSeccion>
+      <article id="eventos" className="py-10 bg-gray-50">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">
+            Calendario de Eventos
+          </h2>
+          <EventCalendar />
+        </div>
+      </article>
     </section>
   );
 };

@@ -2,7 +2,7 @@ import Bienvenida from "../../assets/imgPrueba.jpg";
 
 const Principal = () => {
   return (
-    <section id="principal" className="relative">
+    <section id="principal" className="relative top-15">
       <img
         src={Bienvenida}
         alt="Imagen de Bienvenida"

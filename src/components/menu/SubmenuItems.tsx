@@ -1,11 +1,19 @@
+import { cn } from "@/lib/utils";
+
 type Props = {
   data: string[];
   paths: string[];
+  className?: string;
 };
 
-const SubmenuItems = ({ data, paths }: Props) => {
+const SubmenuItems = ({ data, paths, className }: Props) => {
   return (
-    <ul className="flex flex-col md:flex-row justify-center md:justify-end gap-4">
+    <ul
+      className={cn(
+        "flex flex-col md:flex-row justify-center md:justify-end gap-4",
+        className
+      )}
+    >
       {data.map((item, index) => (
         <li
           key={index}
