@@ -124,7 +124,7 @@ const EventCalendar = () => {
               Calendario de Eventos
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="items-center justify-center flex">
             <Calendar
               mode="single"
               required={true}
@@ -208,7 +208,6 @@ const EventCalendar = () => {
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <Calendar className="mx-auto h-12 w-12 opacity-50 mb-2" />
                 <p>No hay eventos programados para este día.</p>
                 <p className="text-sm mt-1">
                   ¡Explora nuestras clases de gimnasia artística!

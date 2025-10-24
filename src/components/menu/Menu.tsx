@@ -50,8 +50,20 @@ const Menu = () => {
         className={`transition-all duration-400 ease-in-out overflow-hidden ${mobileMenuStateClasses} ${desktopMenuClasses}`}
       >
         <SubmenuItems
-          data={["Inicio", "Sobre nosotros", "Noticias", "Comunidad"]}
-          paths={["#principal", "#nosotros", "#noticias", "#comunidad"]}
+          data={[
+            "Inicio",
+            "Sobre nosotros",
+            "Eventos",
+            "Noticias",
+            "Comunidad",
+          ]}
+          paths={[
+            "#principal",
+            "#nosotros",
+            "#eventos",
+            "#noticias",
+            "#comunidad",
+          ]}
         />
       </div>
     </nav>

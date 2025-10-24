@@ -1,17 +1,17 @@
 import "./App.css";
 import "@/index.css";
-import Menu from "@/components/menu/Menu";
-import Nosotros from "@/components/secciones/Nosotros";
-import Principal from "@/components/secciones/Principal";
-import Footer from "@/components/secciones/footer/Footer";
-
+import Dashboard from "./components/app/dashboard/Dashboard.tsx";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Default from "./components/app/Default/Default.tsx";
 function App() {
   return (
     <>
-      <Menu />
-      <Principal />
-      <Nosotros />
-      <Footer />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Default />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </BrowserRouter>
     </>
   );
 }

@@ -7,16 +7,9 @@ const Footer = () => {
         Contáctanos
       </h3>
       <div className="flex justify-center gap-8">
-        <ItemFooter
-          ruta="/icons/instagram.svg"
-          alterno="Instagram"
-          socialMedia="Instagram"
-        />
-        <ItemFooter
-          ruta="/icons/facebook.svg"
-          alterno="Facebook"
-          socialMedia="Facebook"
-        />
+        <ItemFooter ruta="" alterno="Whatsapp" socialMedia="Enviar Mensaje" />
+        <ItemFooter ruta="" alterno="Instagram" socialMedia="Instagram" />
+        <ItemFooter ruta="" alterno="Facebook" socialMedia="Facebook" />
       </div>
     </footer>
   );
