@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, Bot, SquareTerminal, UserStar } from "lucide-react";
+import { BookOpen, Bot, Settings2, SquareTerminal } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+  SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
 
@@ -21,20 +21,100 @@ const data = {
   },
   navMain: [
     {
-      title: "Prueba",
-      url: "#",
+      title: "Inventario",
+      url: "/",
       icon: SquareTerminal,
       isActive: true,
+      items: [
+        {
+          title: "Ajuste Entrada",
+          url: "/clientes",
+        },
+        {
+          title: "Ajuste Salida",
+          url: "#",
+        },
+        {
+          title: "Articulos",
+          url: "/articulos",
+        },
+      ],
     },
     {
-      title: "Models",
-      url: "#",
+      title: "Persona",
+      url: "/",
       icon: Bot,
+      items: [
+        {
+          title: "Conductores",
+          url: "/conductor",
+        },
+        {
+          title: "Clientes",
+          url: "/clientes",
+        },
+        {
+          title: "Proveedores",
+          url: "/proveedores",
+        },
+      ],
     },
     {
-      title: "Documentation",
+      title: "Operaciones",
       url: "#",
       icon: BookOpen,
+      items: [
+        {
+          title: "Envio",
+          url: "/envio",
+        },
+        {
+          title: "Pedido",
+          url: "/pedido",
+        },
+        {
+          title: "Compra a proveedor",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Reportes",
+      url: "/",
+      icon: Settings2,
+      items: [
+        {
+          title: "Ventas",
+          url: "#",
+        },
+        {
+          title: "Compras",
+          url: "#",
+        },
+        {
+          title: "Lo que se pida",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Detalles",
+      url: "/",
+      icon: Settings2,
+      items: [
+        {
+          title: "Categorias",
+          url: "#",
+        },
+        {
+          title: "Unidades de Medida",
+          url: "#",
+        },
+        {
+          title: "Tipos de vehiculo",
+          url: "#",
+        },
+      ],
     },
   ],
 };
@@ -42,15 +122,13 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg my-2.5 mx-auto">
-        <UserStar />
-      </div>
+      <SidebarHeader>
+        <NavUser user={data.user} />
+      </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
