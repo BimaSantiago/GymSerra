@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./components/app/dashboard/Login";
 import Dashboard from "./components/app/dashboard/Dashboard";
 import Default from "./components/app/Default/Default";
+import "./App.css";
 
 function App() {
   return (

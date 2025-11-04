@@ -104,7 +104,11 @@ const Comentarios = () => {
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full">
+              <Button
+                type="submit"
+                className="w-full bg-gray-800 hover:bg-gray-600 text-white font-medium"
+                variant="outline"
+              >
                 Publicar Comentario
               </Button>
             </form>

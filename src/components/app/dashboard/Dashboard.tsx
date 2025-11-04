@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
-
+import AlumnosDashboard from "./Secciones/AlumnosDashboard";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -20,7 +20,9 @@ export default function Page() {
             />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0"></div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <AlumnosDashboard></AlumnosDashboard>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -1,14 +1,9 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, MapPin, Users } from "lucide-react";
+import { Clock, MapPin, X } from "lucide-react";
 
 type EventType = "gimnasia-artistica" | "parkour" | "crossfit";
 
@@ -23,7 +18,6 @@ type Event = {
   description: string;
 };
 
-// Datos de ejemplo para eventos
 const EXAMPLE_EVENTS: Event[] = [
   {
     id: 1,
@@ -56,31 +50,8 @@ const EXAMPLE_EVENTS: Event[] = [
     type: "crossfit",
     description: "Entrenamiento HIIT con énfasis en fuerza y resistencia.",
   },
-  {
-    id: 4,
-    title: "Competencia Interna de Gimnasia Artística",
-    start: new Date("2025-11-15T09:00:00"),
-    end: new Date("2025-11-15T12:00:00"),
-    location: "Sala Principal - Gym Serra",
-    participants: 20,
-    type: "gimnasia-artistica",
-    description:
-      "Evento competitivo para destacar el talento en gimnasia artística.",
-  },
-  {
-    id: 5,
-    title: "Clase Abierta de Gimnasia Artística",
-    start: new Date("2025-11-20T11:00:00"),
-    end: new Date("2025-11-20T12:30:00"),
-    location: "Sala Principal - Gym Serra",
-    participants: 10,
-    type: "gimnasia-artistica",
-    description:
-      "Clase gratuita para nuevos interesados en gimnasia artística.",
-  },
 ];
 
-// Función para obtener eventos del día seleccionado
 const getEventsForDate = (date: Date, events: Event[]) => {
   return events.filter(
     (event) =>
@@ -96,6 +67,7 @@ const EventCalendar = () => {
   const handleDateSelect = (selectedDate?: Date) => {
     if (selectedDate) {
       setDate(selectedDate);
+      setSelectedEvent(null); // 🔹 Ocultar detalle al cambiar de día
     }
   };
 
@@ -116,7 +88,7 @@ const EventCalendar = () => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-6">
-      {/* Calendario Lateral */}
+      {/* Calendario */}
       <div className="lg:w-1/3">
         <Card>
           <CardHeader>
@@ -124,10 +96,9 @@ const EventCalendar = () => {
               Calendario de Eventos
             </CardTitle>
           </CardHeader>
-          <CardContent className="items-center justify-center flex">
+          <CardContent className="flex justify-center">
             <Calendar
               mode="single"
-              required={true}
               selected={date}
               onSelect={handleDateSelect}
               className="rounded-md border"
@@ -146,8 +117,8 @@ const EventCalendar = () => {
         </Card>
       </div>
 
-      {/* Lista de Eventos */}
-      <div className="lg:w-2/3">
+      {/* Lista y detalle */}
+      <div className="lg:w-2/3 space-y-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -166,7 +137,11 @@ const EventCalendar = () => {
               eventsForDate.map((event) => (
                 <div
                   key={event.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
+                    selectedEvent?.id === event.id
+                      ? "border-primary shadow-sm bg-muted/30"
+                      : ""
+                  }`}
                   onClick={() => setSelectedEvent(event)}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -196,13 +171,9 @@ const EventCalendar = () => {
                       })}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin className="h-4 w-4" />
                     <span>{event.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="h-4 w-4" />
-                    <span>{event.participants} participantes</span>
                   </div>
                 </div>
               ))
@@ -217,69 +188,56 @@ const EventCalendar = () => {
           </CardContent>
         </Card>
 
-        {/* Detalle del Evento Seleccionado */}
+        {/* Card de detalles */}
         {selectedEvent && (
-          <Popover
-            open={!!selectedEvent}
-            onOpenChange={() => setSelectedEvent(null)}
-          >
-            <PopoverTrigger asChild>
+          <Card className="border-primary/40 shadow-sm transition-all -gap-2">
+            <CardHeader className="flex justify-between items-center">
+              <div className="flex justify-between w-full">
+                <CardTitle>{selectedEvent.title}</CardTitle>
+                <Badge className={getEventColor(selectedEvent.type)}>
+                  {selectedEvent.type === "gimnasia-artistica"
+                    ? "Gimnasia Artística"
+                    : selectedEvent.type === "parkour"
+                    ? "Parkour"
+                    : "Crossfit"}
+                </Badge>
+              </div>
               <Button
                 variant="ghost"
-                className="mt-4 w-full"
-                onClick={(e) => e.stopPropagation()}
+                size="icon"
+                onClick={() => setSelectedEvent(null)}
+                className="text-gray-500 hover:text-gray-800"
               >
-                Ver detalles del evento seleccionado
+                <X className="h-5 w-5" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{selectedEvent.title}</CardTitle>
-                  <Badge className={getEventColor(selectedEvent.type)}>
-                    {selectedEvent.type === "gimnasia-artistica"
-                      ? "Gimnasia Artística"
-                      : selectedEvent.type === "parkour"
-                      ? "Parkour"
-                      : "Crossfit"}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="space-y-3 p-6">
-                  <p className="text-sm text-gray-600">
-                    {selectedEvent.description}
-                  </p>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {selectedEvent.start.toLocaleDateString("es-ES")} •{" "}
-                        {selectedEvent.start.toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        -{" "}
-                        {selectedEvent.end.toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{selectedEvent.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>{selectedEvent.participants} participantes</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Reservar plaza
-                  </Button>
-                </CardContent>
-              </Card>
-            </PopoverContent>
-          </Popover>
+            </CardHeader>
+            <CardContent className="pb-6">
+              <p className="text-sm text-gray-600">
+                {selectedEvent.description}
+              </p>
+              <div className=" space-y-2 text-sm py-2 ">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    {selectedEvent.start.toLocaleDateString("es-ES")} •{" "}
+                    {selectedEvent.start.toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    -{" "}
+                    {selectedEvent.end.toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{selectedEvent.location}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

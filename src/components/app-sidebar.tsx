@@ -21,65 +21,57 @@ const data = {
   },
   navMain: [
     {
-      title: "Inventario",
+      title: "Horarios",
       url: "/",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "Ajuste Entrada",
+          title: "Horario",
           url: "/clientes",
         },
         {
-          title: "Ajuste Salida",
+          title: "Promociones",
           url: "#",
         },
         {
-          title: "Articulos",
+          title: "Planes de pago",
           url: "/articulos",
         },
       ],
     },
     {
-      title: "Persona",
+      title: "Administracion de alumnos",
       url: "/",
       icon: Bot,
       items: [
         {
-          title: "Conductores",
+          title: "Tutores",
           url: "/conductor",
         },
         {
-          title: "Clientes",
+          title: "Alumnos",
           url: "/clientes",
-        },
-        {
-          title: "Proveedores",
-          url: "/proveedores",
         },
       ],
     },
     {
-      title: "Operaciones",
+      title: "Actividades",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Envio",
+          title: "Eventos",
           url: "/envio",
         },
         {
-          title: "Pedido",
+          title: "Noticias",
           url: "/pedido",
-        },
-        {
-          title: "Compra a proveedor",
-          url: "#",
         },
       ],
     },
     {
-      title: "Reportes",
+      title: "Inventario",
       url: "/",
       icon: Settings2,
       items: [
@@ -92,7 +84,15 @@ const data = {
           url: "#",
         },
         {
-          title: "Lo que se pida",
+          title: "Articulos",
+          url: "#",
+        },
+        {
+          title: "Proveedores",
+          url: "#",
+        },
+        {
+          title: "Ajustes",
           url: "#",
         },
       ],
@@ -103,15 +103,7 @@ const data = {
       icon: Settings2,
       items: [
         {
-          title: "Categorias",
-          url: "#",
-        },
-        {
-          title: "Unidades de Medida",
-          url: "#",
-        },
-        {
-          title: "Tipos de vehiculo",
+          title: "Niveles",
           url: "#",
         },
       ],

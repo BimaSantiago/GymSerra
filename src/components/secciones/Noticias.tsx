@@ -118,7 +118,9 @@ const Noticias = () => {
             </Card>
           ))}
         </div>
-        <Button className="flex mx-auto my-6">Ver mas noticias</Button>
+        <Button className="flex mx-auto my-6  bg-gray-800 hover:bg-gray-600 text-white font-medium">
+          Ver mas noticias
+        </Button>
       </div>
     </section>
   );
