@@ -28,7 +28,7 @@ const data = {
       items: [
         {
           title: "Horario",
-          url: "/clientes",
+          url: "/dashboard/horarios",
         },
         {
           title: "Promociones",
@@ -51,7 +51,7 @@ const data = {
         },
         {
           title: "Alumnos",
-          url: "/clientes",
+          url: "/dashboard/alumnos",
         },
       ],
     },
@@ -76,15 +76,15 @@ const data = {
       icon: Settings2,
       items: [
         {
+          title: "Articulos",
+          url: "/dashboard/articulo",
+        },
+        {
           title: "Ventas",
           url: "#",
         },
         {
           title: "Compras",
-          url: "#",
-        },
-        {
-          title: "Articulos",
           url: "#",
         },
         {
@@ -104,7 +104,7 @@ const data = {
       items: [
         {
           title: "Niveles",
-          url: "#",
+          url: "/dashboard/niveles",
         },
       ],
     },

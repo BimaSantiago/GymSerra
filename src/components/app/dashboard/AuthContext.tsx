@@ -1,40 +1,81 @@
-// src/context/AuthContext.tsx
 import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AuthContext } from "./AuthContextBase";
+import { AuthContext, type LoginResponse } from "./AuthContextBase";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    setIsAuthenticated(!!token);
+    const checkSession = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost/GymSerra/public/api/check_session.php",
+          {
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        setIsAuthenticated(data.authenticated);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkSession();
   }, []);
 
   useEffect(() => {
-    // Evita que usuarios no autenticados entren al dashboard
-    if (!isAuthenticated && location.pathname.startsWith("/dashboard")) {
+    if (
+      !loading &&
+      !isAuthenticated &&
+      location.pathname.startsWith("/dashboard")
+    ) {
       navigate("/login");
     }
-  }, [isAuthenticated, location, navigate]);
+  }, [isAuthenticated, loading, location, navigate]);
 
-  const login = (token: string) => {
-    localStorage.setItem("authToken", token);
-    setIsAuthenticated(true);
-    navigate("/dashboard");
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<LoginResponse> => {
+    const response = await fetch(
+      "http://localhost/GymSerra/public/api/login.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
+      }
+    );
+
+    const data: LoginResponse = await response.json();
+    if (data.success) {
+      setIsAuthenticated(true);
+      navigate("/dashboard");
+    }
+    return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    setIsAuthenticated(false);
-    navigate("/login");
+  const logout = async () => {
+    try {
+      await fetch("http://localhost/GymSerra/public/api/logout.php", {
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    } finally {
+      setIsAuthenticated(false);
+      setTimeout(() => navigate("/login", { replace: true }), 50);
+    }
   };
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

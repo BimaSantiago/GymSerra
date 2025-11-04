@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
 include 'conexion.php';
 
 $conn = ConcectarBd();
@@ -14,14 +15,14 @@ switch ($action) {
         $offset = ($page - 1) * $limit;
 
         $where = $search ? "WHERE nombre_completo LIKE '%$search%'" : '';
-        $query = "SELECT a.idalumno, a.curp, a.nombre_completo, a.f_nacimiento, a.estado, a.estado_documentos, m.fecha_pago, m.fecha_vencimiento 
+        $query = "SELECT a.idalumno, a.curp, a.nombre_completo, a.f_nacimiento, a.estado, a.estado_documentos, m.fecha_pago 
                   FROM alumnos a 
-                  JOIN mensualidad m ON a.idmensualidad = m.idmensualidad 
+                  INNER JOIN mensualidad m ON a.idmensualidad = m.idmensualidad 
                   $where 
                   LIMIT $offset, $limit";
         $result = $conn->query($query);
 
-        $alumnos = [];
+        $alumnos = array();
         while ($row = $result->fetch_assoc()) {
             $alumnos[] = $row;
         }
@@ -47,8 +48,8 @@ switch ($action) {
         $estado = $conn->real_escape_string($data['estado']);
         $estado_documentos = $conn->real_escape_string($data['estado_documentos']);
 
-        $query = "INSERT INTO alumnos (curp, nombre_completo, f_nacimiento, idmensualidad, estado, estado_documentos) 
-                  VALUES ('$curp', '$nombre_completo', '$f_nacimiento', $idmensualidad, '$estado', '$estado_documentos')";
+        $query = "INSERT INTO alumnos (curp, nombre_completo, f_nacimiento, estado, estado_documentos) 
+                  VALUES ('$curp', '$nombre_completo', '$f_nacimiento', '$estado', '$estado_documentos')";
         if ($conn->query($query)) {
             echo json_encode(['success' => true, 'id' => $conn->insert_id]);
         } else {
@@ -67,8 +68,8 @@ switch ($action) {
         $estado_documentos = $conn->real_escape_string($data['estado_documentos']);
 
         $query = "UPDATE alumnos 
-                  SET curp='$curp', nombre_completo='$nombre_completo', f_nacimiento='$f_nacimiento', 
-                      idmensualidad=$idmensualidad, estado='$estado', estado_documentos='$estado_documentos' 
+                  SET curp='$curp', nombre_completo='$nombre_completo', f_nacimiento='$f_nacimiento',
+                   estado='$estado', estado_documentos='$estado_documentos' 
                   WHERE idalumno=$idalumno";
         if ($conn->query($query)) {
             echo json_encode(['success' => true]);

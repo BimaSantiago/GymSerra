@@ -1,11 +1,15 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import AlumnosDashboard from "./Secciones/AlumnosDashboard";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Routes, Route } from "react-router-dom";
+import AlumnosDashboard from "./Secciones/AlumnosDashboard";
+import ArticulosDashboard from "./Secciones/ArticulosDashboard";
+import HorariosDashboard from "./Secciones/HorariosDashboard";
+import NivelesDashboard from "./Secciones/NivelesDashboard";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -21,7 +25,12 @@ export default function Page() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <AlumnosDashboard></AlumnosDashboard>
+          <Routes>
+            <Route path="/alumnos" element={<AlumnosDashboard />} />
+            <Route path="/articulo" element={<ArticulosDashboard />} />
+            <Route path="/horarios" element={<HorariosDashboard />} />
+            <Route path="/niveles" element={<NivelesDashboard />} />
+          </Routes>
         </div>
       </SidebarInset>
     </SidebarProvider>

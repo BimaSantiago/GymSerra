@@ -1,6 +1,5 @@
-// src/pages/Login.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/components/app/dashboard/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,41 +12,29 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// 🔹 Definimos un tipo para la respuesta del servidor
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+  user?: string;
+}
+
 const Login = () => {
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      // 🔹 Cambia esta ruta según dónde esté alojado tu login.php
-      const response = await fetch(
-        "http://localhost/GymSerra/public/api/login.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
-
-      // Manejar errores HTTP explícitamente
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem("authToken", data.token);
-        navigate("/dashboard");
-      } else {
+      const data: LoginResponse = await login(username, password);
+      if (!data.success) {
         setError(data.message || "Credenciales inválidas");
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error(err);
       setError("Error en la conexión con el servidor");
     }

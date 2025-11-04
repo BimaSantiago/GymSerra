@@ -1,41 +1,40 @@
 <?php
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
 
-$input = json_decode(file_get_contents("php://input"), true);
-$username = $input['username'] ?? '';
-$password = $input['password'] ?? '';
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+session_start();
+include "conexion.php";
+$conn=ConcectarBd();
+$data = json_decode(file_get_contents("php://input"), true);
+$username = $data['username'] ?? '';
+$password = $data['password'] ?? '';
 
-if (!$username || !$password) {
-    echo json_encode(["success" => false, "message" => "Datos incompletos"]);
+$response = [];
+
+if (empty($username) || empty($password)) {
+    echo json_encode(["success" => false, "message" => "Campos vacíos"]);
     exit;
 }
 
-$mysqli = new mysqli("localhost", "root", "patitojuan73", "gym_serra_1");
+$query = $conn->prepare("SELECT * FROM users WHERE username = ? AND passw = ?");
+$query->bind_param("ss", $username, $password);
+$query->execute();
+$result = $query->get_result();
 
-if ($mysqli->connect_error) {
-    echo json_encode(["success" => false, "message" => "Error en la conexión"]);
-    exit;
-}
+if ($result->num_rows > 0) {
+    $_SESSION['auth'] = true;
+    $_SESSION['username'] = $username;
 
-$stmt = $mysqli->prepare("SELECT iduser, passw FROM users WHERE username = ?");
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    if (password_verify($password, $row['passw'])||$password==$row['passw']) {
-        $token = bin2hex(random_bytes(16));
-        echo json_encode(["success" => true, "token" => $token]);
-    } else {
-        echo json_encode(["success" => false, "message" => "Contraseña incorrecta"]);
-    }
+    echo json_encode([
+        "success" => true,
+        "message" => "Inicio de sesión exitoso",
+        "user" => $username
+    ]);
 } else {
-    echo json_encode(["success" => false, "message" => "Usuario no encontrado"]);
+    echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos"]);
 }
 
-$stmt->close();
-$mysqli->close();
+$conn->close();
 ?>

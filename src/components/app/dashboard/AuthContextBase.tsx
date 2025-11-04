@@ -1,13 +1,17 @@
-// AuthContextBase.tsx
 import { createContext } from "react";
+
+export interface LoginResponse {
+  success: boolean;
+  message?: string;
+  user?: string;
+}
 
 export interface AuthContextType {
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (username: string, password: string) => Promise<LoginResponse>;
   logout: () => void;
 }
 
-// Exporta solo el contexto (sin componentes)
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
