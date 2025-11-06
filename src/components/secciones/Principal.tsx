@@ -1,16 +1,9 @@
-import Bienvenida from "../../assets/imgPrueba.jpg";
+import SimpleParallax from "../SimpleParallax";
 
 const Principal = () => {
   return (
-    <section id="principal" className="relative top-15">
-      <img
-        src={Bienvenida}
-        alt="Imagen de Bienvenida"
-        className="w-full h-[80vh] object-cover"
-      />
-      <h1 className="absolute inset-0 flex items-center justify-center text-white font-sans text-5xl md:text-7xl font-bold">
-        Bienvenido a Gym Serra
-      </h1>
+    <section id="principal" className="relative h-full">
+    <SimpleParallax/>
     </section>
   );
 };
