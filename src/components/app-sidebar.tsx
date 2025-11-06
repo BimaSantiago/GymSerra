@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, Bot, Settings2, SquareTerminal } from "lucide-react";
+import {
+  Dumbbell,
+  PersonStanding,
+  Package2,
+  SquareTerminal,
+  EllipsisVertical,
+} from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -21,44 +27,9 @@ const data = {
   },
   navMain: [
     {
-      title: "Horarios",
-      url: "/",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "Horario",
-          url: "/dashboard/horarios",
-        },
-        {
-          title: "Promociones",
-          url: "#",
-        },
-        {
-          title: "Planes de pago",
-          url: "/articulos",
-        },
-      ],
-    },
-    {
-      title: "Administracion de alumnos",
-      url: "/",
-      icon: Bot,
-      items: [
-        {
-          title: "Tutores",
-          url: "/conductor",
-        },
-        {
-          title: "Alumnos",
-          url: "/dashboard/alumnos",
-        },
-      ],
-    },
-    {
       title: "Actividades",
       url: "#",
-      icon: BookOpen,
+      icon: Dumbbell,
       items: [
         {
           title: "Eventos",
@@ -73,7 +44,7 @@ const data = {
     {
       title: "Inventario",
       url: "/",
-      icon: Settings2,
+      icon: Package2,
       items: [
         {
           title: "Articulos",
@@ -85,11 +56,11 @@ const data = {
         },
         {
           title: "Compras",
-          url: "#",
+          url: "/dashboard/compras",
         },
         {
           title: "Proveedores",
-          url: "#",
+          url: "/dashboard/proveedores",
         },
         {
           title: "Ajustes",
@@ -98,9 +69,44 @@ const data = {
       ],
     },
     {
+      title: "Horarios",
+      url: "/",
+      icon: SquareTerminal,
+      items: [
+        {
+          title: "Horario",
+          url: "/dashboard/horarios",
+        },
+        {
+          title: "Planes de pago",
+          url: "/dashboard/planPago",
+        },
+      ],
+    },
+    {
+      title: "Administracion de alumnos",
+      url: "/",
+      icon: PersonStanding,
+      items: [
+        {
+          title: "Alumnos",
+          url: "/dashboard/alumnos",
+        },
+        {
+          title: "Tutores",
+          url: "/dashboard/tutores",
+        },
+
+        {
+          title: "Mensualidades",
+          url: "/dashboard/mensualidades",
+        },
+      ],
+    },
+    {
       title: "Detalles",
       url: "/",
-      icon: Settings2,
+      icon: EllipsisVertical,
       items: [
         {
           title: "Niveles",

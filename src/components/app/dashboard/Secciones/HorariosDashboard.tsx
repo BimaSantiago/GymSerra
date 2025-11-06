@@ -57,7 +57,6 @@ const HorariosDashboard = () => {
     { id: "7", nombre: "Avanzado" },
   ];
 
-  // Mapas nombre <-> id para precargar correctamente en edición
   const deporteNameToId = Object.fromEntries(
     deportes.map((d) => [d.nombre, d.id])
   );
@@ -71,7 +70,7 @@ const HorariosDashboard = () => {
     niveles.map((n) => [n.id, n.nombre])
   );
 
-  const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const horas = [
     1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000,
   ];

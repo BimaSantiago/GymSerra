@@ -44,7 +44,7 @@ export function CarouselDemo() {
   }, [api]);
 
   return (
-    <div className="mx-auto w-full max-w-[80vw] sm:max-w-[80vw] md:max-w-2xl lg:max-w-3xl">
+    <div className="mx-auto max-w-[80vw] sm:max-w-[80vw] md:max-w-2xl lg:max-w-3xl">
       <Carousel
         setApi={setApi}
         className="w-full"
