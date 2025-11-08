@@ -1,5 +1,3 @@
-// src/components/SimpleParallax.tsx
-
 import { Parallax, ParallaxLayer } from '@react-spring/parallax';
 
 const SimpleParallax = () => {
