@@ -1,55 +1,66 @@
-import { Parallax, ParallaxLayer } from '@react-spring/parallax';
+// SimpleParallax.tsx
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 
 const SimpleParallax = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end start'],
+  });
+
+  // ↓↓↓ LAS CAPAS BAJAN (de arriba hacia abajo)
+  const yFondo   = useTransform(scrollYProgress, [0, 1], ['0%', '-22%']);
+  const yArbol   = useTransform(scrollYProgress, [0, 1], ['0%', '-28%']);
+  const ySol     = useTransform(scrollYProgress, [0, 1], ['5%', '-38%']);
+  const yAtleta  = useTransform(scrollYProgress, [0, 1], ['5%%', '-80%']);
+  const yPasto   = useTransform(scrollYProgress, [0, 1], ['0%', '-22%']);
+  const yText   = useTransform(scrollYProgress, [0, 1], ['10%', '-90%']);
+
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <Parallax pages={1.5} className="h-full">
-        {/* Fondo */}
-        <ParallaxLayer offset={0} speed={0.1}>
-          <img
-            src="/img/fondo.png"
-            alt="Fondo"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </ParallaxLayer>
+    <section
+      ref={containerRef}
+      className="relative"
+      style={{ height: '170vh' }} 
+    >
+      <div className="sticky top-0 h-screen overflow-hidden">
+        {/* fondo */}
+        <motion.div style={{ y: yFondo }} className="absolute inset-0">
+          <img src="/img/fondo.png" alt="Fondo" className="w-full h-full object-cover" />
+        </motion.div>
 
         {/* arbol */}
-        <ParallaxLayer offset={0} speed={0.4}>
-          <img
-            src="/img/arbol.png"
-            alt="Árbol"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </ParallaxLayer>
+        <motion.div style={{ y: yArbol }} className="absolute inset-0">
+          <img src="/img/arbol.png" alt="Árbol" className="w-full h-full object-cover pointer-events-none" />
+        </motion.div>
 
-        {/* Sol */}
-        <ParallaxLayer offset={0} speed={0.7}>
-          <img
-            src="/img/sol.png"
-            alt="Sol"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </ParallaxLayer>
+        {/* sol */}
+        <motion.div style={{ y: ySol }} className="absolute inset-0">
+          <img src="/img/sol.png" alt="Sol" className="w-full h-full object-cover pointer-events-none" />
+        </motion.div>
 
-        {/* Atleta */}
-        <ParallaxLayer offset={0} speed={0.9}>
-          <img
-            src="/img/atleta.png"
-            alt="Atleta"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </ParallaxLayer>
+        {/* atleta */}
+        <motion.div style={{ y: yAtleta }} className="absolute inset-0">
+          <img src="/img/atleta.png" alt="Atleta" className="w-full h-full object-cover pointer-events-none" />
+        </motion.div>
 
-        {/* Pasto */}
-        <ParallaxLayer offset={0} speed={1.1}>
-          <img
-            src="/img/pasto.png"
-            alt="Pasto"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-          />
-        </ParallaxLayer>
-      </Parallax>
-    </div>
+        {/* pasto */}
+        <motion.div style={{ y: yPasto }} className="absolute inset-0">
+          <img src="/img/pasto.png" alt="Pasto" className="w-full h-full object-cover pointer-events-none" />
+        </motion.div>
+
+        {/* ttulo */}
+        
+         <motion.div style={{ y: yText }} className="absolute inset-0">
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+               <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-2xl">
+              Gym Serra
+              </h1>
+            </div>
+          </motion.div>
+      </div>
+    </section>
   );
 };
 
