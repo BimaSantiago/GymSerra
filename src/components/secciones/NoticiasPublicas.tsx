@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Dumbbell, Search } from "lucide-react";
+import EventCalendar from "../esenciales/EventCalendar";
 
 interface Noticia {
   idnoticias: number;
@@ -57,7 +58,7 @@ const NoticiasPublicas = () => {
             actividades deportivas del gimnasio.
           </p>
         </div>
-
+        <EventCalendar></EventCalendar>
         {/* Barra de búsqueda */}
         <div className="flex justify-center mb-10">
           <div className="relative w-full max-w-md">

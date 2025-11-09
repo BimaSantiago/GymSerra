@@ -49,22 +49,8 @@ const Menu = () => {
         className={`transition-all duration-300 overflow-hidden ${mobileMenuClasses} ${desktopMenuClasses}`}
       >
         <SubmenuItems
-          data={[
-            "Inicio",
-            "Productos",
-            "Clases",
-            "Eventos",
-            "Noticias",
-            "Sobre nosotros",
-          ]}
-          paths={[
-            "/",
-            "/productos",
-            "/clases",
-            "/eventos",
-            "/noticias",
-            "/sobre-nosotros",
-          ]}
+          data={["Inicio", "Productos", "Clases", "Noticias", "Sobre nosotros"]}
+          paths={["/", "/productos", "/clases", "/noticias", "/sobre-nosotros"]}
         />
       </div>
     </nav>

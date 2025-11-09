@@ -1,245 +1,229 @@
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, MapPin, X } from "lucide-react";
+"use client";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  useState,
+} from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import esLocale from "@fullcalendar/core/locales/es";
+import type { EventApi, EventMountArg } from "@fullcalendar/core";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertCircle, CalendarDays } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-type EventType = "gimnasia-artistica" | "parkour" | "crossfit";
+/* ---------- Tipos ---------- */
+interface Evento {
+  idevento: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  ubicacion: string;
+  iddeporte: number;
+  deporte?: string;
+}
 
-type Event = {
-  id: number;
-  title: string;
-  start: Date;
-  end: Date;
-  location: string;
-  participants: number;
-  type: EventType;
-  description: string;
+/* ---------- Utilidades ---------- */
+const startOfToday = (): Date => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 };
 
-const EXAMPLE_EVENTS: Event[] = [
-  {
-    id: 1,
-    title: "Clase de Gimnasia Artística - Nivel Inicial",
-    start: new Date("2025-11-01T10:00:00"),
-    end: new Date("2025-11-01T11:30:00"),
-    location: "Sala Principal - Gym Serra",
-    participants: 12,
-    type: "gimnasia-artistica",
-    description:
-      "Introducción a rutinas básicas de gimnasia artística para principiantes.",
-  },
-  {
-    id: 2,
-    title: "Taller de Parkour Avanzado",
-    start: new Date("2025-11-05T16:00:00"),
-    end: new Date("2025-11-05T17:30:00"),
-    location: "Área Exterior",
-    participants: 8,
-    type: "parkour",
-    description: "Técnicas avanzadas de saltos y flips en parkour.",
-  },
-  {
-    id: 3,
-    title: "Sesión de Crossfit para Adultos",
-    start: new Date("2025-11-10T18:00:00"),
-    end: new Date("2025-11-10T19:00:00"),
-    location: "Zona Funcional",
-    participants: 15,
-    type: "crossfit",
-    description: "Entrenamiento HIIT con énfasis en fuerza y resistencia.",
-  },
-];
-
-const getEventsForDate = (date: Date, events: Event[]) => {
-  return events.filter(
-    (event) =>
-      event.start.toDateString() === date.toDateString() ||
-      (event.start < date && event.end > date)
-  );
+const hasEventEnded = (fcEvent: EventApi): boolean => {
+  const end = fcEvent.end ?? fcEvent.start;
+  if (!end) return false;
+  if (fcEvent.allDay) return end.getTime() <= startOfToday().getTime();
+  return end.getTime() < Date.now();
 };
 
-const EventCalendar = () => {
-  const [date, setDate] = useState<Date>(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+const colorHexByDeporte = (nombre?: string): string => {
+  const n = (nombre ?? "").toLowerCase();
+  if (n.includes("parkour")) return "#16a34a";
+  if (n.includes("gimnasia")) return "#ec4899";
+  if (n.includes("crossfit")) return "#f59e0b";
+  return "#6b7280";
+};
 
-  const handleDateSelect = (selectedDate?: Date) => {
-    if (selectedDate) {
-      setDate(selectedDate);
-      setSelectedEvent(null); // 🔹 Ocultar detalle al cambiar de día
+/* ---------- Componente principal ---------- */
+const EventCalendar: React.FC = () => {
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
+  const [openDetails, setOpenDetails] = useState(false);
+  const [alert, setAlert] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchEventos();
+  }, []);
+
+  const fetchEventos = async (): Promise<void> => {
+    try {
+      const res = await fetch(
+        "http://localhost/GymSerra/public/api/eventos.php?action=list"
+      );
+      const data = await res.json();
+      if (data.success) setEventos(data.eventos);
+      else setAlert("No se pudieron cargar los eventos.");
+    } catch {
+      setAlert("Error de conexión con el servidor.");
     }
   };
 
-  const eventsForDate = getEventsForDate(date, EXAMPLE_EVENTS);
+  const eventosById = useMemo(() => {
+    const m = new Map<string, Evento>();
+    for (const ev of eventos) m.set(String(ev.idevento), ev);
+    return m;
+  }, [eventos]);
 
-  const getEventColor = (type: string) => {
-    switch (type) {
-      case "gimnasia-artistica":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "parkour":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "crossfit":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
+  const clickHandlersRef = useRef<
+    WeakMap<HTMLElement, (e: MouseEvent) => void>
+  >(new WeakMap());
+
+  const onEventDidMount = useCallback(
+    (arg: EventMountArg) => {
+      const el: HTMLElement = arg.el;
+      const map = clickHandlersRef.current;
+      const prev = map.get(el);
+      if (prev) el.removeEventListener("click", prev);
+
+      const handler = (e: MouseEvent) => {
+        e.stopPropagation();
+        const ev = eventosById.get(arg.event.id);
+        if (!ev) return;
+        setSelectedEvent(ev);
+        setOpenDetails(true);
+      };
+
+      map.set(el, handler);
+      el.addEventListener("click", handler, { passive: true });
+
+      const ended = hasEventEnded(arg.event);
+      if (ended) {
+        el.classList.add("opacity-60");
+      } else {
+        el.classList.remove("opacity-60");
+      }
+    },
+    [eventosById]
+  );
+
+  const eventObjFrom = (e: Evento) => {
+    const color = colorHexByDeporte(e.deporte);
+    return {
+      id: String(e.idevento),
+      title: `${e.deporte ?? ""} • ${e.ubicacion}`,
+      start: e.fecha_inicio,
+      end: e.fecha_fin,
+      backgroundColor: color,
+      borderColor: color,
+      textColor: "#fff",
+      classNames: [
+        "rounded-md",
+        "px-1.5",
+        "py-0.5",
+        "text-[11px]",
+        "font-medium",
+        "shadow-sm",
+        "cursor-pointer",
+      ],
+    };
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-6">
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+          <CalendarDays className="h-5 w-5 text-gray-700" />
+          Calendario de eventos
+        </h2>
+      </div>
+
+      {/* Alerta */}
+      {alert && (
+        <Alert
+          variant="destructive"
+          className="border border-gray-200 bg-gray-50 shadow-sm rounded-md"
+        >
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertTitle className="text-sm font-medium text-gray-800">
+            Error
+          </AlertTitle>
+          <AlertDescription className="text-gray-600 text-sm">
+            {alert}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Calendario */}
-      <div className="lg:w-1/3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">
-              Calendario de Eventos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={handleDateSelect}
-              className="rounded-md border"
-              modifiers={{
-                highlight: EXAMPLE_EVENTS.map((e) => e.start),
-              }}
-              modifiersStyles={{
-                highlight: {
-                  backgroundColor: "#dbeafe",
-                  color: "#1e40af",
-                  fontWeight: "bold",
-                },
-              }}
-            />
-          </CardContent>
-        </Card>
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          locale={esLocale}
+          height="auto"
+          dayMaxEventRows={3}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "",
+          }}
+          eventDidMount={onEventDidMount}
+          events={eventos.map(eventObjFrom)}
+        />
       </div>
 
-      {/* Lista y detalle */}
-      <div className="lg:w-2/3 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Eventos del{" "}
-              {date.toLocaleDateString("es-ES", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {eventsForDate.length > 0 ? (
-              eventsForDate.map((event) => (
-                <div
-                  key={event.id}
-                  className={`border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
-                    selectedEvent?.id === event.id
-                      ? "border-primary shadow-sm bg-muted/30"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedEvent(event)}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg">{event.title}</h3>
-                    <Badge
-                      variant="outline"
-                      className={`border-2 ${getEventColor(event.type)}`}
-                    >
-                      {event.type === "gimnasia-artistica"
-                        ? "Gimnasia Artística"
-                        : event.type === "parkour"
-                        ? "Parkour"
-                        : "Crossfit"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {event.start.toLocaleTimeString("es-ES", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      -{" "}
-                      {event.end.toLocaleTimeString("es-ES", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    <span>{event.location}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>No hay eventos programados para este día.</p>
-                <p className="text-sm mt-1">
-                  ¡Explora nuestras clases de gimnasia artística!
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Leyenda */}
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Leyenda</h3>
+        <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+          <span className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-sm bg-green-600 border border-black/10" />{" "}
+            Parkour
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-sm bg-pink-500 border border-black/10" />{" "}
+            Gimnasia
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-sm bg-amber-500 border border-black/10" />{" "}
+            Crossfit
+          </span>
+        </div>
+      </div>
 
-        {/* Card de detalles */}
-        {selectedEvent && (
-          <Card className="border-primary/40 shadow-sm transition-all -gap-2">
-            <CardHeader className="flex justify-between items-center">
-              <div className="flex justify-between w-full">
-                <CardTitle>{selectedEvent.title}</CardTitle>
-                <Badge className={getEventColor(selectedEvent.type)}>
-                  {selectedEvent.type === "gimnasia-artistica"
-                    ? "Gimnasia Artística"
-                    : selectedEvent.type === "parkour"
-                    ? "Parkour"
-                    : "Crossfit"}
-                </Badge>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedEvent(null)}
-                className="text-gray-500 hover:text-gray-800"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <p className="text-sm text-gray-600">
-                {selectedEvent.description}
+      {/* Dialog Detalles */}
+      <Dialog open={openDetails} onOpenChange={setOpenDetails}>
+        <DialogContent className="sm:max-w-[420px] border border-gray-200 shadow-sm bg-white rounded-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-gray-800">
+              Detalles del evento
+            </DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-2 text-sm text-gray-700">
+              <p>
+                <strong>Deporte:</strong> {selectedEvent.deporte}
               </p>
-              <div className=" space-y-2 text-sm py-2 ">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>
-                    {selectedEvent.start.toLocaleDateString("es-ES")} •{" "}
-                    {selectedEvent.start.toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    -{" "}
-                    {selectedEvent.end.toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>{selectedEvent.location}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+              <p>
+                <strong>Comentario:</strong> {selectedEvent.ubicacion}
+              </p>
+              <p>
+                <strong>Inicio:</strong> {selectedEvent.fecha_inicio}
+              </p>
+              <p>
+                <strong>Fin:</strong> {selectedEvent.fecha_fin}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

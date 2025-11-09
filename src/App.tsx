@@ -7,12 +7,9 @@ import Default from "./components/app/Default/Default";
 import NoticiasPublicas from "./components/secciones/NoticiasPublicas";
 import SobreNosotros from "./components/secciones/Nosotros";
 import HomePublic from "./components/secciones/HomePublic";
-/*
-import Eventos from "./components/app/Public/Eventos";
-
-import Productos from "./components/app/Public/Productos";
+import Clases from "./components/secciones/Clases";
 import "./App.css";
-*/
+import Productos from "./components/secciones/Productos";
 function App() {
   return (
     <Router>
@@ -33,6 +30,8 @@ function App() {
             <Route index element={<HomePublic />} />
             <Route path="noticias" element={<NoticiasPublicas />} />
             <Route path="sobre-nosotros" element={<SobreNosotros />} />
+            <Route path="clases" element={<Clases />} />
+            <Route path="productos" element={<Productos />} />
           </Route>
         </Routes>
       </AuthProvider>
