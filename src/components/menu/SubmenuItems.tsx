@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 type Props = {
   data: string[];
@@ -10,7 +11,7 @@ const SubmenuItems = ({ data, paths, className }: Props) => {
   return (
     <ul
       className={cn(
-        "flex flex-col md:flex-row justify-center md:justify-end gap-4",
+        "flex flex-col md:flex-row justify-center md:justify-end gap-2 md:gap-6",
         className
       )}
     >
@@ -19,12 +20,12 @@ const SubmenuItems = ({ data, paths, className }: Props) => {
           key={index}
           className="hover:bg-gray-700 rounded-md transition-colors"
         >
-          <a
-            href={paths[index]}
+          <Link
+            to={paths[index]}
             className="block px-4 py-2 text-white text-sm font-sans font-medium"
           >
             {item}
-          </a>
+          </Link>
         </li>
       ))}
     </ul>

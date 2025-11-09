@@ -1,15 +1,22 @@
+import React from "react";
+
 type Props = {
   ruta: string;
   alterno: string;
-  socialMedia: string;
+  icon: React.ReactNode;
 };
 
-const ItemFooter = ({ ruta, alterno, socialMedia }: Props) => {
+const ItemFooter = ({ ruta, alterno, icon }: Props) => {
   return (
-    <article className="flex flex-col items-center">
-      <img src={ruta} alt={alterno} className="w-8 h-8" />
-      <p className="text-white text-sm mt-2">{socialMedia}</p>
-    </article>
+    <a
+      href={ruta}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={alterno}
+      className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-all duration-200"
+    >
+      {icon}
+    </a>
   );
 };
 

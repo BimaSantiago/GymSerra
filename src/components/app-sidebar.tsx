@@ -7,6 +7,7 @@ import {
   Package2,
   SquareTerminal,
   EllipsisVertical,
+  Loader2,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -18,14 +19,27 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+type ActiveUser = {
+  iduser: number;
+  username: string;
+  avatar: string | null;
+};
+
+// 🔹 Normaliza la ruta del avatar para evitar rutas relativas rotas al cambiar de vista
+function normalizeAvatarPath(path?: string | null): string {
+  if (!path) return "/images/default-avatar.png";
+  // Si ya es relativa desde raíz, mantenerla
+  if (path.startsWith("/")) return path;
+  // Si es relativa sin slash (ej. uploads/users/...), agregamos /
+  return "/" + path;
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState<ActiveUser | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  // Menú principal
+  const navMain = [
     {
       title: "Actividades",
       url: "#",
@@ -33,11 +47,11 @@ const data = {
       items: [
         {
           title: "Eventos",
-          url: "/envio",
+          url: "/dashboard/eventoDashboard",
         },
         {
           title: "Noticias",
-          url: "/pedido",
+          url: "/dashboard/noticiasDashboard",
         },
       ],
     },
@@ -52,7 +66,7 @@ const data = {
         },
         {
           title: "Ventas",
-          url: "#",
+          url: "/dashboard/ventas",
         },
         {
           title: "Compras",
@@ -64,7 +78,7 @@ const data = {
         },
         {
           title: "Ajustes",
-          url: "#",
+          url: "/dashboard/ajustes",
         },
       ],
     },
@@ -96,7 +110,6 @@ const data = {
           title: "Tutores",
           url: "/dashboard/tutores",
         },
-
         {
           title: "Mensualidades",
           url: "/dashboard/mensualidades",
@@ -107,24 +120,62 @@ const data = {
       title: "Detalles",
       url: "/",
       icon: EllipsisVertical,
-      items: [
-        {
-          title: "Niveles",
-          url: "/dashboard/niveles",
-        },
-      ],
+      items: [{ title: "Niveles", url: "/dashboard/niveles" }],
     },
-  ],
-};
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Obtener usuario activo desde el backend
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost/GymSerra/public/api/users.php?action=get_current",
+          { credentials: "include" }
+        );
+        const data = await res.json();
+
+        if (data.success && data.user) {
+          setUser({
+            iduser: data.user.iduser,
+            username: data.user.username,
+            avatar: data.user.avatar ?? null,
+          });
+        } else {
+          console.warn("No se encontró usuario activo o sesión inválida");
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Error obteniendo usuario activo:", err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const avatarPath = normalizeAvatarPath(user?.avatar);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <NavUser user={data.user} />
+        {loading ? (
+          <div className="flex items-center justify-center py-3 text-gray-500">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : (
+          <NavUser
+            user={{
+              name: user?.username ?? "Invitado",
+              avatar: avatarPath, // ✅ siempre ruta desde raíz
+            }}
+          />
+        )}
       </SidebarHeader>
+
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
 
       <SidebarRail />

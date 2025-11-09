@@ -16,6 +16,13 @@ import Compras from "./Secciones/Compras";
 import ComprasDetalle from "./Secciones/ComprasDetalle";
 import PlanPagoDashboard from "./Secciones/PlanPagoDashboard";
 import MensualidadesDashboard from "./Secciones/MensualidadesDashboard";
+import UsersDashboard from "./Secciones/UsersDashboard";
+import Ventas from "./Secciones/Ventas";
+import VentasDetalle from "./Secciones/VentasDetalle";
+import Ajustes from "./Secciones/Ajustes";
+import AjustesDetalle from "./Secciones/AjustesDetalle";
+import EventDashboard from "./Secciones/EventDashboard";
+import NoticiasDashboard from "./Secciones/NoticiasDashboard";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -42,6 +49,13 @@ export default function Page() {
             <Route path="/comprasDetalle" element={<ComprasDetalle />} />
             <Route path="/planPago" element={<PlanPagoDashboard />} />
             <Route path="/mensualidades" element={<MensualidadesDashboard />} />
+            <Route path="/users" element={<UsersDashboard />} />
+            <Route path="/ventas" element={<Ventas />} />
+            <Route path="/ventasDetalle" element={<VentasDetalle />} />
+            <Route path="/ajustes" element={<Ajustes />} />
+            <Route path="/ajustesDetalle" element={<AjustesDetalle />} />
+            <Route path="/eventoDashboard" element={<EventDashboard />} />
+            <Route path="/noticiasDashboard" element={<NoticiasDashboard />} />
           </Routes>
         </div>
       </SidebarInset>

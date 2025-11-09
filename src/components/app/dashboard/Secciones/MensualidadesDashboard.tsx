@@ -24,24 +24,26 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
-import { Pencil, Search, CheckCircle2, AlertCircle } from "lucide-react";
+import { Pencil, CheckCircle2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-/* ===== Tipos (permitimos null porque la API puede regresarlos null) ===== */
 interface Alumno {
   idalumno: number;
   nombre_completo: string;
 }
+
 interface PlanPago {
   idplan: number;
-  nombre_deporte: string;
-  nombre_nivel: string;
+  idnivel: number;
   dias_por_semana: number;
   costo: number;
   costo_promocion: number;
   costo_penalizacion: number;
 }
+
 interface Mensualidad {
   idmensualidad: number;
   idalumno: number | null;
@@ -55,9 +57,15 @@ interface Mensualidad {
   estado: string | null;
 }
 
-const api = "http://localhost/GymSerra/public/api/mensualidades.php";
+const API_MENS = "http://localhost/GymSerra/public/api/mensualidades.php";
+const API_PLANES = "http://localhost/GymSerra/public/api/plan_pago.php";
+const safeLower = (v: unknown): string => (v ?? "").toString().toLowerCase();
 
-const safeLower = (v: unknown) => (v ?? "").toString().toLowerCase();
+const NIVELES = [
+  { id: 1, nombre: "Gimnasia Inicial (Prenivel)" },
+  { id: 2, nombre: "Gimnasia General (Nivel 1 al 4)" },
+  { id: 3, nombre: "Parkour" },
+];
 
 const MensualidadesDashboard: React.FC = () => {
   const [mensualidades, setMensualidades] = useState<Mensualidad[]>([]);
@@ -68,12 +76,13 @@ const MensualidadesDashboard: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentMensualidad, setCurrentMensualidad] = useState<number | null>(
     null
-  ); // <-- ahora sí se usa
+  );
   const [form, setForm] = useState({
     idalumno: "",
     idplan: "",
@@ -82,22 +91,35 @@ const MensualidadesDashboard: React.FC = () => {
   });
 
   /* ==================== FETCH ==================== */
-  const fetchAll = async () => {
+  const fetchAll = async (): Promise<void> => {
     const [m, a, p] = await Promise.all([
-      fetch(`${api}?action=list`).then((r) => r.json()),
-      fetch(`${api}?action=list_alumnos`).then((r) => r.json()),
-      fetch(`${api}?action=list_planes`).then((r) => r.json()),
+      fetch(`${API_MENS}?action=list`).then((r) => r.json()),
+      fetch(`${API_MENS}?action=list_alumnos`).then((r) => r.json()),
+      fetch(`${API_PLANES}?action=list`).then((r) => r.json()),
     ]);
-    if (m.success) setMensualidades(m.mensualidades);
-    if (a.success) setAlumnos(a.alumnos);
-    if (p.success) setPlanes(p.planes);
+
+    if (m.success) setMensualidades(m.mensualidades as Mensualidad[]);
+    if (a.success) setAlumnos(a.alumnos as Alumno[]);
+    if (p.success && Array.isArray(p.planes)) {
+      const parsed: PlanPago[] = p.planes.map(
+        (pl: Record<string, unknown>) => ({
+          idplan: Number(pl.idplan),
+          idnivel: Number(pl.idnivel),
+          dias_por_semana: Number(pl.dias_por_semana),
+          costo: Number(pl.costo),
+          costo_promocion: Number(pl.costo_promocion),
+          costo_penalizacion: Number(pl.costo_penalizacion),
+        })
+      );
+      setPlanes(parsed);
+    }
   };
 
   useEffect(() => {
     void fetchAll();
   }, []);
 
-  /* ==================== BUSCADOR null-safe ==================== */
+  /* ==================== BUSCADOR ==================== */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return mensualidades;
@@ -119,20 +141,32 @@ const MensualidadesDashboard: React.FC = () => {
     [filtered]
   );
 
+  /* ==================== HELPERS ==================== */
+  const recomputeTotalPreview = (planIdStr: string, fecha: string): string => {
+    const plan = planes.find((p) => String(p.idplan) === planIdStr);
+    if (!plan || !fecha) return "";
+    const dia = new Date(fecha).getDate();
+    if (dia <= 10) return String(plan.costo_promocion);
+    if (dia <= 20) return String(plan.costo);
+    return String(plan.costo_penalizacion);
+  };
+
   /* ==================== CRUD ==================== */
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
+    setModalError(null);
 
     const body = {
       idmensualidad: currentMensualidad,
       idalumno: Number(form.idalumno),
       idplan: Number(form.idplan),
       fecha_pago: form.fecha_pago,
-      // total_pagado lo calcula el backend con base en fecha y plan
     };
-
     const action = isEditing ? "update" : "create";
-    const res = await fetch(`${api}?action=${action}`, {
+
+    const res = await fetch(`${API_MENS}?action=${action}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -142,7 +176,7 @@ const MensualidadesDashboard: React.FC = () => {
     if (data.success) {
       setAlert({
         type: "success",
-        message: "Mensualidad guardada correctamente.",
+        message: data.msg || "Mensualidad guardada correctamente.",
       });
       setIsDialogOpen(false);
       setForm({ idalumno: "", idplan: "", fecha_pago: "", total_pagado: "" });
@@ -150,51 +184,41 @@ const MensualidadesDashboard: React.FC = () => {
       setIsEditing(false);
       await fetchAll();
     } else {
-      setAlert({ type: "error", message: data.error || "Error al guardar." });
+      setModalError(data.error || "Error al guardar.");
     }
-    setTimeout(() => setAlert(null), 2500);
+
+    setTimeout(() => setAlert(null), 3000);
   };
 
-  const handleEdit = (m: Mensualidad) => {
+  const handleEdit = (m: Mensualidad): void => {
     setIsEditing(true);
-    setCurrentMensualidad(m.idmensualidad); // <-- uso explícito del setter
+    setCurrentMensualidad(m.idmensualidad);
     setForm({
       idalumno: m.idalumno ? String(m.idalumno) : "",
       idplan: m.idplan ? String(m.idplan) : "",
       fecha_pago: m.fecha_pago ?? "",
       total_pagado: m.total_pagado != null ? String(m.total_pagado) : "",
     });
+    setModalError(null);
     setIsDialogOpen(true);
-  };
-
-  /* ==================== Cálculo total en el cliente (preview) ==================== */
-  const recomputeTotalPreview = (planIdStr: string, fecha: string) => {
-    const plan = planes.find((p) => String(p.idplan) === planIdStr);
-    if (!plan || !fecha) return "";
-    const dia = new Date(fecha).getDate();
-    if (dia <= 10) return String(plan.costo_promocion);
-    if (dia <= 20) return String(plan.costo);
-    return String(plan.costo_penalizacion);
   };
 
   /* ==================== RENDER ==================== */
   return (
     <div className="p-6 space-y-6">
-      {/* Header + Acciones */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <h2 className="text-2xl font-semibold">Control de Mensualidades</h2>
 
-        {/* Buscador estilo ArticulosDashboard */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-1/3">
           <div className="relative">
             <Input
               placeholder="Buscar por alumno, deporte, nivel o estado…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pr-8"
+              className="max-w-sm rounded-lg shadow-md"
             />
-            <Search className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 opacity-60" />
           </div>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -207,6 +231,7 @@ const MensualidadesDashboard: React.FC = () => {
                   });
                   setCurrentMensualidad(null);
                   setIsEditing(false);
+                  setModalError(null);
                 }}
               >
                 + Registrar Pago
@@ -241,7 +266,7 @@ const MensualidadesDashboard: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* Plan de pago (mostrar deporte • nivel • días • $costo) */}
+                {/* Plan agrupado por nivel */}
                 <div>
                   <Label>Plan de pago</Label>
                   <Select
@@ -255,17 +280,30 @@ const MensualidadesDashboard: React.FC = () => {
                       <SelectValue placeholder="Selecciona un plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      {planes.map((p) => (
-                        <SelectItem key={p.idplan} value={String(p.idplan)}>
-                          {p.nombre_deporte} • {p.nombre_nivel} •{" "}
-                          {p.dias_por_semana} días • ${p.costo}
-                        </SelectItem>
-                      ))}
+                      {NIVELES.map((n) => {
+                        const groupItems = planes.filter(
+                          (p) => p.idnivel === n.id
+                        );
+                        if (groupItems.length === 0) return null;
+                        return (
+                          <SelectGroup key={n.id}>
+                            <SelectLabel>{n.nombre}</SelectLabel>
+                            {groupItems.map((p) => (
+                              <SelectItem
+                                key={p.idplan}
+                                value={String(p.idplan)}
+                              >
+                                {`${p.dias_por_semana} días • $${p.costo}`}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Fecha de pago */}
+                {/* Fecha */}
                 <div>
                   <Label>Fecha de pago</Label>
                   <Input
@@ -280,11 +318,20 @@ const MensualidadesDashboard: React.FC = () => {
                   />
                 </div>
 
-                {/* Total (solo lectura, lo definitivo lo calcula el backend) */}
+                {/* Total calculado */}
                 <div>
                   <Label>Total calculado</Label>
                   <Input type="number" value={form.total_pagado} readOnly />
                 </div>
+
+                {/* Error dentro del modal */}
+                {modalError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{modalError}</AlertDescription>
+                  </Alert>
+                )}
 
                 <Button type="submit" className="w-full">
                   {isEditing ? "Actualizar" : "Guardar"}
@@ -309,9 +356,8 @@ const MensualidadesDashboard: React.FC = () => {
         </Alert>
       )}
 
-      {/* Dos tablas lado a lado como en tus dashboards */}
+      {/* TABLAS */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Pendientes / Vencidos */}
         <Card>
           <CardHeader>
             <CardTitle>Alumnos con deuda</CardTitle>
@@ -356,7 +402,6 @@ const MensualidadesDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Pagados */}
         <Card>
           <CardHeader>
             <CardTitle>Alumnos al corriente</CardTitle>

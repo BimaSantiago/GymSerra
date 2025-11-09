@@ -151,150 +151,154 @@ case 'create':
     }
     break;
 
-  case 'addDetalle':
-    $data = json_decode(file_get_contents("php://input"), true);
-    $idcompra = intval($data['idcompra'] ?? 0);
-    $idarticulo = intval($data['idarticulo'] ?? 0);
-    $cantidad = intval($data['cantidad'] ?? 0);
-    $precioCosto = floatval($data['precioCosto'] ?? 0);
-    $precioVenta = floatval($data['precioVenta'] ?? 0);
+   case 'addDetalle':
+        $input = json_decode(file_get_contents('php://input'), true);
+        $idcompra = $input['idcompra'];
+        $idarticulo = $input['idarticulo'];
+        $cantidad = $input['cantidad'];
+        $precioCosto = $input['precioCosto'];
+        $precioVenta = $input['precioVenta'];
 
-    if ($idcompra <= 0 || $idarticulo <= 0 || $cantidad <= 0 || $precioCosto <= 0) {
-      echo json_encode(['success' => false, 'error' => 'Datos incompletos o inválidos']);
-      exit;
-    }
+        // Insertar costo y precio
+        $stmtCosto = $conn->prepare("INSERT INTO lista_costo (idarticulo, precio) VALUES (?, ?)");
+        $stmtCosto->bind_param("id", $idarticulo, $precioCosto);
+        $stmtCosto->execute();
+        $idcosto = $stmtCosto->insert_id;
 
-    $conn->begin_transaction();
-    try {
-      // Insertar lista_costo y lista_precio
-      $stmtCosto = $conn->prepare("INSERT INTO lista_costo (idarticulo, precio) VALUES (?, ?)");
-      $stmtCosto->bind_param("id", $idarticulo, $precioCosto);
-      $stmtCosto->execute();
-      $idcosto = $conn->insert_id;
+        $stmtPrecio = $conn->prepare("INSERT INTO lista_precio (idarticulo, precio) VALUES (?, ?)");
+        $stmtPrecio->bind_param("id", $idarticulo, $precioVenta);
+        $stmtPrecio->execute();
+        $idprecio = $stmtPrecio->insert_id;
 
-      $stmtPrecio = $conn->prepare("INSERT INTO lista_precio (idarticulo, precio) VALUES (?, ?)");
-      $stmtPrecio->bind_param("id", $idarticulo, $precioVenta);
-      $stmtPrecio->execute();
-      $idprecio = $conn->insert_id;
+        $subtotal = $cantidad * $precioCosto;
 
-      $subtotal = $cantidad * $precioCosto;
+        // Insertar detalle
+        $stmt = $conn->prepare("INSERT INTO detalle_compra (idcompra, idarticulo, cantidad, subtotal, idcosto, idprecio)
+                                VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("iiidii", $idcompra, $idarticulo, $cantidad, $subtotal, $idcosto, $idprecio);
+        $success = $stmt->execute();
 
-      $stmtDet = $conn->prepare("
-        INSERT INTO detalle_compra (idcompra, idarticulo, subtotal, cantidad, idcosto, idprecio)
-        VALUES (?, ?, ?, ?, ?, ?)
-      ");
-      $stmtDet->bind_param("iidiii", $idcompra, $idarticulo, $subtotal, $cantidad, $idcosto, $idprecio);
-      $stmtDet->execute();
+        if ($success) {
+            // Actualizar stock
+            $updateStock = $conn->prepare("UPDATE articulos SET stock = stock + ? WHERE idarticulo = ?");
+            $updateStock->bind_param("ii", $cantidad, $idarticulo);
+            $updateStock->execute();
 
-      $stmtTotal = $conn->prepare("
-        UPDATE compra SET total = (SELECT IFNULL(SUM(subtotal), 0) FROM detalle_compra WHERE idcompra = ?) 
-        WHERE idcompra = ?
-      ");
-      $stmtTotal->bind_param("ii", $idcompra, $idcompra);
-      $stmtTotal->execute();
+            // Recalcular total de la compra
+            $conn->query("UPDATE compra 
+                          SET total = (SELECT IFNULL(SUM(subtotal),0) FROM detalle_compra WHERE idcompra = $idcompra)
+                          WHERE idcompra = $idcompra");
+        }
 
-      $conn->commit();
-      echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-      $conn->rollback();
-      echo json_encode(['success' => false, 'error' => 'Error al agregar detalle: ' . $e->getMessage()]);
-    }
-    break;
+        echo json_encode(["success" => $success]);
+        break;
 
   case 'updateDetalle':
-    $data = json_decode(file_get_contents("php://input"), true);
-    $iddetalle = intval($data['iddetalle_compra'] ?? 0);
-    $idcompra = intval($data['idcompra'] ?? 0);
-    $idarticulo = intval($data['idarticulo'] ?? 0);
-    $cantidad = intval($data['cantidad'] ?? 0);
-    $precioCosto = floatval($data['precioCosto'] ?? 0);
-    $precioVenta = floatval($data['precioVenta'] ?? 0);
+        $input = json_decode(file_get_contents('php://input'), true);
+        $iddetalle = $input['iddetalle_compra'];
+        $idcompra = $input['idcompra'];
+        $nuevoArticulo = $input['idarticulo'];
+        $nuevaCantidad = $input['cantidad'];
+        $nuevoCosto = $input['precioCosto'];
+        $nuevoPrecio = $input['precioVenta'];
 
-    if ($iddetalle <= 0 || $idcompra <= 0) {
-      echo json_encode(['success' => false, 'error' => 'Datos inválidos']);
-      exit;
-    }
+        // Obtener el detalle actual
+        $stmt = $conn->prepare("SELECT idarticulo, cantidad FROM detalle_compra WHERE iddetalle_compra = ?");
+        $stmt->bind_param("i", $iddetalle);
+        $stmt->execute();
+        $old = $stmt->get_result()->fetch_assoc();
 
-    $subtotal = $cantidad * $precioCosto;
+        if ($old) {
+            $oldArticulo = $old['idarticulo'];
+            $oldCantidad = $old['cantidad'];
 
-    $conn->begin_transaction();
-    try {
-      // Actualizar precios
-      $stmtIDs = $conn->prepare("SELECT idcosto, idprecio FROM detalle_compra WHERE iddetalle_compra=?");
-      $stmtIDs->bind_param("i", $iddetalle);
-      $stmtIDs->execute();
-      $ids = $stmtIDs->get_result()->fetch_assoc();
+            // Caso 1: mismo artículo → ajustar diferencia de stock
+            if ($oldArticulo == $nuevoArticulo) {
+                $diferencia = $nuevaCantidad - $oldCantidad;
+                $updateStock = $conn->prepare("UPDATE articulos SET stock = stock + ? WHERE idarticulo = ?");
+                $updateStock->bind_param("ii", $diferencia, $nuevoArticulo);
+                $updateStock->execute();
+            }
+            // Caso 2: artículo cambiado → devolver stock al anterior y sumar al nuevo
+            else {
+                $devolver = $conn->prepare("UPDATE articulos SET stock = stock - ? WHERE idarticulo = ?");
+                $devolver->bind_param("ii", $oldCantidad, $oldArticulo);
+                $devolver->execute();
 
-      if ($ids) {
-        $stmtCosto = $conn->prepare("UPDATE lista_costo SET precio=? WHERE idcosto=?");
-        $stmtCosto->bind_param("di", $precioCosto, $ids['idcosto']);
-        $stmtCosto->execute();
+                $sumar = $conn->prepare("UPDATE articulos SET stock = stock + ? WHERE idarticulo = ?");
+                $sumar->bind_param("ii", $nuevaCantidad, $nuevoArticulo);
+                $sumar->execute();
+            }
 
-        $stmtPrecio = $conn->prepare("UPDATE lista_precio SET precio=? WHERE idprecio=?");
-        $stmtPrecio->bind_param("di", $precioVenta, $ids['idprecio']);
-        $stmtPrecio->execute();
-      }
+            // Insertar nuevos registros de precio y costo
+            $stmtCosto = $conn->prepare("INSERT INTO lista_costo (idarticulo, precio) VALUES (?, ?)");
+            $stmtCosto->bind_param("id", $nuevoArticulo, $nuevoCosto);
+            $stmtCosto->execute();
+            $idcosto = $stmtCosto->insert_id;
 
-      // Actualizar detalle
-      $stmt = $conn->prepare("
-        UPDATE detalle_compra 
-        SET idarticulo=?, cantidad=?, subtotal=? 
-        WHERE iddetalle_compra=?
-      ");
-      $stmt->bind_param("iidi", $idarticulo, $cantidad, $subtotal, $iddetalle);
-      $stmt->execute();
+            $stmtPrecio = $conn->prepare("INSERT INTO lista_precio (idarticulo, precio) VALUES (?, ?)");
+            $stmtPrecio->bind_param("id", $nuevoArticulo, $nuevoPrecio);
+            $stmtPrecio->execute();
+            $idprecio = $stmtPrecio->insert_id;
 
-      // Recalcular total
-      $stmtTotal = $conn->prepare("
-        UPDATE compra 
-        SET total = (SELECT IFNULL(SUM(subtotal), 0) FROM detalle_compra WHERE idcompra = ?)
-        WHERE idcompra = ?
-      ");
-      $stmtTotal->bind_param("ii", $idcompra, $idcompra);
-      $stmtTotal->execute();
+            $subtotal = $nuevaCantidad * $nuevoCosto;
 
-      $conn->commit();
-      echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-      $conn->rollback();
-      echo json_encode(['success' => false, 'error' => 'Error al actualizar detalle: ' . $e->getMessage()]);
-    }
-    break;
+            // Actualizar el detalle
+            $update = $conn->prepare("UPDATE detalle_compra
+                                      SET idarticulo=?, cantidad=?, subtotal=?, idcosto=?, idprecio=?
+                                      WHERE iddetalle_compra=?");
+            $update->bind_param("iidiii", $nuevoArticulo, $nuevaCantidad, $subtotal, $idcosto, $idprecio, $iddetalle);
+            $success = $update->execute();
+
+            if ($success) {
+                // Recalcular total de compra
+                $conn->query("UPDATE compra 
+                              SET total = (SELECT IFNULL(SUM(subtotal),0) FROM detalle_compra WHERE idcompra = $idcompra)
+                              WHERE idcompra = $idcompra");
+            }
+
+            echo json_encode(["success" => $success]);
+        } else {
+            echo json_encode(["success" => false, "error" => "Detalle no encontrado"]);
+        }
+        break;
 
   case 'deleteDetalle':
-    $iddetalle = intval($_GET['iddetalle_compra'] ?? 0);
-    if ($iddetalle <= 0) {
-      echo json_encode(['success' => false, 'error' => 'ID inválido']);
-      exit;
-    }
+        $iddetalle = $_GET['iddetalle_compra'];
 
-    $getCompra = $conn->prepare("SELECT idcompra FROM detalle_compra WHERE iddetalle_compra = ?");
-    $getCompra->bind_param("i", $iddetalle);
-    $getCompra->execute();
-    $row = $getCompra->get_result()->fetch_assoc();
-    $idcompra = $row['idcompra'] ?? 0;
+        // Obtener cantidad e idarticulo
+        $stmt = $conn->prepare("SELECT idarticulo, cantidad, idcompra FROM detalle_compra WHERE iddetalle_compra = ?");
+        $stmt->bind_param("i", $iddetalle);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
 
-    $conn->begin_transaction();
-    try {
-      $stmt = $conn->prepare("DELETE FROM detalle_compra WHERE iddetalle_compra = ?");
-      $stmt->bind_param("i", $iddetalle);
-      $stmt->execute();
+        if ($row) {
+            $idarticulo = $row['idarticulo'];
+            $cantidad = $row['cantidad'];
+            $idcompra = $row['idcompra'];
 
-      $stmtTotal = $conn->prepare("
-        UPDATE compra 
-        SET total = (SELECT IFNULL(SUM(subtotal), 0) FROM detalle_compra WHERE idcompra = ?) 
-        WHERE idcompra = ?
-      ");
-      $stmtTotal->bind_param("ii", $idcompra, $idcompra);
-      $stmtTotal->execute();
+            // Eliminar el detalle
+            $del = $conn->prepare("DELETE FROM detalle_compra WHERE iddetalle_compra = ?");
+            $del->bind_param("i", $iddetalle);
+            $success = $del->execute();
 
-      $conn->commit();
-      echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-      $conn->rollback();
-      echo json_encode(['success' => false, 'error' => 'Error al eliminar detalle: ' . $e->getMessage()]);
-    }
-    break;
+            if ($success) {
+                // Reducir stock
+                $updateStock = $conn->prepare("UPDATE articulos SET stock = GREATEST(stock - ?, 0) WHERE idarticulo = ?");
+                $updateStock->bind_param("ii", $cantidad, $idarticulo);
+                $updateStock->execute();
+
+                // Actualizar total de compra
+                $conn->query("UPDATE compra 
+                              SET total = (SELECT IFNULL(SUM(subtotal),0) FROM detalle_compra WHERE idcompra = $idcompra)
+                              WHERE idcompra = $idcompra");
+            }
+
+            echo json_encode(["success" => $success]);
+        } else {
+            echo json_encode(["success" => false, "error" => "Detalle no encontrado"]);
+        }
+        break;
 
   default:
     echo json_encode(['success' => false, 'error' => 'Acción no válida']);
