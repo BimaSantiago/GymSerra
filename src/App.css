@@ -139,3 +139,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* index.css o App.css */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-y: auto; /* permite scroll */
+  overflow-x: hidden;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
