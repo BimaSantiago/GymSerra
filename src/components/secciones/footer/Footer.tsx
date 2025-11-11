@@ -5,7 +5,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  Youtube,
   Home,
   Newspaper,
   Info,
@@ -25,34 +24,29 @@ const Footer = () => {
           <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-2">
               <Phone className="h-5 w-5 text-gray-400" />
-              <span>+57 312 456 7890</span>
+              <span>+52 1 55 8260 6391</span>
             </li>
             <li className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-gray-400" />
               <span>contacto@gymserra.com</span>
             </li>
-            <li className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-gray-400" />
-              <span>Calle 45 #22-17, Bogotá, Colombia</span>
+            <li className="flex justify-between items-center gap-2">
+              <MapPin className="min-h-5 min-w-5 text-gray-400" />
+              <span>Avenida Reforma SN, Plaza Reforma tercer piso, 54240 Jilotepec de Molina Enríquez, Méx.</span>
             </li>
           </ul>
 
           {/* Redes sociales */}
           <div className="flex gap-4 mt-5">
             <ItemFooter
-              ruta="https://facebook.com"
+              ruta="https://www.facebook.com/share/1DMFLc4Zdw/"
               alterno="Facebook"
               icon={<Facebook />}
             />
             <ItemFooter
-              ruta="https://instagram.com"
+              ruta="https://www.instagram.com/academia_gym_serra_oficial"
               alterno="Instagram"
               icon={<Instagram />}
-            />
-            <ItemFooter
-              ruta="https://youtube.com"
-              alterno="YouTube"
-              icon={<Youtube />}
             />
           </div>
         </div>
