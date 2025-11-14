@@ -66,6 +66,7 @@ export function PrettyCarousel({
     return () => {
       api.off("select", handleSelect);
       window.removeEventListener("keydown", onKey);
+      // eslint-disable-next-line
       plugin.current?.reset();
     };
   }, [api]);
