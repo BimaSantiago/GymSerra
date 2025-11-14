@@ -3,7 +3,12 @@ import SubSeccion from "../esenciales/SubSeccion";
 import SeccionPequenia from "../esenciales/SeccionPequenia";
 import SeccionPequenia2 from "../esenciales/SeccionPequenia2";
 import Imagenes from "../esenciales/Imagenes";
-import logo from "../../assets/LogoGymSerra.png";
+import Imagen1 from "../../assets/Imagen1.jpg";
+import Imagen2 from "../../assets/Imagen2.jpg";
+import Imagen3 from "../../assets/Imagen3.jpg";
+import Imagen4 from "../../assets/Imagen4.jpg";
+import Imagen6 from "../../assets/Imagen6.jpg";
+
 import { CarouselDemo } from "../CarouselDemo";
 import {
   Heart,
@@ -83,7 +88,22 @@ const Nosotros = () => {
 
   return (
     <section id="nosotros" className="py-10">
-      <CarouselDemo />
+      <CarouselDemo
+        items={[
+          { src: Imagen4, alt: "Algo 2" },
+          {
+            src: Imagen6,
+            alt: "Algo",
+          },
+          {
+            src: Imagen4,
+            alt: "Algo",
+          },
+        ]}
+        showThumbnails
+        aspect="video"
+        autoPlayDelay={3500}
+      />
 
       <SubSeccion title="Sobre Nosotros">
         <Parrafos>
@@ -98,21 +118,20 @@ const Nosotros = () => {
       <SubSeccion title="Historia">
         <SeccionPequenia data={datosHistoria1}>
           <Imagenes
-            ruta={logo}
+            ruta={Imagen4}
             pie="Nuestra academia en sus inicios"
             alternativo="Logo Gym Serra"
           />
         </SeccionPequenia>
         <SeccionPequenia2 data={datosHistoria2}>
           <Imagenes
-            ruta={logo}
+            ruta={Imagen1}
             pie="Competencias y crecimiento"
             alternativo="Logo Gym Serra"
           />
         </SeccionPequenia2>
       </SubSeccion>
 
-      {/* NUEVA SECCIÓN DE VALORES CORPORATIVOS */}
       <SubSeccion title="Nuestros Valores Corporativos">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {valores.map((valor, index) => (
@@ -137,10 +156,11 @@ const Nosotros = () => {
       <SubSeccion title="Misión">
         <SeccionPequenia data={datosMision}>
           <Imagenes
-            ruta={logo}
+            ruta={Imagen2}
             pie="Formando futuros campeones"
             alternativo="Logo Gym Serra"
             altura="50px"
+            className="max-h-40"
           />
         </SeccionPequenia>
       </SubSeccion>
@@ -148,7 +168,7 @@ const Nosotros = () => {
       <SubSeccion title="Visión">
         <SeccionPequenia2 data={datosVision}>
           <Imagenes
-            ruta={logo}
+            ruta={Imagen3}
             pie="Inspirando excelencia"
             alternativo="Logo Gym Serra"
           />

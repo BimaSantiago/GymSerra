@@ -14,7 +14,7 @@ import {
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-800 text-gray-300 pt-12 pb-8 border-t border-gray-700">
+    <footer className="bg-gray-800 text-gray-100 pt-12 pb-8 border-t border-gray-700">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         {/* Contacto */}
         <div>
@@ -23,16 +23,19 @@ const Footer = () => {
           </h3>
           <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-gray-400" />
+              <Phone className="h-5 w-5 text-gray-100" />
               <span>+52 1 55 8260 6391</span>
             </li>
             <li className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-gray-400" />
+              <Mail className="h-5 w-5 text-gray-100" />
               <span>contacto@gymserra.com</span>
             </li>
             <li className="flex justify-between items-center gap-2">
-              <MapPin className="min-h-5 min-w-5 text-gray-400" />
-              <span>Avenida Reforma SN, Plaza Reforma tercer piso, 54240 Jilotepec de Molina Enríquez, Méx.</span>
+              <MapPin className="min-h-5 min-w-5 text-gray-100" />
+              <span>
+                Avenida Reforma SN, Plaza Reforma tercer piso, 54240 Jilotepec
+                de Molina Enríquez, Méx.
+              </span>
             </li>
           </ul>
 
@@ -58,23 +61,23 @@ const Footer = () => {
           </h3>
           <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-2 hover:text-white transition">
-              <Home className="h-4 w-4 text-gray-400" />
+              <Home className="h-4 w-4 text-gray-100" />
               <a href="/">Inicio</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
-              <ShoppingBag className="h-4 w-4 text-gray-400" />
+              <ShoppingBag className="h-4 w-4 text-gray-100" />
               <a href="/productos">Productos</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
-              <Dumbbell className="h-4 w-4 text-gray-400" />
+              <Dumbbell className="h-4 w-4 text-gray-100" />
               <a href="/clases">Clases</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
-              <Newspaper className="h-4 w-4 text-gray-400" />
+              <Newspaper className="h-4 w-4 text-gray-100" />
               <a href="/noticias">Noticias</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
-              <Info className="h-4 w-4 text-gray-400" />
+              <Info className="h-4 w-4 text-gray-100" />
               <a href="/sobre-nosotros">Sobre Nosotros</a>
             </li>
           </ul>
@@ -85,7 +88,7 @@ const Footer = () => {
           <h3 className="text-white text-xl font-semibold mb-4 border-b border-gray-600 pb-2">
             Sobre GymSerra
           </h3>
-          <p className="text-sm text-gray-400 leading-relaxed">
+          <p className="text-sm text-gray-100 leading-relaxed">
             En <span className="text-white font-semibold">GymSerra</span>{" "}
             fomentamos el bienestar físico y mental. Ofrecemos clases
             personalizadas, entrenamientos funcionales y una comunidad que te
@@ -95,7 +98,7 @@ const Footer = () => {
       </div>
 
       {/* Línea inferior */}
-      <div className="mt-10 border-t border-gray-700 pt-6 text-center text-sm text-gray-500">
+      <div className="mt-10 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
         © {new Date().getFullYear()}{" "}
         <span className="text-white font-semibold">GymSerra</span>. Todos los
         derechos reservados.

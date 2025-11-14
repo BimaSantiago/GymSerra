@@ -15,6 +15,13 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<Default />}>
+            <Route index element={<HomePublic />} />
+            <Route path="noticias" element={<NoticiasPublicas />} />
+            <Route path="sobre-nosotros" element={<SobreNosotros />} />
+            <Route path="clases" element={<Clases />} />
+            <Route path="productos" element={<Productos />} />
+          </Route>
           {/* Rutas de login y dashboard protegidas */}
           <Route path="/login" element={<Login />} />
           <Route
@@ -25,14 +32,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route path="/" element={<Default />}>
-            <Route index element={<HomePublic />} />
-            <Route path="noticias" element={<NoticiasPublicas />} />
-            <Route path="sobre-nosotros" element={<SobreNosotros />} />
-            <Route path="clases" element={<Clases />} />
-            <Route path="productos" element={<Productos />} />
-          </Route>
         </Routes>
       </AuthProvider>
     </Router>

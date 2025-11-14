@@ -13,7 +13,7 @@ const ItemFooter = ({ ruta, alterno, icon }: Props) => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={alterno}
-      className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-all duration-200"
+      className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-50 hover:text-white transition-all duration-200"
     >
       {icon}
     </a>
