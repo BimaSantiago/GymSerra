@@ -1,15 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./components/app/dashboard/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Login from "./components/app/dashboard/Login";
-import Dashboard from "./components/app/dashboard/Dashboard";
-import Default from "./components/app/Default/Default";
-import NoticiasPublicas from "./components/secciones/NoticiasPublicas";
-import SobreNosotros from "./components/secciones/Nosotros";
-import HomePublic from "./components/secciones/HomePublic";
-import Clases from "./components/secciones/Clases";
+import { AuthProvider } from "./modules/Auth/pages/AuthContext";
+import ProtectedRoute from "./modules/Auth/pages/ProtectedRoute";
+import Login from "./modules/Auth/pages/Login";
+import Dashboard from "./modules/dashboard/app/Dashboard";
+import Default from "./app/Default";
+import NoticiasPublicas from "./components/Pages/NoticiasPublicas";
+import SobreNosotros from "./components/Pages/Nosotros";
+import HomePublic from "./components/Pages/HomePublic";
+import Clases from "./components/Pages/Clases";
 import "./App.css";
-import Productos from "./components/secciones/Productos";
+import Productos from "./components/Pages/Productos";
 function App() {
   return (
     <Router>
