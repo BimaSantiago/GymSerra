@@ -23,6 +23,7 @@ import Ajustes from "../../inventario/pages/Ajustes";
 import AjustesDetalle from "../../inventario/pages/AjustesDetalle";
 import EventDashboard from "../../actividades/pages/EventDashboard";
 import NoticiasDashboard from "../../actividades/pages/NoticiasDashboard";
+import DeportesDashboard from "@/modules/detalles/pages/DeportesDashboard";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -56,6 +57,7 @@ export default function Page() {
             <Route path="/ajustesDetalle" element={<AjustesDetalle />} />
             <Route path="/eventoDashboard" element={<EventDashboard />} />
             <Route path="/noticiasDashboard" element={<NoticiasDashboard />} />
+            <Route path="/deportesDashboard" element={<DeportesDashboard />} />
           </Routes>
         </div>
       </SidebarInset>

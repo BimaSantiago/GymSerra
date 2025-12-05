@@ -23,77 +23,74 @@ interface Horario {
   hora_inicio: number;
   hora_fin: number;
   dia: number;
+  iddeporte: number;
+  idnivel: number;
   deporte: string; // nombre que llega de la API
   nivel: string; // nombre que llega de la API
+  color: string; // color HEX del deporte (viene desde la BD)
 }
 
-const HorariosDashboard = () => {
+interface DeporteOption {
+  iddeporte: number;
+  nombre: string;
+  color: string;
+}
+
+interface NivelOption {
+  idnivel: number;
+  iddeporte: number;
+  nombre_nivel: string;
+}
+
+interface HorariosListResponse {
+  success: boolean;
+  horarios?: Horario[];
+  error?: string;
+}
+
+interface MetaResponse {
+  success: boolean;
+  deportes?: DeporteOption[];
+  niveles?: NivelOption[];
+  error?: string;
+}
+
+const API_BASE = "http://localhost/GymSerra/public";
+
+const HorariosDashboard: React.FC = () => {
   const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [deportes, setDeportes] = useState<DeporteOption[]>([]);
+  const [niveles, setNiveles] = useState<NivelOption[]>([]);
+
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-  const [form, setForm] = useState({
+
+  const [form, setForm] = useState<{
+    idhorario: number;
+    hora_inicio: number;
+    hora_fin: number;
+    dia: number;
+    iddeporte: number;
+    idnivel: number;
+  }>({
     idhorario: 0,
     hora_inicio: 0,
     hora_fin: 0,
     dia: 1,
-    iddeporte: "",
-    idnivel: "",
+    iddeporte: 0,
+    idnivel: 0,
   });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const deportes = [
-    { id: "1", nombre: "Gimnasia Artística" },
-    { id: "2", nombre: "Parkour" },
-    { id: "3", nombre: "Crossfit" },
-  ];
-  const niveles = [
-    { id: "1", nombre: "Prenivel" },
-    { id: "2", nombre: "Nivel 1" },
-    { id: "3", nombre: "Nivel 2" },
-    { id: "4", nombre: "Nivel 3" },
-    { id: "5", nombre: "Nivel 4" },
-    { id: "6", nombre: "Principiante" },
-    { id: "7", nombre: "Avanzado" },
-  ];
 
-  const deporteNameToId = Object.fromEntries(
-    deportes.map((d) => [d.nombre, d.id])
-  );
-  const nivelNameToId = Object.fromEntries(
-    niveles.map((n) => [n.nombre, n.id])
-  );
-  const idToDeporteName = Object.fromEntries(
-    deportes.map((d) => [d.id, d.nombre])
-  );
-  const idToNivelName = Object.fromEntries(
-    niveles.map((n) => [n.id, n.nombre])
-  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const horas = [
     1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000,
   ];
 
-  const fetchHorarios = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost/GymSerra/public/api/horarios.php?action=list"
-      );
-      if (!response.ok) throw new Error("Error en la respuesta de la API");
-      const data = await response.json();
-      setHorarios(data.horarios || []);
-    } catch (error) {
-      console.error("Error al obtener horarios:", error);
-      setAlert({ type: "error", message: "Error al cargar los horarios" });
-      setTimeout(() => setAlert(null), 2500);
-    }
-  };
-
-  useEffect(() => {
-    fetchHorarios();
-  }, []);
-
+  // --------- Helpers ---------
   const formatearHora = (h: number) => {
     const hh = Math.floor(h / 100);
     const mm = h % 100;
@@ -102,33 +99,63 @@ const HorariosDashboard = () => {
       .padStart(2, "0")}`;
   };
 
-  const colorDeporte = (nombre?: string) => {
-    switch (nombre) {
-      case "Gimnasia Artística":
-        return "bg-blue-50 hover:bg-blue-100 border-blue-200";
-      case "Parkour":
-        return "bg-emerald-50 hover:bg-emerald-100 border-emerald-200";
-      case "Crossfit":
-        return "bg-amber-50 hover:bg-amber-100 border-amber-200";
-      default:
-        return "bg-white hover:bg-gray-50 border-gray-200";
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 2500);
+  };
+
+  // --------- Fetch data ---------
+  const fetchHorarios = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/horarios.php?action=list`);
+      if (!response.ok) throw new Error("Error en la respuesta de la API");
+      const data: HorariosListResponse = await response.json();
+      if (data.success && data.horarios) {
+        setHorarios(data.horarios);
+      } else {
+        showAlert("error", data.error || "Error al cargar los horarios");
+      }
+    } catch (error) {
+      console.error("Error al obtener horarios:", error);
+      showAlert("error", "Error al cargar los horarios");
     }
   };
 
+  const fetchMeta = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/horarios.php?action=meta`);
+      if (!response.ok) throw new Error("Error en meta horarios");
+      const data: MetaResponse = await response.json();
+      if (data.success) {
+        setDeportes(data.deportes || []);
+        setNiveles(data.niveles || []);
+      } else {
+        console.error("Error meta horarios:", data.error);
+      }
+    } catch (error) {
+      console.error("Error meta horarios:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHorarios();
+    fetchMeta();
+  }, []);
+
+  // --------- UI logic ---------
   const handleCellClick = (hora: number, dia: number) => {
     const horario = horarios.find(
       (h) => Number(h.hora_inicio) === hora && Number(h.dia) === dia
     );
 
     if (horario) {
-      // ⛏️ mapeo de nombre → id para precargar Selects correctamente
       setForm({
         idhorario: horario.idhorario,
         hora_inicio: horario.hora_inicio,
         hora_fin: horario.hora_fin,
         dia: horario.dia,
-        iddeporte: deporteNameToId[horario.deporte] ?? "",
-        idnivel: nivelNameToId[horario.nivel] ?? "",
+        iddeporte: horario.iddeporte,
+        idnivel: horario.idnivel,
       });
     } else {
       setForm({
@@ -136,8 +163,8 @@ const HorariosDashboard = () => {
         hora_inicio: hora,
         hora_fin: hora + 30,
         dia,
-        iddeporte: "",
-        idnivel: "",
+        iddeporte: 0,
+        idnivel: 0,
       });
     }
 
@@ -147,70 +174,69 @@ const HorariosDashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.iddeporte || !form.idnivel) {
-      setAlert({
-        type: "error",
-        message: "Debe seleccionar un deporte y nivel",
-      });
-      setTimeout(() => setAlert(null), 2500);
+      showAlert("error", "Debe seleccionar un deporte y nivel");
       return;
     }
 
     const payload = {
-      ...form,
-      deporte: idToDeporteName[form.iddeporte] ?? undefined,
-      nivel: idToNivelName[form.idnivel] ?? undefined,
+      idhorario: form.idhorario || undefined,
+      hora_inicio: form.hora_inicio,
+      hora_fin: form.hora_fin,
+      dia: form.dia,
+      iddeporte: form.iddeporte,
+      idnivel: form.idnivel,
     };
 
     const action = form.idhorario ? "update" : "create";
     try {
       const response = await fetch(
-        `http://localhost/GymSerra/public/api/horarios.php?action=${action}`,
+        `${API_BASE}/api/horarios.php?action=${action}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }
       );
-      const data = await response.json();
+      const data: { success: boolean; error?: string } = await response.json();
       if (data.success) {
-        setAlert({
-          type: "success",
-          message: form.idhorario ? "Horario actualizado" : "Horario creado",
-        });
+        showAlert(
+          "success",
+          form.idhorario ? "Horario actualizado" : "Horario creado"
+        );
         fetchHorarios();
         setIsDialogOpen(false);
       } else {
-        setAlert({
-          type: "error",
-          message: data.error || "No se pudo guardar",
-        });
+        showAlert("error", data.error || "No se pudo guardar");
       }
-      setTimeout(() => setAlert(null), 2500);
     } catch (error) {
       console.error("Error al procesar el horario:", error);
-      setAlert({ type: "error", message: "Error al procesar el horario" });
-      setTimeout(() => setAlert(null), 2500);
+      showAlert("error", "Error al procesar el horario");
     }
   };
 
+  // Filtrar niveles por deporte seleccionado
+  const nivelesFiltrados = form.iddeporte
+    ? niveles.filter((n) => n.iddeporte === form.iddeporte)
+    : niveles;
+
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-800">Horario Semanal</h2>
+      <h2 className="text-2xl font-semibold ">Horario Semanal</h2>
 
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="rounded-lg shadow-sm bg-gray-50 border-gray-200"
+          className="rounded-lg shadow-sm  border-gray-200"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-500" />
           )}
-          <AlertTitle className="text-sm font-medium text-gray-800">
+          <AlertTitle className="text-sm font-medium ">
             {alert.type === "success" ? "Éxito" : "Error"}
           </AlertTitle>
-          <AlertDescription className="text-sm text-gray-600">
+          <AlertDescription className="text-sm ">
             {alert.message}
           </AlertDescription>
         </Alert>
@@ -218,8 +244,8 @@ const HorariosDashboard = () => {
 
       {/* Tabla principal */}
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-200 text-sm text-center">
-          <thead className="bg-gray-100 text-gray-700">
+        <table className="min-w-full border border-gray-200 text-sm text-center bg-card">
+          <thead>
             <tr>
               <th className="border p-2">Hora</th>
               {dias.map((d, idx) => (
@@ -231,31 +257,34 @@ const HorariosDashboard = () => {
           </thead>
           <tbody>
             {horas.map((h) => (
-              <tr key={h} className="border-t">
-                <td className="border p-2 font-medium text-gray-600">
-                  {formatearHora(h)}
-                </td>
+              <tr key={h}>
+                <td className="border p-2 font-medium">{formatearHora(h)}</td>
                 {dias.map((_, diaIdx) => {
                   const horario = horarios.find(
                     (x) =>
                       Number(x.hora_inicio) === h &&
                       Number(x.dia) === diaIdx + 1
                   );
-                  const nombreDep = horario?.deporte;
+
                   return (
                     <td
                       key={`${diaIdx}-${h}`}
                       onClick={() => handleCellClick(h, diaIdx + 1)}
-                      className={`border p-2 cursor-pointer transition-all duration-200 rounded-md ${colorDeporte(
-                        nombreDep
-                      )}`}
+                      className="border p-2 cursor-pointer transition-all duration-200 rounded-xs align-top text-black/20"
+                      style={
+                        horario?.color
+                          ? {
+                              backgroundColor: horario.color,
+                            }
+                          : undefined
+                      }
                     >
                       {horario ? (
                         <div className="space-y-0.5">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-gray-900 text-xs md:text-sm">
                             {horario.deporte}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-[11px] text-gray-700">
                             {horario.nivel}
                           </p>
                         </div>
@@ -292,15 +321,17 @@ const HorariosDashboard = () => {
                 Deporte
               </Label>
               <Select
-                value={form.iddeporte}
-                onValueChange={(v) => setForm({ ...form, iddeporte: v })}
+                value={form.iddeporte ? String(form.iddeporte) : ""}
+                onValueChange={(v) =>
+                  setForm({ ...form, iddeporte: Number(v), idnivel: 0 })
+                }
               >
                 <SelectTrigger className="mt-1 rounded-lg border-gray-200">
                   <SelectValue placeholder="Selecciona un deporte" />
                 </SelectTrigger>
                 <SelectContent>
                   {deportes.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
+                    <SelectItem key={d.iddeporte} value={String(d.iddeporte)}>
                       {d.nombre}
                     </SelectItem>
                   ))}
@@ -311,16 +342,16 @@ const HorariosDashboard = () => {
             <div>
               <Label className="text-sm font-medium text-gray-600">Nivel</Label>
               <Select
-                value={form.idnivel}
-                onValueChange={(v) => setForm({ ...form, idnivel: v })}
+                value={form.idnivel ? String(form.idnivel) : ""}
+                onValueChange={(v) => setForm({ ...form, idnivel: Number(v) })}
               >
                 <SelectTrigger className="mt-1 rounded-lg border-gray-200">
                   <SelectValue placeholder="Selecciona un nivel" />
                 </SelectTrigger>
                 <SelectContent>
-                  {niveles.map((n) => (
-                    <SelectItem key={n.id} value={n.id}>
-                      {n.nombre}
+                  {nivelesFiltrados.map((n) => (
+                    <SelectItem key={n.idnivel} value={String(n.idnivel)}>
+                      {n.nombre_nivel}
                     </SelectItem>
                   ))}
                 </SelectContent>

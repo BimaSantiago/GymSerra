@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 session_set_cookie_params([
     "httponly" => true,
     "samesite" => "None",
-    "secure" => false
+    "secure"   => false
 ]);
 
 session_start();
@@ -21,29 +21,48 @@ $conn = ConcectarBd();
 
 $action = $_GET["action"] ?? $_POST["action"] ?? null;
 
+/**
+ * Obtener usuario de sesión (incluyendo avatar/rol/correo actualizados desde BD si falta)
+ */
 if ($action === "get_current") {
     if (!empty($_SESSION["auth"]) && $_SESSION["auth"] === true && !empty($_SESSION["user"])) {
         $user = $_SESSION["user"];
 
-        // Si el avatar está vacío o se modificó en la base de datos, recargamos desde DB
-        if (empty($user["avatar"])) {
+        // Si falta avatar/correo/rol, recargar desde DB
+        if (empty($user["avatar"]) || empty($user["correo"]) || empty($user["rol"])) {
             $iduser = $user["iduser"];
-            $query = $conn->prepare("SELECT avatar FROM users WHERE iduser = ?");
+            $query = $conn->prepare("SELECT avatar, correo, rol, estatus FROM users WHERE iduser = ?");
             $query->bind_param("i", $iduser);
             $query->execute();
             $result = $query->get_result();
             if ($row = $result->fetch_assoc()) {
-                $user["avatar"] = $row["avatar"];
-                $_SESSION["user"]["avatar"] = $row["avatar"];
+                if (empty($user["avatar"])) {
+                    $user["avatar"] = $row["avatar"];
+                }
+                if (empty($user["correo"])) {
+                    $user["correo"] = $row["correo"];
+                }
+                if (empty($user["rol"])) {
+                    $user["rol"] = $row["rol"];
+                }
+                if (empty($user["estatus"])) {
+                    $user["estatus"] = $row["estatus"];
+                }
+
+                $_SESSION["user"] = $user;
             }
+            $query->close();
         }
 
         echo json_encode([
             "success" => true,
             "user" => [
-                "iduser" => $user["iduser"],
+                "iduser"   => $user["iduser"],
                 "username" => $user["username"],
-                "avatar" => !empty($user["avatar"]) ? $user["avatar"] : "uploads/users/default.png"
+                "avatar"   => !empty($user["avatar"]) ? $user["avatar"] : "uploads/users/default.png",
+                "correo"   => $user["correo"] ?? null,
+                "rol"      => $user["rol"] ?? null,
+                "estatus"  => $user["estatus"] ?? null,
             ]
         ]);
     } else {
@@ -55,42 +74,44 @@ if ($action === "get_current") {
     exit;
 }
 
-
 function json_ok($data) {
-  echo json_encode(["success" => true] + $data);
-  exit;
+    echo json_encode(["success" => true] + $data);
+    exit;
 }
 function json_err($msg) {
-  echo json_encode(["success" => false, "error" => $msg]);
-  exit;
+    echo json_encode(["success" => false, "error" => $msg]);
+    exit;
 }
 
 // Ruta donde se guardarán los avatars
-$uploadDir = __DIR__ . "/../uploads/users/";
+$uploadDir    = __DIR__ . "/../uploads/users/";
 $relativePath = "uploads/users/";
 
 // Crear carpeta si no existe
 if (!file_exists($uploadDir)) {
-  mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0777, true);
 }
-
 
 switch ($action) {
   /* === LIST === */
   case "list": {
-    $page = intval($_GET["page"] ?? 1);
+    $page  = intval($_GET["page"] ?? 1);
     $limit = intval($_GET["limit"] ?? 10);
     $offset = ($page - 1) * $limit;
     $search = mysqli_real_escape_string($conn, $_GET["search"] ?? "");
 
     $where = $search ? "WHERE username LIKE '%$search%'" : "";
 
-    $total = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM users $where"))["total"];
-    $res = mysqli_query($conn, "SELECT * FROM users $where ORDER BY iduser DESC LIMIT $limit OFFSET $offset");
+    $total = mysqli_fetch_assoc(
+        mysqli_query($conn, "SELECT COUNT(*) AS total FROM users $where")
+    )["total"];
+    $res = mysqli_query(
+        $conn,
+        "SELECT * FROM users $where ORDER BY iduser DESC LIMIT $limit OFFSET $offset"
+    );
 
     $users = [];
     while ($row = mysqli_fetch_assoc($res)) {
-      // Si existe avatar, agregamos la URL completa accesible desde el frontend
       if (!empty($row["avatar"])) {
         $row["avatar"] = $relativePath . basename($row["avatar"]);
       }
@@ -102,12 +123,26 @@ switch ($action) {
 
   /* === CREATE === */
   case "create": {
-    $username = mysqli_real_escape_string($conn, $_POST["username"]);
-    $passw = mysqli_real_escape_string($conn, $_POST["passw"]);
+    $username = mysqli_real_escape_string($conn, $_POST["username"] ?? "");
+    $passw    = mysqli_real_escape_string($conn, $_POST["passw"] ?? "");
+
+    // Campos adicionales (opcionales pero necesarios para la nueva BD)
+    $nombre    = mysqli_real_escape_string($conn, $_POST["nombre"]    ?? $username);
+    $appaterno = mysqli_real_escape_string($conn, $_POST["appaterno"] ?? "");
+    $apmaterno = mysqli_real_escape_string($conn, $_POST["apmaterno"] ?? "");
+    $correo    = mysqli_real_escape_string($conn, $_POST["correo"]    ?? "");
+    $genero    = mysqli_real_escape_string($conn, $_POST["genero"]    ?? "No especificado");
+    $rol       = mysqli_real_escape_string($conn, $_POST["rol"]       ?? "Estandar");
+    $estatus   = mysqli_real_escape_string($conn, $_POST["estatus"]   ?? "activo");
+
+    if ($username === "" || $passw === "") {
+        json_err("Usuario y contraseña son obligatorios");
+    }
+
     $avatarPath = "";
 
     if (isset($_FILES["avatar"]) && $_FILES["avatar"]["error"] === UPLOAD_ERR_OK) {
-      $ext = strtolower(pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION));
+      $ext      = strtolower(pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION));
       $fileName = uniqid("user_") . "." . $ext;
       $filePath = $uploadDir . $fileName;
 
@@ -118,7 +153,13 @@ switch ($action) {
       }
     }
 
-    $sql = "INSERT INTO users (username, passw, avatar) VALUES ('$username', '$passw', '$avatarPath')";
+    $sql = "
+      INSERT INTO users 
+        (username, passw, avatar, nombre, appaterno, apmaterno, correo, genero, rol, estatus)
+      VALUES 
+        ('$username', '$passw', '$avatarPath', '$nombre', '$appaterno', '$apmaterno', '$correo', '$genero', '$rol', '$estatus')
+    ";
+
     if (mysqli_query($conn, $sql)) {
       json_ok(["msg" => "Usuario creado correctamente"]);
     } else {
@@ -128,7 +169,7 @@ switch ($action) {
 
   /* === GET === */
   case "get": {
-    $id = intval($_GET["iduser"] ?? 0);
+    $id  = intval($_GET["iduser"] ?? 0);
     $res = mysqli_query($conn, "SELECT * FROM users WHERE iduser=$id");
     if ($row = mysqli_fetch_assoc($res)) {
       if (!empty($row["avatar"])) {
@@ -142,16 +183,25 @@ switch ($action) {
 
   /* === UPDATE === */
   case "update": {
-    $id = intval($_POST["iduser"]);
-    $username = mysqli_real_escape_string($conn, $_POST["username"]);
-    $passw = mysqli_real_escape_string($conn, $_POST["passw"]);
+    $id       = intval($_POST["iduser"] ?? 0);
+    $username = mysqli_real_escape_string($conn, $_POST["username"] ?? "");
+    $passw    = mysqli_real_escape_string($conn, $_POST["passw"] ?? "");
+
+    // Campos adicionales
+    $nombre    = mysqli_real_escape_string($conn, $_POST["nombre"]    ?? $username);
+    $appaterno = mysqli_real_escape_string($conn, $_POST["appaterno"] ?? "");
+    $apmaterno = mysqli_real_escape_string($conn, $_POST["apmaterno"] ?? "");
+    $correo    = mysqli_real_escape_string($conn, $_POST["correo"]    ?? "");
+    $genero    = mysqli_real_escape_string($conn, $_POST["genero"]    ?? "No especificado");
+    $rol       = mysqli_real_escape_string($conn, $_POST["rol"]       ?? "Estandar");
+    $estatus   = mysqli_real_escape_string($conn, $_POST["estatus"]   ?? "activo");
 
     $res = mysqli_query($conn, "SELECT avatar FROM users WHERE iduser=$id");
     $row = mysqli_fetch_assoc($res);
     $avatarPath = $row["avatar"] ?? "";
 
     if (isset($_FILES["avatar"]) && $_FILES["avatar"]["error"] === UPLOAD_ERR_OK) {
-      $ext = strtolower(pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION));
+      $ext      = strtolower(pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION));
       $fileName = uniqid("user_") . "." . $ext;
       $filePath = $uploadDir . $fileName;
 
@@ -166,7 +216,38 @@ switch ($action) {
       }
     }
 
-    $sql = "UPDATE users SET username='$username', passw='$passw', avatar='$avatarPath' WHERE iduser=$id";
+    // Si passw viene vacío, no actualizar la contraseña
+    if ($passw === "") {
+        $sql = "
+            UPDATE users 
+            SET username='$username',
+                avatar='$avatarPath',
+                nombre='$nombre',
+                appaterno='$appaterno',
+                apmaterno='$apmaterno',
+                correo='$correo',
+                genero='$genero',
+                rol='$rol',
+                estatus='$estatus'
+            WHERE iduser=$id
+        ";
+    } else {
+        $sql = "
+            UPDATE users 
+            SET username='$username',
+                passw='$passw',
+                avatar='$avatarPath',
+                nombre='$nombre',
+                appaterno='$appaterno',
+                apmaterno='$apmaterno',
+                correo='$correo',
+                genero='$genero',
+                rol='$rol',
+                estatus='$estatus'
+            WHERE iduser=$id
+        ";
+    }
+
     if (mysqli_query($conn, $sql)) {
       json_ok(["msg" => "Usuario actualizado correctamente"]);
     } else {
@@ -176,11 +257,11 @@ switch ($action) {
 
   /* === DELETE === */
   case "delete": {
-    $id = intval($_GET["iduser"] ?? 0);
+    $id  = intval($_GET["iduser"] ?? 0);
     $res = mysqli_query($conn, "SELECT avatar FROM users WHERE iduser=$id");
     $row = mysqli_fetch_assoc($res);
-    if (!empty($row["avatar"]) && file_exists(__DIR__ . "/../../" . $row["avatar"])) {
-      unlink(__DIR__ . "/../../" . $row["avatar"]);
+    if (!empty($row["avatar"]) && file_exists(__DIR__ . "/../" . $row["avatar"])) {
+      unlink(__DIR__ . "/../" . $row["avatar"]);
     }
     if (mysqli_query($conn, "DELETE FROM users WHERE iduser=$id")) {
       json_ok(["msg" => "Usuario eliminado"]);

@@ -1,6 +1,6 @@
 // components/ProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../utils/useAuth"; // ajusta ruta
+import { useAuth } from "@/modules/Auth/utils/useAuth";
 import type { JSX } from "react";
 
 export default function ProtectedRoute({

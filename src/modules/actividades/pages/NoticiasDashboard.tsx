@@ -53,7 +53,7 @@ import {
 interface Noticia {
   idnoticias: number;
   titulo: string;
-  descricpion: string;
+  descripcion: string;
   fecha_publicacion: string;
   imagen: string;
   deporte: string;
@@ -76,7 +76,47 @@ interface Evento {
   fecha_fin: string;
 }
 
-const NoticiasDashboard = () => {
+interface ListNoticiasResponse {
+  success: boolean;
+  noticias?: Noticia[];
+  total?: number;
+  error?: string;
+}
+
+interface ListDeportesResponse {
+  success: boolean;
+  deportes?: { iddeporte: number | string; nombre: string }[];
+  error?: string;
+}
+
+interface ListEventosResponse {
+  success: boolean;
+  eventos?: {
+    idevento: number | string;
+    ubicacion: string;
+    fecha_inicio: string;
+    fecha_fin: string;
+  }[];
+  error?: string;
+}
+
+interface CrudResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  noticia?: {
+    idnoticias: number | string;
+    titulo: string;
+    descripcion: string;
+    iddeporte: number | string;
+    idevento: number | string;
+    imagen: string;
+  };
+}
+
+const API_BASE = "http://localhost/GymSerra/public";
+
+const NoticiasDashboard: React.FC = () => {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [deportes, setDeportes] = useState<Deporte[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -86,51 +126,107 @@ const NoticiasDashboard = () => {
   const [limit] = useState(6);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+
   const [form, setForm] = useState({
     idnoticias: 0,
     titulo: "",
-    descricpion: "",
+    descripcion: "",
     iddeporte: 0,
     idevento: 0,
     imagen: "",
   });
+
   const [file, setFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isEventMenuOpen, setIsEventMenuOpen] = useState(false);
+
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // 🔹 Fetch de datos
+  // 🔹 Autocerrar alertas
+  useEffect(() => {
+    if (!alert) return;
+    const t = setTimeout(() => setAlert(null), 3000);
+    return () => clearTimeout(t);
+  }, [alert]);
+
+  // 🔹 Fetch de noticias (paginado + búsqueda)
   const fetchNoticias = async () => {
-    const response = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=listExtended&page=${page}&limit=${limit}&search=${search}`
-    );
-    const data = await response.json();
-    setNoticias(data.noticias || []);
-    setTotal(data.total || 0);
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/noticias.php?action=listExtended&page=${page}&limit=${limit}&search=${encodeURIComponent(
+          search
+        )}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data: ListNoticiasResponse = await response.json();
+      if (data.success) {
+        setNoticias(data.noticias || []);
+        setTotal(data.total || 0);
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error || "Error al obtener noticias",
+        });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setAlert({
+        type: "error",
+        message: "Error de conexión al obtener noticias",
+      });
+    }
   };
 
   const fetchDeportes = async () => {
-    const res = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=listDeportes`
-    );
-    const data = await res.json();
-    setDeportes(data.deportes || []);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/noticias.php?action=listDeportes`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: ListDeportesResponse = await res.json();
+      if (data.success && data.deportes) {
+        setDeportes(
+          data.deportes.map((d) => ({
+            iddeporte: Number(d.iddeporte),
+            nombre: d.nombre,
+          }))
+        );
+      }
+    } catch {
+      // podemos omitir la alerta, solo no habrá deportes
+    }
   };
 
   const fetchEventos = async () => {
-    const res = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=listEventos`
-    );
-    const data = await res.json();
-    setEventos(data.eventos || []);
-    setFilteredEventos(data.eventos || []);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/noticias.php?action=listEventos`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: ListEventosResponse = await res.json();
+      if (data.success && data.eventos) {
+        const evs: Evento[] = data.eventos.map((e) => ({
+          idevento: Number(e.idevento),
+          ubicacion: e.ubicacion,
+          fecha_inicio: e.fecha_inicio,
+          fecha_fin: e.fecha_fin,
+        }));
+        setEventos(evs);
+        setFilteredEventos(evs);
+      }
+    } catch {
+      // sin eventos no se rompe nada
+    }
   };
 
   useEffect(() => {
@@ -142,6 +238,7 @@ const NoticiasDashboard = () => {
     fetchEventos();
   }, []);
 
+  // 🔹 Filtro de eventos por texto
   useEffect(() => {
     const term = searchEvento.toLowerCase();
     const filtered = eventos.filter(
@@ -153,6 +250,7 @@ const NoticiasDashboard = () => {
     setFilteredEventos(filtered);
   }, [searchEvento, eventos]);
 
+  // 🔹 Cerrar menú de eventos al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -172,7 +270,7 @@ const NoticiasDashboard = () => {
     setForm({
       idnoticias: 0,
       titulo: "",
-      descricpion: "",
+      descripcion: "",
       iddeporte: 0,
       idevento: 0,
       imagen: "",
@@ -184,50 +282,75 @@ const NoticiasDashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const url = isEditing
-      ? "http://localhost/GymSerra/public/api/noticias.php?action=update"
-      : "http://localhost/GymSerra/public/api/noticias.php?action=create";
+      ? `${API_BASE}/api/noticias.php?action=update`
+      : `${API_BASE}/api/noticias.php?action=create`;
 
     const formData = new FormData();
     formData.append("idnoticias", form.idnoticias.toString());
     formData.append("titulo", form.titulo);
-    formData.append("descricpion", form.descricpion);
+    formData.append("descripcion", form.descripcion);
     formData.append("iddeporte", form.iddeporte.toString());
     formData.append("idevento", form.idevento.toString());
     if (file) formData.append("imagen", file);
 
-    const response = await fetch(url, { method: "POST", body: formData });
-    const data = await response.json();
+    try {
+      const response = await fetch(url, { method: "POST", body: formData });
+      const data: CrudResponse = await response.json();
 
-    if (data.success) {
-      setAlert({
-        type: "success",
-        message: isEditing
-          ? "Noticia actualizada correctamente"
-          : "Noticia creada correctamente",
-      });
-      fetchNoticias();
-      setIsDialogOpen(false);
-      resetForm();
-    } else {
+      if (data.success) {
+        setAlert({
+          type: "success",
+          message: isEditing
+            ? "Noticia actualizada correctamente"
+            : "Noticia creada correctamente",
+        });
+        fetchNoticias();
+        setIsDialogOpen(false);
+        resetForm();
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error || "Error al guardar la noticia",
+        });
+      }
+    } catch {
       setAlert({
         type: "error",
-        message: data.error || "Error al guardar la noticia",
+        message: "Error de conexión al guardar la noticia",
       });
     }
-    setTimeout(() => setAlert(null), 3000);
   };
 
   const handleEdit = async (id: number) => {
-    const response = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=get&idnoticias=${id}`
-    );
-    const data = await response.json();
-    if (data.success) {
-      setForm(data.noticia);
-      setIsEditing(true);
-      setIsDialogOpen(true);
-    } else {
-      setAlert({ type: "error", message: "Error al obtener la noticia" });
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/noticias.php?action=get&idnoticias=${id}`
+      );
+      const data: CrudResponse = await response.json();
+      if (data.success && data.noticia) {
+        const n = data.noticia;
+        setForm({
+          idnoticias: Number(n.idnoticias),
+          titulo: n.titulo,
+          descripcion: n.descripcion,
+          iddeporte: Number(n.iddeporte),
+          idevento: Number(n.idevento),
+          imagen: n.imagen || "",
+        });
+        setFile(null);
+        setIsEditing(true);
+        setIsDialogOpen(true);
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error || "Error al obtener la noticia",
+        });
+      }
+    } catch {
+      setAlert({
+        type: "error",
+        message: "Error de conexión al obtener la noticia",
+      });
     }
   };
 
@@ -238,23 +361,36 @@ const NoticiasDashboard = () => {
 
   const handleDeleteConfirmed = async () => {
     if (!selectedDeleteId) return;
-    const response = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=delete&idnoticias=${selectedDeleteId}`,
-      { method: "POST" }
-    );
-    const data = await response.json();
-    if (data.success) {
-      setAlert({ type: "success", message: "Noticia eliminada correctamente" });
-      fetchNoticias();
-    } else {
-      setAlert({ type: "error", message: "Error al eliminar la noticia" });
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/noticias.php?action=delete&idnoticias=${selectedDeleteId}`,
+        { method: "POST" }
+      );
+      const data: CrudResponse = await response.json();
+      if (data.success) {
+        setAlert({
+          type: "success",
+          message: "Noticia eliminada correctamente",
+        });
+        fetchNoticias();
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error || "Error al eliminar la noticia",
+        });
+      }
+    } catch {
+      setAlert({
+        type: "error",
+        message: "Error de conexión al eliminar la noticia",
+      });
     }
+
     setDeleteDialogOpen(false);
     setSelectedDeleteId(null);
-    setTimeout(() => setAlert(null), 3000);
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div className="p-6">
@@ -302,7 +438,7 @@ const NoticiasDashboard = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal de editar y crear */}
+      {/* Barra superior: búsqueda + modal */}
       <div className="flex justify-between items-center mb-6">
         <Input
           placeholder="Buscar noticia por título, descripción o deporte..."
@@ -340,9 +476,9 @@ const NoticiasDashboard = () => {
               <div>
                 <Label>Descripción</Label>
                 <Input
-                  value={form.descricpion}
+                  value={form.descripcion}
                   onChange={(e) =>
-                    setForm({ ...form, descricpion: e.target.value })
+                    setForm({ ...form, descripcion: e.target.value })
                   }
                   required
                 />
@@ -373,11 +509,11 @@ const NoticiasDashboard = () => {
                 </Select>
               </div>
 
-              {/* Input combinable flotante */}
+              {/* Selector de evento (combinado) */}
               <div className="relative" ref={menuRef}>
                 <Label>Evento</Label>
                 <div
-                  className="flex items-center justify-between border rounded-lg px-3 py-2 bg-white cursor-text hover:border-gray-400 transition"
+                  className="flex items-center justify-between border rounded-lg px-3 py-2 cursor-text hover:border-gray-400 transition"
                   onClick={() => setIsEventMenuOpen(true)}
                 >
                   <input
@@ -402,7 +538,7 @@ const NoticiasDashboard = () => {
                 </div>
 
                 {isEventMenuOpen && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 mt-1 w-full  border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                     <Command>
                       <CommandList>
                         {filteredEventos.length > 0 ? (
@@ -461,7 +597,7 @@ const NoticiasDashboard = () => {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {noticias.map((n) => (
           <Card
             key={n.idnoticias}
@@ -469,27 +605,27 @@ const NoticiasDashboard = () => {
           >
             <CardHeader className="p-0">
               <img
-                src={`http://localhost/GymSerra/public/${n.imagen}`}
+                src={`${API_BASE}/${n.imagen}`}
                 alt={n.titulo}
                 className="h-48 w-full object-cover rounded-t-xl"
               />
             </CardHeader>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            <CardContent className="p-2">
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">
                 {n.titulo}
               </h3>
-              <p className="text-sm text-gray-600">{n.descricpion}</p>
-              <div className="mt-4 text-sm text-gray-700 space-y-1">
+              <p className="text-sm text-gray-300">{n.descripcion}</p>
+              <div className="mt-4 text-sm text-gray-300 space-y-1">
                 <div className="flex items-center gap-2">
-                  <Dumbbell className="h-4 w-4 text-gray-500" />{" "}
+                  <Dumbbell className="h-4 w-4 text-gray-400" />{" "}
                   <span>{n.deporte}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-gray-500" />{" "}
+                  <BookOpen className="h-4 w-4 text-gray-400" />{" "}
                   <span>{n.ubicacion}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <Calendar className="h-4 w-4 text-gray-400" />
                   <span>
                     {new Date(n.fecha_inicio).toLocaleDateString()} -{" "}
                     {new Date(n.fecha_fin).toLocaleDateString()}
@@ -497,8 +633,8 @@ const NoticiasDashboard = () => {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between items-center px-4 py-3">
-              <p className="text-xs text-gray-500">
+            <CardFooter className="flex justify-between items-center px-4 py-1">
+              <p className="text-xs text-gray-200">
                 Publicado: {new Date(n.fecha_publicacion).toLocaleDateString()}
               </p>
               <div className="flex gap-2">
@@ -531,11 +667,11 @@ const NoticiasDashboard = () => {
         >
           Anterior
         </Button>
-        <span className="text-gray-700">
+        <span className="text-gray-300">
           Página {page} de {totalPages}
         </span>
         <Button
-          disabled={page === totalPages}
+          disabled={page === totalPages || totalPages === 0}
           onClick={() => setPage(page + 1)}
           className="bg-gray-800 text-white hover:bg-gray-700"
         >

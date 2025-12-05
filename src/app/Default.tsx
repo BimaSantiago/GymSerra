@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import Menu from "../../menu/Menu";
-import Footer from "../../secciones/footer/Footer";
+import Menu from "../components/layout/menu/Menu";
+import Footer from "../components/layout/footer/Footer";
 
 const Default = () => {
   return (

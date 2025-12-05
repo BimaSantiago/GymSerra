@@ -8,6 +8,9 @@ import {
   SquareTerminal,
   EllipsisVertical,
   Loader2,
+  Frame,
+  PieChart,
+  Map,
 } from "lucide-react";
 
 import { NavMain } from "@/modules/dashboard/layout/nav-main";
@@ -18,41 +21,52 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { NavProjects } from "@/modules/dashboard/layout/nav-projects";
+
+const API_BASE = "http://localhost/GymSerra/public";
 
 type ActiveUser = {
   iduser: number;
   username: string;
-  avatar: string | null;
+  avatar: string | null; // tal cual viene de PHP: "uploads/users/..."
+  email: string | null;
+  role: string | null;
 };
 
-// 🔹 Normaliza la ruta del avatar para evitar rutas relativas rotas al cambiar de vista
-function normalizeAvatarPath(path?: string | null): string {
-  if (!path) return "/images/default-avatar.png";
-  // Si ya es relativa desde raíz, mantenerla
-  if (path.startsWith("/")) return path;
-  // Si es relativa sin slash (ej. uploads/users/...), agregamos /
-  return "/" + path;
-}
+const buildAvatarUrl = (avatar: string | null): string => {
+  if (!avatar) return "";
+  if (/^https?:\/\//i.test(avatar)) return avatar;
+  return `${API_BASE}/${avatar.replace(/^\/+/, "")}`;
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = React.useState<ActiveUser | null>(null);
   const [loading, setLoading] = React.useState(true);
-
-  // Menú principal
+  const projects = [
+    {
+      name: "Design Engineering",
+      url: "#",
+      icon: Frame,
+    },
+    {
+      name: "Sales & Marketing",
+      url: "#",
+      icon: PieChart,
+    },
+    {
+      name: "Travel",
+      url: "#",
+      icon: Map,
+    },
+  ];
   const navMain = [
     {
       title: "Actividades",
       url: "#",
       icon: Dumbbell,
       items: [
-        {
-          title: "Eventos",
-          url: "/dashboard/eventoDashboard",
-        },
-        {
-          title: "Noticias",
-          url: "/dashboard/noticiasDashboard",
-        },
+        { title: "Eventos", url: "/dashboard/eventoDashboard" },
+        { title: "Noticias", url: "/dashboard/noticiasDashboard" },
       ],
     },
     {
@@ -60,26 +74,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/",
       icon: Package2,
       items: [
-        {
-          title: "Articulos",
-          url: "/dashboard/articulo",
-        },
-        {
-          title: "Ventas",
-          url: "/dashboard/ventas",
-        },
-        {
-          title: "Compras",
-          url: "/dashboard/compras",
-        },
-        {
-          title: "Proveedores",
-          url: "/dashboard/proveedores",
-        },
-        {
-          title: "Ajustes",
-          url: "/dashboard/ajustes",
-        },
+        { title: "Articulos", url: "/dashboard/articulo" },
+        { title: "Ventas", url: "/dashboard/ventas" },
+        { title: "Compras", url: "/dashboard/compras" },
+        { title: "Proveedores", url: "/dashboard/proveedores" },
+        { title: "Ajustes", url: "/dashboard/ajustes" },
       ],
     },
     {
@@ -87,14 +86,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/",
       icon: SquareTerminal,
       items: [
-        {
-          title: "Horario",
-          url: "/dashboard/horarios",
-        },
-        {
-          title: "Planes de pago",
-          url: "/dashboard/planPago",
-        },
+        { title: "Horario", url: "/dashboard/horarios" },
+        { title: "Planes de pago", url: "/dashboard/planPago" },
       ],
     },
     {
@@ -102,35 +95,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/",
       icon: PersonStanding,
       items: [
-        {
-          title: "Alumnos",
-          url: "/dashboard/alumnos",
-        },
-        {
-          title: "Tutores",
-          url: "/dashboard/tutores",
-        },
-        {
-          title: "Mensualidades",
-          url: "/dashboard/mensualidades",
-        },
+        { title: "Alumnos y tutores", url: "/dashboard/tutores" },
+        { title: "Mensualidades", url: "/dashboard/mensualidades" },
       ],
     },
     {
       title: "Detalles",
       url: "/",
       icon: EllipsisVertical,
-      items: [{ title: "Niveles", url: "/dashboard/niveles" }],
+      items: [
+        { title: "Niveles", url: "/dashboard/niveles" },
+        { title: "Deportes", url: "/dashboard/deportesDashboard" },
+      ],
     },
   ];
 
-  // Obtener usuario activo desde el backend
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch(
-          "http://localhost/GymSerra/public/api/users.php?action=get_current",
-          { credentials: "include" }
+          `${API_BASE}/api/users.php?action=get_current`,
+          {
+            credentials: "include",
+          }
         );
         const data = await res.json();
 
@@ -138,10 +125,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           setUser({
             iduser: data.user.iduser,
             username: data.user.username,
-            avatar: data.user.avatar ?? null,
+            avatar: data.user.avatar ?? null, // "uploads/users/..."
+            email: data.user.correo ?? null,
+            role: data.user.rol ?? null,
           });
         } else {
-          console.warn("No se encontró usuario activo o sesión inválida");
           setUser(null);
         }
       } catch (err) {
@@ -155,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     fetchUser();
   }, []);
 
-  const avatarPath = normalizeAvatarPath(user?.avatar);
+  const avatarUrl = user ? buildAvatarUrl(user.avatar) : "";
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -168,7 +156,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <NavUser
             user={{
               name: user?.username ?? "Invitado",
-              avatar: avatarPath, // ✅ siempre ruta desde raíz
+              avatar: avatarUrl,
+              email: user?.email ?? undefined,
+              role: user?.role?.trim() || undefined,
             }}
           />
         )}
@@ -176,6 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <NavMain items={navMain} />
+        <NavProjects projects={projects} />
       </SidebarContent>
 
       <SidebarRail />

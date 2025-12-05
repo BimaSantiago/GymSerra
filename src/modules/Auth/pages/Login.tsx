@@ -11,13 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// 🔹 Definimos un tipo para la respuesta del servidor
-interface LoginResponse {
-  success: boolean;
-  message?: string;
-  user?: string;
-}
+import type { LoginResponse } from "@/modules/Auth/pages/AuthContextBase";
 
 const Login = () => {
   const { login } = useAuth();

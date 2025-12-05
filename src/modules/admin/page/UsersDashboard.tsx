@@ -19,13 +19,42 @@ import {
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Pencil, Upload } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface User {
   iduser: number;
   username: string;
-  passw: string;
-  avatar: string;
+  passw?: string;
+  avatar?: string;
+
+  nombre: string;
+  appaterno: string;
+  apmaterno: string;
+  correo: string;
+  genero: string;
+  rol: "Administrador" | "Estandar";
+  estatus: "activo" | "inactivo" | "bloqueado";
 }
+
+const emptyUser: User = {
+  iduser: 0,
+  username: "",
+  passw: "",
+  avatar: "",
+  nombre: "",
+  appaterno: "",
+  apmaterno: "",
+  correo: "",
+  genero: "",
+  rol: "Estandar",
+  estatus: "activo",
+};
 
 const UsersDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -33,12 +62,7 @@ const UsersDashboard = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({
-    iduser: 0,
-    username: "",
-    passw: "",
-    avatar: "",
-  });
+  const [form, setForm] = useState<User>(emptyUser);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,7 +77,9 @@ const UsersDashboard = () => {
   /* ==================== FETCH ==================== */
   const fetchUsers = async () => {
     const response = await fetch(
-      `${API_URL}?action=list&page=${page}&limit=${limit}&search=${search}`
+      `${API_URL}?action=list&page=${page}&limit=${limit}&search=${encodeURIComponent(
+        search
+      )}`
     );
     const data = await response.json();
     if (data.success) {
@@ -64,9 +90,10 @@ const UsersDashboard = () => {
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search]);
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / limit) || 1;
 
   /* ==================== FORM ==================== */
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,19 +121,29 @@ const UsersDashboard = () => {
     const formData = new FormData();
     formData.append("iduser", form.iduser.toString());
     formData.append("username", form.username);
-    formData.append("passw", form.passw);
+    if (form.passw) formData.append("passw", form.passw);
+    formData.append("nombre", form.nombre);
+    formData.append("appaterno", form.appaterno);
+    formData.append("apmaterno", form.apmaterno);
+    formData.append("correo", form.correo);
+    formData.append("genero", form.genero);
+    formData.append("rol", form.rol);
+    formData.append("estatus", form.estatus);
     if (file) formData.append("avatar", file);
 
     const res = await fetch(url, { method: "POST", body: formData });
     const data = await res.json();
 
     if (data.success) {
-      setAlert({ type: "success", message: data.msg });
+      setAlert({ type: "success", message: data.msg || "Operación exitosa" });
       fetchUsers();
       resetForm();
       setIsDialogOpen(false);
     } else {
-      setAlert({ type: "error", message: data.error });
+      setAlert({
+        type: "error",
+        message: data.error || "Error en la operación",
+      });
     }
 
     setTimeout(() => setAlert(null), 3000);
@@ -116,21 +153,27 @@ const UsersDashboard = () => {
     const res = await fetch(`${API_URL}?action=get&iduser=${iduser}`);
     const data = await res.json();
     if (data.success) {
-      setForm(data.user);
+      const u: User = {
+        ...emptyUser,
+        ...data.user,
+      };
+      setForm(u);
       setPreview(
-        data.user.avatar
-          ? `http://localhost/GymSerra/public/${data.user.avatar}`
-          : null
+        u.avatar ? `http://localhost/GymSerra/public/${u.avatar}` : null
       );
       setIsEditing(true);
       setIsDialogOpen(true);
     } else {
-      setAlert({ type: "error", message: data.error });
+      setAlert({
+        type: "error",
+        message: data.error || "No se pudo cargar el usuario",
+      });
+      setTimeout(() => setAlert(null), 3000);
     }
   };
 
   const resetForm = () => {
-    setForm({ iduser: 0, username: "", passw: "", avatar: "" });
+    setForm(emptyUser);
     setFile(null);
     setPreview(null);
     setIsEditing(false);
@@ -138,11 +181,11 @@ const UsersDashboard = () => {
 
   /* ==================== RENDER ==================== */
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-4">
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-4 rounded-2xl shadow-lg bg-gray-50"
+          className="mb-4 rounded-2xl shadow-lg"
         >
           {alert.type === "success" ? <CheckCircle2 /> : <AlertCircle />}
           <AlertTitle>
@@ -152,9 +195,9 @@ const UsersDashboard = () => {
         </Alert>
       )}
 
-      <div className="flex justify-between mb-6">
+      <div className="flex justify-between gap-4 flex-wrap">
         <Input
-          placeholder="Buscar usuario..."
+          placeholder="Buscar usuario por nombre/usuario/correo..."
           value={search}
           onChange={handleSearch}
           className="max-w-sm rounded-lg shadow-md"
@@ -168,7 +211,7 @@ const UsersDashboard = () => {
               Agregar Usuario
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle>
                 {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
@@ -176,31 +219,149 @@ const UsersDashboard = () => {
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label>Nombre de usuario</Label>
-                <Input
-                  value={form.username}
-                  onChange={(e) =>
-                    setForm({ ...form, username: e.target.value })
-                  }
-                  required
-                />
+              {/* Datos de acceso */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Nombre de usuario</Label>
+                  <Input
+                    value={form.username}
+                    onChange={(e) =>
+                      setForm({ ...form, username: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Contraseña</Label>
+                  <Input
+                    type="password"
+                    placeholder={isEditing ? "Dejar vacío para no cambiar" : ""}
+                    value={form.passw || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, passw: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label>Contraseña</Label>
-                <Input
-                  type="password"
-                  value={form.passw}
-                  onChange={(e) => setForm({ ...form, passw: e.target.value })}
-                  required
-                />
+              {/* Datos personales */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Nombre</Label>
+                  <Input
+                    value={form.nombre}
+                    onChange={(e) =>
+                      setForm({ ...form, nombre: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Apellido paterno</Label>
+                  <Input
+                    value={form.appaterno}
+                    onChange={(e) =>
+                      setForm({ ...form, appaterno: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Apellido materno</Label>
+                  <Input
+                    value={form.apmaterno}
+                    onChange={(e) =>
+                      setForm({ ...form, apmaterno: e.target.value })
+                    }
+                    required
+                  />
+                </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <Label>Correo</Label>
+                  <Input
+                    type="email"
+                    value={form.correo}
+                    onChange={(e) =>
+                      setForm({ ...form, correo: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Género</Label>
+                  <Select
+                    value={form.genero}
+                    onValueChange={(value) =>
+                      setForm({ ...form, genero: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona género" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Femenino">Femenino</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Rol y estatus */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Rol</Label>
+                  <Select
+                    value={form.rol}
+                    onValueChange={(value) =>
+                      setForm({
+                        ...form,
+                        rol: value as User["rol"],
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Administrador">
+                        Administrador
+                      </SelectItem>
+                      <SelectItem value="Estandar">Estándar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Estatus</Label>
+                  <Select
+                    value={form.estatus}
+                    onValueChange={(value) =>
+                      setForm({
+                        ...form,
+                        estatus: value as User["estatus"],
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona estatus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="activo">Activo</SelectItem>
+                      <SelectItem value="inactivo">Inactivo</SelectItem>
+                      <SelectItem value="bloqueado">Bloqueado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Avatar */}
               <div className="flex flex-col gap-2">
                 <Label>Avatar</Label>
                 <div className="flex items-center gap-4">
-                  {/* Vista previa */}
                   <div className="max-w-20 h-20 border rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
                     {preview ? (
                       <img
@@ -212,8 +373,6 @@ const UsersDashboard = () => {
                       <Upload className="opacity-40 w-6 h-6" />
                     )}
                   </div>
-
-                  {/* Selector de archivo */}
                   <Input
                     type="file"
                     accept="image/*"
@@ -240,6 +399,10 @@ const UsersDashboard = () => {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Usuario</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Correo</TableHead>
+            <TableHead>Rol</TableHead>
+            <TableHead>Estatus</TableHead>
             <TableHead>Avatar</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
@@ -249,6 +412,12 @@ const UsersDashboard = () => {
             <TableRow key={u.iduser}>
               <TableCell>{u.iduser}</TableCell>
               <TableCell>{u.username}</TableCell>
+              <TableCell>
+                {u.nombre} {u.appaterno} {u.apmaterno}
+              </TableCell>
+              <TableCell>{u.correo}</TableCell>
+              <TableCell>{u.rol}</TableCell>
+              <TableCell className="capitalize">{u.estatus}</TableCell>
               <TableCell>
                 {u.avatar ? (
                   <img

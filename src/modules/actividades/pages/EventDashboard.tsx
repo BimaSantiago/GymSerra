@@ -13,8 +13,10 @@ import type {
   EventApi,
   EventClickArg,
   EventMountArg,
+  ViewApi,
 } from "@fullcalendar/core";
 import esLocale from "@fullcalendar/core/locales/es";
+
 import {
   Dialog,
   DialogContent,
@@ -27,10 +29,10 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,22 +53,52 @@ import {
   Pencil,
 } from "lucide-react";
 
-/* ---------- Tipos ---------- */
 interface Evento {
   idevento: number;
-  fecha_inicio: string;
-  fecha_fin: string;
-  ubicacion: string;
+  fecha_inicio: string; // "YYYY-MM-DD"
+  fecha_fin: string; // "YYYY-MM-DD"
+  ubicacion: string; // en BD es 'descripcion'
   iddeporte: number;
   deporte?: string;
+  color?: string;
 }
 
 interface Deporte {
   iddeporte: number;
   nombre: string;
+  color: string;
 }
 
-/* ---------- Utilidades ---------- */
+interface EventosListResponse {
+  success: boolean;
+  eventos?: Evento[];
+  error?: string;
+}
+
+interface DeportesListResponse {
+  success: boolean;
+  deportes?: {
+    iddeporte: number | string;
+    nombre: string;
+    color: string;
+  }[];
+  error?: string;
+}
+
+interface SaveResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+interface DeleteResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+const API_BASE = "http://localhost/GymSerra/public";
+
 const startOfToday = (): Date => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -79,15 +111,6 @@ const hasEventEnded = (fcEvent: EventApi): boolean => {
   return end.getTime() < Date.now();
 };
 
-const colorHexByDeporte = (nombre?: string): string => {
-  const n = (nombre ?? "").toLowerCase();
-  if (n.includes("parkour")) return "#16a34a";
-  if (n.includes("gimnasia")) return "#ec4899";
-  if (n.includes("crossfit")) return "#f59e0b";
-  return "#6b7280";
-};
-
-/* ---------- Componente principal ---------- */
 const EventDashboard: React.FC = () => {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [deportes, setDeportes] = useState<Deporte[]>([]);
@@ -106,14 +129,13 @@ const EventDashboard: React.FC = () => {
     iddeporte: "",
   });
 
-  /* ---------- Alert auto dismiss ---------- */
+  // Autocerrar alertas
   useEffect(() => {
     if (!alert) return;
     const t = setTimeout(() => setAlert(null), 3000);
     return () => clearTimeout(t);
   }, [alert]);
 
-  /* ---------- Carga de datos ---------- */
   useEffect(() => {
     void fetchEventos();
     void fetchDeportes();
@@ -121,36 +143,63 @@ const EventDashboard: React.FC = () => {
 
   const fetchEventos = async (): Promise<void> => {
     try {
-      const res = await fetch(
-        "http://localhost/GymSerra/public/api/eventos.php?action=list"
-      );
-      const data = await res.json();
-      if (data.success) setEventos(data.eventos);
-    } catch {
-      /* noop */
+      const res = await fetch(`${API_BASE}/api/eventos.php?action=list`);
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      const data: EventosListResponse = await res.json();
+      if (data.success && data.eventos) {
+        setEventos(data.eventos);
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error ?? "Error al obtener eventos.",
+        });
+      }
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Error de conexión con el servidor al obtener eventos.";
+      setAlert({ type: "error", message: msg });
     }
   };
 
   const fetchDeportes = async (): Promise<void> => {
     try {
-      const res = await fetch(
-        "http://localhost/GymSerra/public/api/deportes.php?action=list"
-      );
-      const data = await res.json();
-      if (data.success) setDeportes(data.deportes);
-    } catch {
-      /* noop */
+      const res = await fetch(`${API_BASE}/api/deportes.php?action=list`);
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      const data: DeportesListResponse = await res.json();
+      if (data.success && data.deportes) {
+        const list: Deporte[] = data.deportes.map((d) => ({
+          iddeporte: Number(d.iddeporte),
+          nombre: d.nombre,
+          color: d.color || "#6b7280",
+        }));
+        setDeportes(list);
+      }
+    } catch (error: unknown) {
+      // No mostramos alerta aquí para no ensuciar UI; solo dejamos sin leyenda
+      console.error("Error al obtener deportes", error);
     }
   };
 
-  /* ---------- Mapa id->evento ---------- */
+  // Mapas auxiliares
   const eventosById = useMemo(() => {
-    const m = new Map<string, Evento>();
-    for (const ev of eventos) m.set(String(ev.idevento), ev);
-    return m;
+    const map = new Map<string, Evento>();
+    eventos.forEach((e) => map.set(String(e.idevento), e));
+    return map;
   }, [eventos]);
 
-  /* ---------- CRUD ---------- */
+  const colorByDeporteId = useMemo(() => {
+    const map = new Map<number, string>();
+    deportes.forEach((d) => map.set(d.iddeporte, d.color));
+    return map;
+  }, [deportes]);
+
+  // Guardar evento
   const handleSave = async (): Promise<void> => {
     if (
       !form.fecha_inicio ||
@@ -166,22 +215,31 @@ const EventDashboard: React.FC = () => {
     }
 
     const action = selectedEvent ? "update" : "create";
-    const body = { ...form, idevento: selectedEvent?.idevento ?? null };
+    const payload = {
+      idevento: selectedEvent?.idevento ?? undefined,
+      fecha_inicio: form.fecha_inicio,
+      fecha_fin: form.fecha_fin,
+      ubicacion: form.ubicacion,
+      iddeporte: Number(form.iddeporte),
+    };
 
     try {
-      const res = await fetch(
-        `http://localhost/GymSerra/public/api/eventos.php?action=${action}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
-      const data = await res.json();
+      const res = await fetch(`${API_BASE}/api/eventos.php?action=${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+
+      const data: SaveResponse = await res.json();
+
       if (data.success) {
         setAlert({
           type: "success",
-          message: data.message || "Evento guardado correctamente.",
+          message: data.message ?? "Evento guardado correctamente.",
         });
         setOpenForm(false);
         setSelectedEvent(null);
@@ -189,28 +247,33 @@ const EventDashboard: React.FC = () => {
       } else {
         setAlert({
           type: "error",
-          message: data.error || "Error al guardar el evento.",
+          message: data.error ?? "Error al guardar el evento.",
         });
       }
-    } catch {
-      setAlert({
-        type: "error",
-        message: "Error de conexión con el servidor.",
-      });
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Error de conexión con el servidor.";
+      setAlert({ type: "error", message: msg });
     }
   };
 
+  // Eliminar
   const handleDelete = async (): Promise<void> => {
     if (!selectedEvent) return;
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/eventos.php?action=delete&idevento=${selectedEvent.idevento}`
+        `${API_BASE}/api/eventos.php?action=delete&idevento=${selectedEvent.idevento}`
       );
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      const data: DeleteResponse = await res.json();
       if (data.success) {
         setAlert({
           type: "success",
-          message: "Evento eliminado correctamente.",
+          message: data.message ?? "Evento eliminado correctamente.",
         });
         setOpenConfirmDelete(false);
         setOpenDetails(false);
@@ -218,18 +281,19 @@ const EventDashboard: React.FC = () => {
       } else {
         setAlert({
           type: "error",
-          message: data.error || "Error al eliminar el evento.",
+          message: data.error ?? "Error al eliminar el evento.",
         });
       }
-    } catch {
-      setAlert({
-        type: "error",
-        message: "Error de conexión con el servidor.",
-      });
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Error de conexión con el servidor.";
+      setAlert({ type: "error", message: msg });
     }
   };
 
-  /* ---------- Calendario ---------- */
+  // Handlers del calendario
   const handleDateClick = (arg: DateClickArg): void => {
     setSelectedEvent(null);
     setForm({
@@ -266,10 +330,10 @@ const EventDashboard: React.FC = () => {
         setSelectedEvent(ev);
         setOpenDetails(true);
       };
+
       map.set(el, handler);
       el.addEventListener("click", handler, { passive: true });
 
-      // Tachado visual, no altera fechas
       const ended = hasEventEnded(arg.event);
       if (ended) {
         el.classList.add("line-through", "opacity-60");
@@ -280,8 +344,22 @@ const EventDashboard: React.FC = () => {
     [eventosById]
   );
 
+  // Poner el título (mes) en mayúsculas
+  const handleViewDidMount = useCallback(
+    (arg: { view: ViewApi; el: HTMLElement }): void => {
+      const titleEl = arg.el.querySelector(
+        ".fc-toolbar-title"
+      ) as HTMLElement | null;
+      if (titleEl && titleEl.textContent) {
+        titleEl.textContent = titleEl.textContent.toUpperCase();
+      }
+    },
+    []
+  );
+
   const eventObjFrom = (e: Evento) => {
-    const color = colorHexByDeporte(e.deporte);
+    const color = e.color || colorByDeporteId.get(e.iddeporte) || "#6b7280"; // gris por defecto
+
     return {
       id: String(e.idevento),
       title: `${e.deporte ?? ""} • ${e.ubicacion}`,
@@ -289,7 +367,7 @@ const EventDashboard: React.FC = () => {
       end: e.fecha_fin,
       backgroundColor: color,
       borderColor: color,
-      textColor: "#fff",
+      textColor: "#000000",
       classNames: [
         "rounded-md",
         "px-1.5",
@@ -302,12 +380,12 @@ const EventDashboard: React.FC = () => {
     };
   };
 
-  /* ---------- Render ---------- */
+  // Render
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="text-xl font-semibold text-gray-200">
           Calendario de eventos
         </h2>
         <Button
@@ -333,7 +411,7 @@ const EventDashboard: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="border border-gray-200 bg-gray-50 shadow-sm rounded-md"
+          className="border border-gray-200 shadow-sm rounded-md"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -350,7 +428,7 @@ const EventDashboard: React.FC = () => {
       )}
 
       {/* Calendario */}
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
+      <div className="rounded-xl border border-gray-200 bg-card shadow-sm p-4">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -363,42 +441,47 @@ const EventDashboard: React.FC = () => {
             center: "title",
             right: "",
           }}
+          buttonText={{
+            today: "HOY",
+          }}
+          titleFormat={{ month: "long", year: "numeric" }}
+          firstDay={1}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           eventDidMount={onEventDidMount}
+          viewDidMount={handleViewDidMount}
           events={eventos.map(eventObjFrom)}
         />
       </div>
 
       {/* Leyenda */}
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Leyenda</h3>
-        <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm bg-green-600 border border-black/10" />{" "}
-            Parkour
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm bg-pink-500 border border-black/10" />{" "}
-            Gimnasia
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm bg-amber-500 border border-black/10" />{" "}
-            Crossfit
-          </span>
+      {deportes.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-accent shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-100 mb-2">Leyenda</h3>
+          <div className="flex flex-wrap gap-4 text-sm text-gray-100">
+            {deportes.map((d) => (
+              <span key={d.iddeporte} className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 rounded-sm border border-black/10"
+                  style={{ backgroundColor: d.color }}
+                />
+                {d.nombre}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Dialog Detalles */}
+      {/* Detalles */}
       <Dialog open={openDetails} onOpenChange={setOpenDetails}>
-        <DialogContent className="sm:max-w-[420px] border border-gray-200 shadow-sm bg-white rounded-lg">
+        <DialogContent className="sm:max-w-[420px] border border-gray-200 shadow-s rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-gray-800">
+            <DialogTitle className="text-base font-semibold text-gray-50">
               Detalles del evento
             </DialogTitle>
           </DialogHeader>
           {selectedEvent && (
-            <div className="space-y-2 text-sm text-gray-700">
+            <div className="space-y-2 text-sm text-gray-100">
               <p>
                 <strong>Deporte:</strong> {selectedEvent.deporte}
               </p>
@@ -442,14 +525,14 @@ const EventDashboard: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmar eliminación */}
+      {/* Confirmar eliminar */}
       <AlertDialog open={openConfirmDelete} onOpenChange={setOpenConfirmDelete}>
-        <AlertDialogContent className="border border-gray-200 bg-white shadow-sm rounded-lg">
+        <AlertDialogContent className="border border-gray-200 shadow-sm rounded-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base text-gray-800">
+            <AlertDialogTitle className="text-base text-gray-200">
               ¿Eliminar este evento?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-gray-600">
+            <AlertDialogDescription className="text-sm text-gray-100">
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -467,11 +550,11 @@ const EventDashboard: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Formulario Crear/Editar */}
+      {/* Formulario */}
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="sm:max-w-[480px] border border-gray-200 bg-white shadow-sm rounded-lg">
+        <DialogContent className="sm:max-w-[480px] border border-gray-200 shadow-sm rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-gray-800">
+            <DialogTitle className="text-base font-semibold text-gray-200">
               {selectedEvent ? "Editar evento" : "Nuevo evento"}
             </DialogTitle>
           </DialogHeader>
@@ -507,7 +590,7 @@ const EventDashboard: React.FC = () => {
                 onChange={(e) =>
                   setForm({ ...form, ubicacion: e.target.value })
                 }
-                placeholder="Ej. Competencia Regional"
+                placeholder="Ej. Competencia regional"
                 className="h-9 text-sm"
               />
             </div>

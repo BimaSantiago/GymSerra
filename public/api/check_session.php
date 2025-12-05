@@ -5,6 +5,7 @@ header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Content-Type: application/json; charset=utf-8");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
@@ -14,18 +15,23 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 session_set_cookie_params([
     "httponly" => true,
     "samesite" => "None",
-    "secure" => false
+    "secure"   => false
 ]);
 
 session_start();
 
 if (!empty($_SESSION["auth"]) && $_SESSION["auth"] === true && !empty($_SESSION["user"])) {
+    $user = $_SESSION["user"];
+
     echo json_encode([
         "authenticated" => true,
         "user" => [
-            "iduser" => $_SESSION["user"]["iduser"],
-            "username" => $_SESSION["user"]["username"],
-            "avatar" => $_SESSION["user"]["avatar"]
+            "iduser"   => $user["iduser"],
+            "username" => $user["username"],
+            "avatar"   => $user["avatar"],
+            "correo"   => $user["correo"] ?? null,
+            "rol"      => $user["rol"] ?? null,
+            "estatus"  => $user["estatus"] ?? null,
         ]
     ]);
 } else {

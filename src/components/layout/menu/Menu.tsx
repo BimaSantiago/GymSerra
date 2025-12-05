@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SubmenuItems from "./SubmenuItems";
-import { Button } from "../../components/ui/button";
+import { Button } from "../../ui/button";
 
 const Menu = () => {
   const [isOpen, setIsOpen] = useState(false);
