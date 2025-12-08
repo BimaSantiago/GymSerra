@@ -7,14 +7,14 @@ import {
 } from "@/components/ui/sidebar";
 import { Routes, Route } from "react-router-dom";
 import AlumnosDashboard from "../../alumnos/pages/AlumnosDashboard";
-import ArticulosDashboard from "../../inventario/pages/ArticulosDashboard";
-import HorariosDashboard from "../pages/HorariosDashboard";
+import ArticulosDashboard from "../../articulo/page/ArticulosDashboard";
+import HorariosDashboard from "../../actividades/pages/HorariosDashboard";
 import NivelesDashboard from "../../detalles/pages/NivelesDashboard";
 import TutoresDashboard from "../../alumnos/pages/TutoresDashboard";
-import ProveedoresDashboard from "../../inventario/pages/ProveeedoresDashboard";
+import ProveedoresDashboard from "../../personas/pages/ProveeedoresDashboard";
 import Compras from "../../inventario/pages/Compras";
 import ComprasDetalle from "../../inventario/pages/ComprasDetalle";
-import PlanPagoDashboard from "../pages/PlanPagoDashboard";
+import PlanPagoDashboard from "../../alumnos/pages/PlanPagoDashboard";
 import MensualidadesDashboard from "../../alumnos/pages/MensualidadesDashboard";
 import UsersDashboard from "../../admin/page/UsersDashboard";
 import Ventas from "../../inventario/pages/Ventas";
@@ -24,6 +24,11 @@ import AjustesDetalle from "../../inventario/pages/AjustesDetalle";
 import EventDashboard from "../../actividades/pages/EventDashboard";
 import NoticiasDashboard from "../../actividades/pages/NoticiasDashboard";
 import DeportesDashboard from "@/modules/detalles/pages/DeportesDashboard";
+import UnidadesMedidaDashboard from "@/modules/articulo/page/UnidadesMedidaDashboard";
+import CategoriasDashboard from "@/modules/articulo/page/CategoriasDashboard";
+import ClientesDashboard from "@/modules/personas/pages/ClientessDashboard";
+import CorteCaja from "@/modules/inventario/pages/CorteCaja";
+import CorteCajaDetalle from "@/modules/inventario/pages/CorteCajaDetalle";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -58,6 +63,11 @@ export default function Page() {
             <Route path="/eventoDashboard" element={<EventDashboard />} />
             <Route path="/noticiasDashboard" element={<NoticiasDashboard />} />
             <Route path="/deportesDashboard" element={<DeportesDashboard />} />
+            <Route path="/unidades" element={<UnidadesMedidaDashboard />} />
+            <Route path="/categorias" element={<CategoriasDashboard />} />
+            <Route path="/clientes" element={<ClientesDashboard />} />
+            <Route path="/corteCaja" element={<CorteCaja />} />
+            <Route path="/corteCajaDetalle" element={<CorteCajaDetalle />} />
           </Routes>
         </div>
       </SidebarInset>

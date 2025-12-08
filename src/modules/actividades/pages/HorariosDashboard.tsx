@@ -275,6 +275,7 @@ const HorariosDashboard: React.FC = () => {
                         horario?.color
                           ? {
                               backgroundColor: horario.color,
+                              opacity: 0.7,
                             }
                           : undefined
                       }
@@ -304,7 +305,7 @@ const HorariosDashboard: React.FC = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-lg font-medium text-gray-900">
+            <DialogTitle className="text-lg font-medium text-gray-50">
               {form.idhorario ? "Editar Horario" : "Nuevo Horario"} (
               {formatearHora(form.hora_inicio)} - {formatearHora(form.hora_fin)}
               )
@@ -317,7 +318,7 @@ const HorariosDashboard: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="text-sm font-medium text-gray-600">
+              <Label className="text-sm font-medium text-gray-200">
                 Deporte
               </Label>
               <Select
@@ -340,7 +341,7 @@ const HorariosDashboard: React.FC = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-600">Nivel</Label>
+              <Label className="text-sm font-medium text-gray-200">Nivel</Label>
               <Select
                 value={form.idnivel ? String(form.idnivel) : ""}
                 onValueChange={(v) => setForm({ ...form, idnivel: Number(v) })}

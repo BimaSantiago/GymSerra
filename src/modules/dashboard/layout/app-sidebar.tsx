@@ -5,12 +5,12 @@ import {
   Dumbbell,
   PersonStanding,
   Package2,
-  SquareTerminal,
-  EllipsisVertical,
+  Milk,
   Loader2,
-  Frame,
-  PieChart,
-  Map,
+  ChartNoAxesCombined,
+  UsersRound,
+  Waypoints,
+  Trophy,
 } from "lucide-react";
 
 import { NavMain } from "@/modules/dashboard/layout/nav-main";
@@ -44,19 +44,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [loading, setLoading] = React.useState(true);
   const projects = [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      name: "Niveles",
+      url: "/dashboard/niveles",
+      icon: ChartNoAxesCombined,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
+      name: "Deportes",
+      url: "/dashboard/deportesDashboard",
+      icon: Trophy,
     },
     {
-      name: "Travel",
+      name: "Contactos",
       url: "#",
-      icon: Map,
+      icon: Waypoints,
     },
   ];
   const navMain = [
@@ -65,29 +65,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "#",
       icon: Dumbbell,
       items: [
-        { title: "Eventos", url: "/dashboard/eventoDashboard" },
-        { title: "Noticias", url: "/dashboard/noticiasDashboard" },
+        {
+          title: "Eventos",
+          url: "/dashboard/eventoDashboard",
+        },
+        {
+          title: "Noticias",
+          url: "/dashboard/noticiasDashboard",
+        },
+        {
+          title: "Horario",
+          url: "/dashboard/horarios",
+        },
       ],
     },
     {
-      title: "Inventario",
+      title: "Articulos",
       url: "/",
-      icon: Package2,
+      icon: Milk,
       items: [
-        { title: "Articulos", url: "/dashboard/articulo" },
-        { title: "Ventas", url: "/dashboard/ventas" },
-        { title: "Compras", url: "/dashboard/compras" },
-        { title: "Proveedores", url: "/dashboard/proveedores" },
-        { title: "Ajustes", url: "/dashboard/ajustes" },
-      ],
-    },
-    {
-      title: "Horarios",
-      url: "/",
-      icon: SquareTerminal,
-      items: [
-        { title: "Horario", url: "/dashboard/horarios" },
-        { title: "Planes de pago", url: "/dashboard/planPago" },
+        {
+          title: "Articulos",
+          url: "/dashboard/articulo",
+        },
+        {
+          title: "Unidades de Medida",
+          url: "/dashboard/unidades",
+        },
+        {
+          title: "Categorias",
+          url: "/dashboard/categorias",
+        },
       ],
     },
     {
@@ -95,17 +103,56 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/",
       icon: PersonStanding,
       items: [
-        { title: "Alumnos y tutores", url: "/dashboard/tutores" },
-        { title: "Mensualidades", url: "/dashboard/mensualidades" },
+        {
+          title: "Alumnos y tutores",
+          url: "/dashboard/tutores",
+        },
+        {
+          title: "Planes de pago",
+          url: "/dashboard/planPago",
+        },
+        {
+          title: "Mensualidades",
+          url: "/dashboard/mensualidades",
+        },
       ],
     },
     {
-      title: "Detalles",
+      title: "Inventario",
       url: "/",
-      icon: EllipsisVertical,
+      icon: Package2,
       items: [
-        { title: "Niveles", url: "/dashboard/niveles" },
-        { title: "Deportes", url: "/dashboard/deportesDashboard" },
+        {
+          title: "Ajustes",
+          url: "/dashboard/ajustes",
+        },
+        {
+          title: "Compras",
+          url: "/dashboard/compras",
+        },
+        {
+          title: "Ventas",
+          url: "/dashboard/ventas",
+        },
+        {
+          title: "Cortes de caja",
+          url: "/dashboard/corteCaja",
+        },
+      ],
+    },
+    {
+      title: "Personas",
+      url: "/",
+      icon: UsersRound,
+      items: [
+        {
+          title: "Cliente",
+          url: "/dashboard/clientes",
+        },
+        {
+          title: "Proveedores",
+          url: "/dashboard/proveedores",
+        },
       ],
     },
   ];

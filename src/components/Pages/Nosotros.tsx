@@ -3,11 +3,11 @@ import SubSeccion from "../layout/SubSeccion";
 import SeccionPequenia from "../layout/SeccionPequenia";
 import SeccionPequenia2 from "../layout/SeccionPequenia2";
 import Imagenes from "../layout/Imagenes";
-import Imagen1 from "../../assets/Imagen1.jpg";
-import Imagen2 from "../../assets/Imagen2.jpg";
-import Imagen3 from "../../assets/Imagen3.jpg";
-import Imagen4 from "../../assets/Imagen4.jpg";
-import Imagen6 from "../../assets/Imagen6.jpg";
+import Imagen1 from "../../assets/img1familia.svg";
+import Imagen2 from "../../assets/img1historia.svg";
+import Imagen3 from "../../assets/img1nosostros.svg";
+import Imagen4 from "../../assets/img1pilares.svg";
+import Imagen6 from "../../assets/img2historia.svg";
 
 import { CarouselDemo } from "../layout/CarouselDemo";
 import {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,12 +12,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Eye, PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Ajuste {
   idajuste: number;
   fecha: string;
   comentario: string;
-  tipo: "entrada" | "salida";
+  // El backend ahora devuelve "Entrada"/"Salida", pero lo normalizamos a minúsculas
+  tipo: "entrada" | "salida" | string;
 }
 
 interface ApiResponse {
@@ -39,6 +41,8 @@ const Ajustes = () => {
     message: string;
   } | null>(null);
 
+  const [tab, setTab] = useState<"todos" | "entrada" | "salida">("todos");
+
   const navigate = useNavigate();
 
   // Obtener ajustes con paginación y rango de fechas
@@ -58,7 +62,12 @@ const Ajustes = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        setAjustes(data.ajustes ?? []);
+        const normalizados =
+          data.ajustes?.map((a) => ({
+            ...a,
+            tipo: (a.tipo || "").toLowerCase(),
+          })) ?? [];
+        setAjustes(normalizados);
         setTotal(data.total ?? 0);
       } else {
         setAlert({
@@ -78,6 +87,7 @@ const Ajustes = () => {
 
   useEffect(() => {
     fetchAjustes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const handleFiltrar = () => {
@@ -93,14 +103,78 @@ const Ajustes = () => {
     navigate(`/dashboard/ajustesDetalle?tipo=${tipo}&idajuste=${idajuste}`);
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / limit) || 1;
+
+  const filtrarPorTab = (lista: Ajuste[]) => {
+    if (tab === "todos") return lista;
+    return lista.filter((a) => (a.tipo || "").toLowerCase() === tab);
+  };
+
+  const renderTabla = (lista: Ajuste[]) => (
+    <Table className="rounded-lg shadow-sm">
+      <TableHeader>
+        <TableRow>
+          <TableHead>ID</TableHead>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Tipo</TableHead>
+          <TableHead>Comentario</TableHead>
+          <TableHead className="text-center">Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {lista.length > 0 ? (
+          lista.map((a) => (
+            <TableRow key={`${a.tipo}-${a.idajuste}`}>
+              <TableCell>{a.idajuste}</TableCell>
+              <TableCell>{a.fecha}</TableCell>
+              <TableCell>
+                <span
+                  className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
+                    (a.tipo || "").toLowerCase() === "entrada"
+                      ? "bg-green-600"
+                      : "bg-red-600"
+                  }`}
+                >
+                  {(a.tipo || "").toLowerCase() === "entrada"
+                    ? "Entrada"
+                    : "Salida"}
+                </span>
+              </TableCell>
+              <TableCell>{a.comentario}</TableCell>
+              <TableCell className="text-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    handleVerDetalle(
+                      ((a.tipo || "").toLowerCase() as "entrada" | "salida") ??
+                        "entrada",
+                      a.idajuste
+                    )
+                  }
+                >
+                  <Eye className="h-4 w-4 text-blue-600" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center text-gray-500 py-4">
+              No se encontraron ajustes en este rango de fechas.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <div className="p-4">
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-4 rounded-2xl shadow-xl bg-gray-50"
+          className="mb-4 rounded-2xl shadow-xl"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -114,9 +188,9 @@ const Ajustes = () => {
         </Alert>
       )}
 
-      {/* 🔹 Encabezado principal */}
+      {/* Encabezado principal */}
       <div className="flex justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">
+        <h2 className="text-2xl font-bold text-gray-200">
           Ajustes de Inventario
         </h2>
         <Button
@@ -128,10 +202,10 @@ const Ajustes = () => {
         </Button>
       </div>
 
-      {/* 🔹 Filtro de fechas */}
-      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-xl shadow-sm">
+      {/* Filtro de fechas */}
+      <div className="flex flex-wrap gap-4 mb-6 bg-accent p-4 rounded-xl shadow-sm">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-100">
             Desde
           </label>
           <Input
@@ -142,7 +216,7 @@ const Ajustes = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-100">
             Hasta
           </label>
           <Input
@@ -173,55 +247,29 @@ const Ajustes = () => {
         </div>
       </div>
 
-      {/* 🔹 Tabla de ajustes */}
-      <Table className="border border-gray-200 rounded-lg shadow-sm">
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Fecha</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Comentario</TableHead>
-            <TableHead className="text-center">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {ajustes.length > 0 ? (
-            ajustes.map((a) => (
-              <TableRow key={`${a.tipo}-${a.idajuste}`}>
-                <TableCell>{a.idajuste}</TableCell>
-                <TableCell>{a.fecha}</TableCell>
-                <TableCell>
-                  <span
-                    className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
-                      a.tipo === "entrada" ? "bg-green-600" : "bg-red-600"
-                    }`}
-                  >
-                    {a.tipo === "entrada" ? "Entrada" : "Salida"}
-                  </span>
-                </TableCell>
-                <TableCell>{a.comentario}</TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleVerDetalle(a.tipo, a.idajuste)}
-                  >
-                    <Eye className="h-4 w-4 text-blue-600" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-gray-500 py-4">
-                No se encontraron ajustes en este rango de fechas.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      {/* Tabs de tipo de ajuste */}
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setTab(v as "todos" | "entrada" | "salida")}
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="todos">Todos</TabsTrigger>
+          <TabsTrigger value="entrada">Entradas</TabsTrigger>
+          <TabsTrigger value="salida">Salidas</TabsTrigger>
+        </TabsList>
 
-      {/* 🔹 Paginación */}
+        <TabsContent value="todos">
+          {renderTabla(filtrarPorTab(ajustes))}
+        </TabsContent>
+        <TabsContent value="entrada">
+          {renderTabla(filtrarPorTab(ajustes))}
+        </TabsContent>
+        <TabsContent value="salida">
+          {renderTabla(filtrarPorTab(ajustes))}
+        </TabsContent>
+      </Tabs>
+
+      {/* Paginación */}
       <div className="flex justify-between mt-4">
         <Button
           disabled={page === 1}
@@ -231,7 +279,7 @@ const Ajustes = () => {
           Anterior
         </Button>
         <span>
-          Página {page} de {totalPages || 1}
+          Página {page} de {totalPages}
         </span>
         <Button
           disabled={page === totalPages}

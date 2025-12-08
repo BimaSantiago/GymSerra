@@ -1025,54 +1025,54 @@ const TutoresDashboard: React.FC = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Nueva inscripción</DialogTitle>
+            <div className="flex items-center justify-between">
+              {/* Paso 1: Alumno */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span
+                  className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
+                    wizardStep === 1
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-gray-900 text-white"
+                  }`}
+                >
+                  1
+                </span>
+                <span>Alumno</span>
+              </div>
+              <div className="flex-1 h-px bg-gray-200 mx-2" />
+              {/* Paso 2: Tutor */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span
+                  className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
+                    wizardStep === 2
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-gray-900 text-white"
+                  }`}
+                >
+                  2
+                </span>
+                <span>Tutor</span>
+              </div>
+              <div className="flex-1 h-px bg-gray-200 mx-2" />
+              {/* Paso 3: Tipo de registro */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span
+                  className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
+                    wizardStep === 3
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-gray-900 text-white"
+                  }`}
+                >
+                  3
+                </span>
+                <span>Tipo de registro</span>
+              </div>
+            </div>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Columna izquierda: pasos */}
             <div className="space-y-4">
               {/* Indicador de pasos */}
-              <div className="flex items-center justify-between mb-4">
-                {/* Paso 1: Alumno */}
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <span
-                    className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
-                      wizardStep === 1
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    1
-                  </span>
-                  <span>Alumno</span>
-                </div>
-                <div className="flex-1 h-px bg-gray-200 mx-2" />
-                {/* Paso 2: Tutor */}
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <span
-                    className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
-                      wizardStep === 2
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    2
-                  </span>
-                  <span>Tutor</span>
-                </div>
-                <div className="flex-1 h-px bg-gray-200 mx-2" />
-                {/* Paso 3: Tipo de registro */}
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <span
-                    className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold ${
-                      wizardStep === 3
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    3
-                  </span>
-                  <span>Tipo de registro</span>
-                </div>
-              </div>
 
               {/* STEP 1: Alumno */}
               {wizardStep === 1 && (
@@ -1160,7 +1160,7 @@ const TutoresDashboard: React.FC = () => {
               {/* STEP 2: Tutor (obligatorio solo si es menor) */}
               {wizardStep === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-300">
                     {wizardRequiresTutor
                       ? "El alumno es menor de edad. Debes registrar un tutor."
                       : "El alumno es mayor de edad. El tutor es opcional."}
@@ -1240,7 +1240,7 @@ const TutoresDashboard: React.FC = () => {
               {/* STEP 3: Tipo de registro */}
               {wizardStep === 3 && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-300">
                     Elige si el alumno también será registrado como cliente para
                     el módulo de ventas.
                   </p>
@@ -1252,8 +1252,8 @@ const TutoresDashboard: React.FC = () => {
                       }
                       className={`w-full justify-start rounded-lg ${
                         tipoRegistro === "alumno"
-                          ? "bg-gray-900 text-white hover:bg-gray-800"
-                          : "bg-white text-gray-900 hover:bg-gray-50"
+                          ? "bg-white text-gray-900 hover:bg-gray-50"
+                          : "bg-gray-900 text-white hover:bg-gray-800"
                       }`}
                       onClick={() => setTipoRegistro("alumno")}
                     >
@@ -1263,9 +1263,6 @@ const TutoresDashboard: React.FC = () => {
                         </div>
                         <div className="text-left">
                           <div className="font-semibold">Solo alumno</div>
-                          <div className="text-xs text-gray-500">
-                            Se registrará únicamente en el módulo escolar.
-                          </div>
                         </div>
                       </div>
                     </Button>
@@ -1279,8 +1276,8 @@ const TutoresDashboard: React.FC = () => {
                       }
                       className={`w-full justify-start rounded-lg ${
                         tipoRegistro === "cliente_alumno"
-                          ? "bg-gray-900 text-white hover:bg-gray-800"
-                          : "bg-white text-gray-900 hover:bg-gray-50"
+                          ? "bg-white text-gray-900 hover:bg-gray-50"
+                          : "bg-gray-900 text-white hover:bg-gray-800"
                       }`}
                       onClick={() => setTipoRegistro("cliente_alumno")}
                     >
@@ -1290,10 +1287,6 @@ const TutoresDashboard: React.FC = () => {
                         </div>
                         <div className="text-left">
                           <div className="font-semibold">Alumno y cliente</div>
-                          <div className="text-xs text-gray-500">
-                            También se registrará como cliente en el módulo de
-                            ventas.
-                          </div>
                         </div>
                       </div>
                     </Button>
@@ -1303,7 +1296,7 @@ const TutoresDashboard: React.FC = () => {
             </div>
 
             {/* Columna derecha: resumen */}
-            <div className="border rounded-xl p-4 bg-gray-50 space-y-4">
+            <div className="border rounded-xl p-4 bg-accent space-y-4">
               <h3 className="font-semibold mb-2">Resumen</h3>
               <div className="text-sm space-y-1">
                 <p className="font-semibold">Alumno</p>
@@ -1348,6 +1341,7 @@ const TutoresDashboard: React.FC = () => {
                   {wizardStep < 3 && (
                     <Button
                       type="button"
+                      className="bg-gray-800 hover:bg-gray-700 text-white"
                       disabled={wizardLoading}
                       onClick={handleWizardNext}
                     >
@@ -1367,7 +1361,7 @@ const TutoresDashboard: React.FC = () => {
                 </div>
               </div>
               {wizardError && (
-                <p className="mt-3 text-sm text-red-500">{wizardError}</p>
+                <p className="mt-3 text-sm text-red-200">{wizardError}</p>
               )}
             </div>
           </div>

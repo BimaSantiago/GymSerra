@@ -398,7 +398,7 @@ const NoticiasDashboard: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-6 rounded-xl shadow-lg bg-gray-50"
+          className="mb-6 rounded-xl shadow-lg"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -425,7 +425,7 @@ const NoticiasDashboard: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg border-gray-300 hover:bg-gray-100">
+            <AlertDialogCancel className="rounded-lg border-gray-300 hover:bg-accent">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
@@ -550,7 +550,7 @@ const NoticiasDashboard: React.FC = () => {
                                 setSearchEvento("");
                                 setIsEventMenuOpen(false);
                               }}
-                              className="cursor-pointer hover:bg-gray-100 px-3 py-2"
+                              className="cursor-pointer hover:bg-accent px-3 py-2"
                             >
                               <div className="flex flex-col">
                                 <span className="font-medium text-sm">
@@ -601,7 +601,7 @@ const NoticiasDashboard: React.FC = () => {
         {noticias.map((n) => (
           <Card
             key={n.idnoticias}
-            className="shadow-lg rounded-xl border hover:shadow-xl transition"
+            className="shadow-lg rounded-xl border hover:shadow-xl transition bg-secondary"
           >
             <CardHeader className="p-0">
               <img

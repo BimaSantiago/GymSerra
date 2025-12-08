@@ -375,7 +375,10 @@ const PlanPagoDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full mt-2">
+              <Button
+                type="submit"
+                className="w-full mt-2 bg-gray-800 hover:bg-gray-700 text-white"
+              >
                 {isEditing ? "Actualizar Plan" : "Guardar Plan"}
               </Button>
             </form>
