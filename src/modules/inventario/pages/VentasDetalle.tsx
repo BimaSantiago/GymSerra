@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,188 +13,678 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { CheckCircle2, AlertCircle, Pencil, Trash2 } from "lucide-react";
+  Command,
+  CommandList,
+  CommandItem,
+  CommandEmpty,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  ChevronDown,
+  Save,
+  ArrowLeft,
+  Ban,
+  RotateCcw,
+  Plus,
+} from "lucide-react";
+
+const API_BASE = "http://localhost/GymSerra/public/api";
 
 /* ---------- Tipos ---------- */
 interface Articulo {
   idarticulo: number;
   nombre: string;
+  stock?: number;
+  descripcion2?: string;
+  precio: number; // viene de ventas.php?action=articulosVenta
+}
+
+interface Cliente {
+  idcliente: number;
+  nombre: string;
 }
 
 interface DetalleVenta {
-  iddetalle_venta: number;
+  iddetalle_venta?: number;
   idarticulo: number;
   articulo: string;
   cantidad: number;
-  subtotal: number;
-  precio: number;
+  precio?: number;
+  subtotal?: number;
+  cantidad_devuelta?: number;
 }
 
 interface VentaInfo {
   idventa: number;
   fecha: string;
   total: number;
+  idcliente?: number | null;
+  cliente?: string | null;
+  cancelada?: boolean | 0 | 1;
 }
 
-interface ApiResponse {
+interface DevolucionHistorial {
+  iddevolucion_detalle: number;
+  fecha_devolucion: string;
+  articulo: string;
+  cantidad_devuelta: number;
+  subtotal: number;
+  motivo: string;
+}
+
+interface Motivo {
+  idmotivo: number;
+  nombre: string;
+  tipo: string; // "Cancelacion" | "Devolucion"
+}
+
+interface ApiDetalleResponse {
   success?: boolean;
   info?: VentaInfo;
   detalles?: DetalleVenta[];
-  articulos?: Articulo[];
-  total?: number;
+  devoluciones?: DevolucionHistorial[];
   error?: string;
 }
 
-/* ---------- Componente principal ---------- */
+interface ApiGenericResponse {
+  success?: boolean;
+  idventa?: number;
+  error?: string;
+}
+
 const VentasDetalle: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const idventa = Number(searchParams.get("idventa"));
   const navigate = useNavigate();
 
-  const [articulos, setArticulos] = useState<Articulo[]>([]);
-  const [detalles, setDetalles] = useState<DetalleVenta[]>([]);
+  const idventaParam = searchParams.get("idventa");
+  const isEditing = !!idventaParam;
+  const idventa = idventaParam ? Number(idventaParam) : null;
+
   const [info, setInfo] = useState<VentaInfo | null>(null);
-  const [form, setForm] = useState({
-    idarticulo: "",
+  const [detallesBackend, setDetallesBackend] = useState<DetalleVenta[]>([]);
+  const [historialDevoluciones, setHistorialDevoluciones] = useState<
+    DevolucionHistorial[]
+  >([]);
+
+  const [detallesLocal, setDetallesLocal] = useState<DetalleVenta[]>([]);
+
+  const [articulos, setArticulos] = useState<Articulo[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+
+  // Form de detalle: incluye precio y subtotal
+  const [formDetalle, setFormDetalle] = useState<{
+    idarticulo: number;
+    cantidad: string;
+    precio: number;
+    subtotal: number;
+  }>({
+    idarticulo: 0,
     cantidad: "",
+    precio: 0,
+    subtotal: 0,
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-  /* ---------- Cargar datos ---------- */
+  // Command Artículos
+  const [articuloSearch, setArticuloSearch] = useState("");
+  const [isArticuloMenuOpen, setIsArticuloMenuOpen] = useState(false);
+  const articuloMenuRef = useRef<HTMLDivElement | null>(null);
+  const [selectedArticuloLabel, setSelectedArticuloLabel] = useState("");
+
+  // Command Clientes
+  const [clienteSearch, setClienteSearch] = useState("");
+  const [isClienteMenuOpen, setIsClienteMenuOpen] = useState(false);
+  const clienteMenuRef = useRef<HTMLDivElement | null>(null);
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+
+  // Motivos cancelación / devolución
+  const [motivosCancel, setMotivosCancel] = useState<Motivo[]>([]);
+  const [motivosDevol, setMotivosDevol] = useState<Motivo[]>([]);
+  const [selectedMotivoCancelId, setSelectedMotivoCancelId] =
+    useState<string>("");
+  const [selectedMotivoDevolId, setSelectedMotivoDevolId] =
+    useState<string>("");
+  const [nuevoMotivoCancel, setNuevoMotivoCancel] = useState("");
+  const [nuevoMotivoDevol, setNuevoMotivoDevol] = useState("");
+  const [showNuevoMotivoCancel, setShowNuevoMotivoCancel] = useState(false);
+  const [showNuevoMotivoDevol, setShowNuevoMotivoDevol] = useState(false);
+
+  // Dialog cancelación
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  // Dialog devolución parcial
+  const [devolDialogOpen, setDevolDialogOpen] = useState(false);
+  const [devolReason, setDevolReason] = useState("");
+  const [devolCantidad, setDevolCantidad] = useState("");
+  const [selectedDetalleForDevol, setSelectedDetalleForDevol] =
+    useState<DetalleVenta | null>(null);
+
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+  };
+
+  const isCancelada =
+    info?.cancelada === true || info?.cancelada === 1 ? true : false;
+
+  /* ------- autocierre de alertas ------- */
+  useEffect(() => {
+    if (!alert) return;
+    const t = setTimeout(() => setAlert(null), 3500);
+    return () => clearTimeout(t);
+  }, [alert]);
+
+  /* ---------- Click fuera para cerrar commands ---------- */
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        articuloMenuRef.current &&
+        !articuloMenuRef.current.contains(target)
+      ) {
+        setIsArticuloMenuOpen(false);
+      }
+      if (clienteMenuRef.current && !clienteMenuRef.current.contains(target)) {
+        setIsClienteMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ---------- Cargar catálogos (artículos, clientes, motivos) ---------- */
   useEffect(() => {
     void fetchArticulos();
-    void fetchDetalles();
-  }, [idventa]);
+    void fetchClientes();
+    void fetchMotivos("Cancelacion");
+    void fetchMotivos("Devolucion");
+  }, []);
 
+  // ⚠️ AQUÍ SE ARREGLA: obtenemos artículos con precio desde ventas.php
   const fetchArticulos = async (): Promise<void> => {
     try {
-      const res = await fetch(
-        "http://localhost/GymSerra/public/api/articulos.php?action=list"
-      );
+      const res = await fetch(`${API_BASE}/ventas.php?action=articulosVenta`);
       const data = await res.json();
-      if (Array.isArray(data.articulos)) setArticulos(data.articulos);
-    } catch {
-      console.error("Error al cargar artículos");
+      if (data.success && Array.isArray(data.articulos)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsed: Articulo[] = data.articulos.map((a: any) => ({
+          idarticulo: Number(a.idarticulo),
+          nombre: a.nombre,
+          stock: a.stock ?? 0,
+          descripcion2: a.descripcion2,
+          precio: Number(a.precio) || 0, // viene directo del backend
+        }));
+        setArticulos(parsed);
+      } else {
+        console.error("Error en articulosVenta:", data.error);
+      }
+    } catch (err) {
+      console.error("Error al cargar artículos:", err);
     }
   };
 
-  const fetchDetalles = async (): Promise<void> => {
+  const fetchClientes = async (): Promise<void> => {
     try {
-      const res = await fetch(
-        `http://localhost/GymSerra/public/api/ventas.php?action=detalle&idventa=${idventa}`
-      );
-      const data: ApiResponse = await res.json();
-      if (data.success) {
-        setDetalles(data.detalles ?? []);
-        setInfo(data.info ?? null);
+      const res = await fetch(`${API_BASE}/clientes.php?action=list`);
+      const data = await res.json();
+      if (Array.isArray(data.clientes)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsed: Cliente[] = data.clientes.map((c: any) => ({
+          idcliente: Number(c.idcliente),
+          nombre: c.nombre ?? c.nombre_completo,
+        }));
+        setClientes(parsed);
       }
     } catch {
-      console.error("Error al cargar detalles");
+      console.error("Error al cargar clientes");
     }
   };
 
-  /* ---------- Guardar (Agregar / Editar) ---------- */
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const fetchMotivos = async (tipo: "Cancelacion" | "Devolucion") => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/ventas.php?action=listMotivos&tipo=${encodeURIComponent(
+          tipo
+        )}`
+      );
+      const data = await res.json();
+      if (data.success && Array.isArray(data.motivos)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsed: Motivo[] = data.motivos.map((m: any) => ({
+          idmotivo: Number(m.idmotivo),
+          nombre: m.nombre,
+          tipo: m.tipo,
+        }));
+        if (tipo === "Cancelacion") setMotivosCancel(parsed);
+        else setMotivosDevol(parsed);
+      }
+    } catch {
+      console.error("Error al cargar motivos", tipo);
+    }
+  };
+
+  const createMotivo = async (
+    tipo: "Cancelacion" | "Devolucion",
+    nombre: string
+  ): Promise<Motivo | null> => {
+    try {
+      const res = await fetch(`${API_BASE}/ventas.php?action=createMotivo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, nombre }),
+      });
+      const data = await res.json();
+      if (data.success && data.motivo) {
+        const m: Motivo = {
+          idmotivo: Number(data.motivo.idmotivo),
+          nombre: data.motivo.nombre,
+          tipo: data.motivo.tipo,
+        };
+        if (tipo === "Cancelacion")
+          setMotivosCancel((prev) =>
+            [...prev, m].sort((a, b) => a.nombre.localeCompare(b.nombre))
+          );
+        else
+          setMotivosDevol((prev) =>
+            [...prev, m].sort((a, b) => a.nombre.localeCompare(b.nombre))
+          );
+        return m;
+      } else {
+        showAlert("error", data.error ?? "No se pudo crear el motivo.");
+      }
+    } catch {
+      showAlert("error", "Error de conexión al crear motivo.");
+    }
+    return null;
+  };
+
+  /* ---------- Modo edición: cargar venta existente ---------- */
+  useEffect(() => {
+    if (!isEditing || !idventa) return;
+    void fetchDetalleVenta(idventa);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, idventa]);
+
+  const fetchDetalleVenta = async (id: number): Promise<void> => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/ventas.php?action=detalle&idventa=${id}`
+      );
+      const data: ApiDetalleResponse = await res.json();
+      if (data.success && data.info) {
+        setInfo(data.info);
+        setDetallesBackend(data.detalles ?? []);
+        setHistorialDevoluciones(data.devoluciones ?? []);
+        if (data.info.idcliente && data.info.cliente) {
+          const cli: Cliente = {
+            idcliente: data.info.idcliente,
+            nombre: data.info.cliente,
+          };
+          setSelectedCliente(cli);
+          setClienteSearch(cli.nombre);
+        }
+      } else {
+        showAlert("error", data.error ?? "No se pudo obtener la venta.");
+      }
+    } catch {
+      showAlert("error", "Error de conexión al obtener la venta.");
+    }
+  };
+
+  /* ---------- Helpers de filtros para Command ---------- */
+  const articulosFiltrados = articulos.filter((a) =>
+    a.nombre.toLowerCase().includes(articuloSearch.toLowerCase())
+  );
+
+  const clientesFiltrados = clientes.filter((c) =>
+    c.nombre.toLowerCase().includes(clienteSearch.toLowerCase())
+  );
+
+  /* ---------- Nueva venta: agregar detalle (solo en front) ---------- */
+  const handleAgregarDetalleLocal = (e: React.FormEvent) => {
     e.preventDefault();
-    const body = {
-      idventa,
-      idarticulo: Number(form.idarticulo),
-      cantidad: Number(form.cantidad),
-      iddetalle_venta: editingId,
+    if (!formDetalle.idarticulo || !formDetalle.cantidad) {
+      showAlert("error", "Selecciona un artículo y una cantidad.");
+      return;
+    }
+
+    const articulo = articulos.find(
+      (a) => a.idarticulo === formDetalle.idarticulo
+    );
+    if (!articulo) {
+      showAlert("error", "Artículo no válido.");
+      return;
+    }
+
+    const cantidad = Number(formDetalle.cantidad);
+    if (cantidad <= 0) {
+      showAlert("error", "La cantidad debe ser mayor a 0.");
+      return;
+    }
+
+    if (typeof articulo.stock === "number" && articulo.stock < cantidad) {
+      showAlert("error", "Stock insuficiente para este artículo.");
+      return;
+    }
+
+    const precioLinea = formDetalle.precio || articulo.precio || 0;
+
+    setDetallesLocal((prev) => {
+      const existingIndex = prev.findIndex(
+        (d) => d.idarticulo === articulo.idarticulo
+      );
+
+      // Si ya existe el artículo, sumamos la cantidad
+      if (existingIndex >= 0) {
+        return prev.map((d, idx) => {
+          if (idx !== existingIndex) return d;
+          const nuevaCantidad = d.cantidad + cantidad;
+          return {
+            ...d,
+            cantidad: nuevaCantidad,
+            precio: precioLinea,
+            subtotal: precioLinea * nuevaCantidad,
+          };
+        });
+      }
+
+      // Nuevo renglón
+      return [
+        ...prev,
+        {
+          idarticulo: articulo.idarticulo,
+          articulo: articulo.nombre,
+          cantidad,
+          precio: precioLinea,
+          subtotal: precioLinea * cantidad,
+        },
+      ];
+    });
+
+    setFormDetalle({
+      idarticulo: 0,
+      cantidad: "",
+      precio: 0,
+      subtotal: 0,
+    });
+    setArticuloSearch("");
+    setSelectedArticuloLabel("");
+  };
+
+  const handleEliminarDetalleLocal = (index: number) => {
+    setDetallesLocal((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const totalLocal = detallesLocal.reduce(
+    (sum, d) => sum + (d.subtotal ?? 0),
+    0
+  );
+
+  /* ---------- Hacer compra: se crea la venta en backend (1 sola inserción) ---------- */
+  const handleHacerCompra = async () => {
+    if (isEditing) return;
+    if (!selectedCliente) {
+      const cont = confirm(
+        "No hay cliente seleccionado, ¿deseas continuar la venta sin cliente?"
+      );
+      if (!cont) return;
+    }
+    if (detallesLocal.length === 0) {
+      showAlert("error", "Agrega al menos un artículo antes de comprar.");
+      return;
+    }
+
+    const payload = {
+      idcliente: selectedCliente?.idcliente ?? null,
+      detalles: detallesLocal.map((d) => ({
+        idarticulo: d.idarticulo,
+        cantidad: d.cantidad,
+      })),
     };
-    const action = editingId ? "updateDetalle" : "addDetalle";
+
+    try {
+      const res = await fetch(`${API_BASE}/ventas.php?action=createFull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data: ApiDetalleResponse & ApiGenericResponse = await res.json();
+      if (data.success && data.idventa) {
+        showAlert("success", "Compra realizada correctamente.");
+        setTimeout(() => {
+          navigate("/dashboard/ventas");
+        }, 800);
+      } else {
+        showAlert(
+          "error",
+          data.error ?? "No se pudo completar la compra (verifica stock)."
+        );
+      }
+    } catch {
+      showAlert("error", "Error de conexión al realizar la compra.");
+    }
+  };
+
+  /* ---------- Cancelar / Reactivar venta ---------- */
+  const handleClickCancelar = () => {
+    if (!isEditing || !idventa) return;
+
+    if (isCancelada) {
+      const ok = confirm("¿Dar de alta (reactivar) esta venta?");
+      if (!ok) return;
+      void postToggleCancel();
+    } else {
+      setCancelReason("");
+      setNuevoMotivoCancel("");
+      setSelectedMotivoCancelId("");
+      setShowNuevoMotivoCancel(false);
+      setCancelDialogOpen(true);
+    }
+  };
+
+  const postToggleCancel = async (
+    idmotivo?: number,
+    descripcion?: string
+  ): Promise<void> => {
+    if (!isEditing || !idventa) return;
 
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/ventas.php?action=${action}`,
+        `${API_BASE}/ventas.php?action=toggleCancel&idventa=${idventa}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ idmotivo, descripcion }),
         }
       );
-      const data = await res.json();
-      if (data.success) {
-        setAlert({
-          type: "success",
-          message: editingId ? "Detalle actualizado" : "Detalle agregado",
-        });
-        setEditingId(null);
-        setForm({ idarticulo: "", cantidad: "" });
-        void fetchDetalles();
+      const data: ApiDetalleResponse = await res.json();
+      if (data.success && data.info) {
+        setInfo(data.info);
+        showAlert(
+          "success",
+          data.info.cancelada
+            ? "Venta cancelada correctamente."
+            : "Venta reactivada correctamente."
+        );
       } else {
-        setAlert({ type: "error", message: data.error ?? "Error al guardar" });
+        showAlert(
+          "error",
+          data.error ?? "No se pudo cambiar el estado de la venta."
+        );
       }
     } catch {
-      setAlert({ type: "error", message: "Error de conexión con el servidor" });
+      showAlert("error", "Error de conexión al cambiar estado.");
     }
   };
 
-  /* ---------- Editar ---------- */
-  const handleEdit = (detalle: DetalleVenta): void => {
-    setEditingId(detalle.iddetalle_venta);
-    setForm({
-      idarticulo: String(detalle.idarticulo),
-      cantidad: String(detalle.cantidad),
-    });
+  const handleConfirmCancel = async () => {
+    if (isCancelada) return;
+    let idmotivo: number | undefined = undefined;
+
+    if (!selectedMotivoCancelId && !nuevoMotivoCancel.trim()) {
+      const ok = confirm(
+        "No seleccionaste ni escribiste motivo, ¿quieres cancelar de todos modos?"
+      );
+      if (!ok) return;
+    }
+
+    if (!selectedMotivoCancelId && nuevoMotivoCancel.trim()) {
+      const nuevo = await createMotivo("Cancelacion", nuevoMotivoCancel.trim());
+      if (!nuevo) return;
+      idmotivo = nuevo.idmotivo;
+    } else if (selectedMotivoCancelId) {
+      idmotivo = Number(selectedMotivoCancelId);
+    }
+
+    await postToggleCancel(idmotivo, cancelReason.trim() || undefined);
+    setCancelDialogOpen(false);
   };
 
-  /* ---------- Eliminar ---------- */
-  const handleDelete = async (id: number): Promise<void> => {
-    if (!confirm("¿Eliminar este detalle?")) return;
-    try {
-      const res = await fetch(
-        `http://localhost/GymSerra/public/api/ventas.php?action=deleteDetalle&iddetalle_venta=${id}`
+  /* ---------- Devolución parcial ---------- */
+  const handleOpenDevolucionParcial = (detalle: DetalleVenta) => {
+    if (!isEditing || !idventa || isCancelada) return;
+    if (!detalle.iddetalle_venta) return;
+
+    const devuelto = detalle.cantidad_devuelta ?? 0;
+    const pendiente = (detalle.cantidad ?? 0) - devuelto;
+    if (pendiente <= 0) {
+      showAlert("error", "Este artículo ya fue devuelto por completo.");
+      return;
+    }
+
+    setSelectedDetalleForDevol(detalle);
+    setDevolCantidad(String(pendiente));
+    setDevolReason("");
+    setNuevoMotivoDevol("");
+    setSelectedMotivoDevolId("");
+    setShowNuevoMotivoDevol(false);
+    setDevolDialogOpen(true);
+  };
+
+  const handleConfirmDevolucionParcial = async () => {
+    if (!isEditing || !idventa || !selectedDetalleForDevol) return;
+
+    const inputCant = Number(devolCantidad);
+    if (!inputCant || inputCant <= 0) {
+      showAlert("error", "Cantidad de devolución inválida.");
+      return;
+    }
+
+    const devuelto = selectedDetalleForDevol.cantidad_devuelta ?? 0;
+    const pendiente = (selectedDetalleForDevol.cantidad ?? 0) - devuelto;
+
+    if (inputCant > pendiente) {
+      showAlert(
+        "error",
+        "La cantidad a devolver no puede ser mayor a la pendiente."
       );
-      const data = await res.json();
-      if (data.success) {
-        setAlert({ type: "success", message: "Detalle eliminado" });
-        void fetchDetalles();
+      return;
+    }
+
+    let idmotivo: number | undefined = undefined;
+
+    if (!selectedMotivoDevolId && !nuevoMotivoDevol.trim()) {
+      const ok = confirm(
+        "No seleccionaste ni escribiste motivo, ¿quieres registrar la devolución de todos modos?"
+      );
+      if (!ok) return;
+    }
+
+    if (!selectedMotivoDevolId && nuevoMotivoDevol.trim()) {
+      const nuevo = await createMotivo("Devolucion", nuevoMotivoDevol.trim());
+      if (!nuevo) return;
+      idmotivo = nuevo.idmotivo;
+    } else if (selectedMotivoDevolId) {
+      idmotivo = Number(selectedMotivoDevolId);
+    }
+
+    const payload = {
+      idventa,
+      iddetalle_venta: selectedDetalleForDevol.iddetalle_venta,
+      cantidad: inputCant,
+      idmotivo,
+      descripcion: devolReason.trim() || undefined,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/ventas.php?action=devolverParcial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data: ApiDetalleResponse = await res.json();
+      if (data.success && data.info) {
+        setInfo(data.info);
+        setDetallesBackend(data.detalles ?? []);
+        setHistorialDevoluciones(data.devoluciones ?? []);
+        showAlert("success", "Devolución registrada correctamente.");
+        setDevolDialogOpen(false);
       } else {
-        setAlert({ type: "error", message: data.error ?? "Error al eliminar" });
+        showAlert(
+          "error",
+          data.error ?? "No se pudo registrar la devolución parcial."
+        );
       }
     } catch {
-      setAlert({ type: "error", message: "Error de conexión" });
+      showAlert(
+        "error",
+        "Error de conexión al registrar la devolución parcial."
+      );
     }
   };
 
   /* ---------- Render ---------- */
+  const tituloPantalla = isEditing
+    ? `Detalles de Venta #${idventa}`
+    : "Nueva venta";
+
+  const totalMostrar = isEditing && info ? info.total : totalLocal;
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Encabezado */}
       <div className="flex justify-between mb-4">
-        <h2 className="text-2xl font-bold">Detalles de Venta #{idventa}</h2>
-        <Button onClick={() => navigate("/dashboard/ventas")} variant="outline">
-          Volver
-        </Button>
+        <h2 className="text-2xl font-bold">{tituloPantalla}</h2>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => navigate("/dashboard/ventas")}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Button>
+          {!isEditing && (
+            <Button
+              onClick={handleHacerCompra}
+              className="bg-gray-800 text-white hover:bg-gray-700 flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Hacer compra
+            </Button>
+          )}
+        </div>
       </div>
 
-      {info && (
-        <div className="mb-6 bg-gray-50 rounded-lg p-4 shadow-sm">
-          <p>
-            <strong>Fecha:</strong> {info.fecha}
-          </p>
-          <p>
-            <strong>Total actual:</strong> ${info.total}
-          </p>
-        </div>
-      )}
-
+      {/* Alertas */}
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-4 rounded-2xl shadow-lg bg-gray-50"
+          className="mb-4 rounded-2xl shadow-lg"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -208,97 +698,577 @@ const VentasDetalle: React.FC = () => {
         </Alert>
       )}
 
-      {/* Formulario */}
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 bg-white p-6 rounded-xl shadow-lg mb-6"
-      >
-        <div>
-          <Label>Artículo</Label>
-          <Select
-            value={form.idarticulo}
-            onValueChange={(v) => setForm({ ...form, idarticulo: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona un artículo" />
-            </SelectTrigger>
-            <SelectContent>
-              {articulos.map((a) => (
-                <SelectItem key={a.idarticulo} value={String(a.idarticulo)}>
-                  {a.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Cantidad</Label>
-            <Input
-              type="number"
-              value={form.cantidad}
-              onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
-              required
-            />
+      {/* Info de venta (solo modo editar) */}
+      {isEditing && info && (
+        <div className="mb-6 bg-card rounded-lg p-4 shadow-sm space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p>
+                <strong>Fecha:</strong> {info.fecha}
+              </p>
+              <p>
+                <strong>Total actual:</strong> ${info.total.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p>
+                <strong>Estado:</strong>{" "}
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    isCancelada
+                      ? "bg-red-600 text-white"
+                      : "bg-green-600 text-white"
+                  }`}
+                >
+                  {isCancelada ? "Cancelada" : "Activa"}
+                </span>
+              </p>
+            </div>
+            <div>
+              <p>
+                <strong>Cliente:</strong>{" "}
+                {selectedCliente ? selectedCliente.nombre : "Sin asignar"}
+              </p>
+            </div>
           </div>
-          <div className="flex items-end">
+
+          <div className="flex flex-wrap gap-2 mt-2">
             <Button
-              type="submit"
-              className="w-full bg-gray-800 text-white hover:bg-gray-700"
+              variant={isCancelada ? "outline" : "destructive"}
+              onClick={handleClickCancelar}
+              className="flex items-center gap-2"
             >
-              {editingId ? "Actualizar" : "Agregar"}
+              <Ban className="h-4 w-4" />
+              {isCancelada ? "Dar de alta venta" : "Cancelar venta"}
             </Button>
           </div>
         </div>
-      </form>
+      )}
 
-      {/* Tabla */}
-      <Table className="border border-gray-200 rounded-lg">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Artículo</TableHead>
-            <TableHead>Cantidad</TableHead>
-            <TableHead>Precio</TableHead>
-            <TableHead>Subtotal</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {detalles.length > 0 ? (
-            detalles.map((d) => (
-              <TableRow key={d.iddetalle_venta}>
-                <TableCell>{d.articulo}</TableCell>
-                <TableCell>{d.cantidad}</TableCell>
-                <TableCell>${d.precio}</TableCell>
-                <TableCell>${d.subtotal}</TableCell>
-                <TableCell className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(d)}
-                  >
-                    <Pencil className="h-4 w-4 text-gray-700" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(d.iddetalle_venta)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-gray-500 py-4">
-                No hay artículos agregados.
-              </TableCell>
-            </TableRow>
+      {/* Cliente (Command) */}
+      <div className="mb-6 bg-card rounded-xl p-4 shadow-lg">
+        <Label>Cliente</Label>
+        <div ref={clienteMenuRef} className="mt-1 relative">
+          <div
+            className="flex items-center justify-between border rounded-lg px-3 py-2 cursor-text hover:border-gray-400 transition"
+            onClick={() => {
+              if (!isEditing) setIsClienteMenuOpen(true);
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Seleccionar cliente..."
+              value={
+                isClienteMenuOpen
+                  ? clienteSearch
+                  : selectedCliente?.nombre ?? ""
+              }
+              onFocus={() => {
+                if (!isEditing) setIsClienteMenuOpen(true);
+              }}
+              onChange={(e) => {
+                if (isEditing) return;
+                setClienteSearch(e.target.value);
+                setIsClienteMenuOpen(true);
+              }}
+              className="w-full outline-none bg-transparent text-sm"
+              readOnly={isEditing}
+            />
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          </div>
+
+          {isClienteMenuOpen && !isEditing && (
+            <div className="absolute z-50 mt-1 w-full border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto bg-card">
+              <Command>
+                <CommandList>
+                  {clientesFiltrados.length > 0 ? (
+                    clientesFiltrados.map((c) => (
+                      <CommandItem
+                        key={c.idcliente}
+                        onSelect={() => {
+                          setSelectedCliente(c);
+                          setClienteSearch(c.nombre);
+                          setIsClienteMenuOpen(false);
+                        }}
+                        className="cursor-pointer hover:bg-accent px-3 py-2 text-sm"
+                      >
+                        {c.nombre}
+                      </CommandItem>
+                    ))
+                  ) : (
+                    <CommandEmpty className="px-3 py-2 text-gray-500">
+                      No se encontraron clientes.
+                    </CommandEmpty>
+                  )}
+                </CommandList>
+              </Command>
+            </div>
           )}
-        </TableBody>
-      </Table>
+        </div>
+      </div>
+
+      {/* Formulario de detalle (solo nueva venta) */}
+      {!isEditing && (
+        <form
+          onSubmit={handleAgregarDetalleLocal}
+          className="space-y-6 bg-card p-6 rounded-xl shadow-lg mb-6"
+        >
+          {/* Artículo (Command) */}
+          <div>
+            <Label>Artículo</Label>
+            <div ref={articuloMenuRef} className="mt-1 relative">
+              <div
+                className="flex items-center justify-between border rounded-lg px-3 py-2 cursor-text hover:border-gray-400 transition"
+                onClick={() => setIsArticuloMenuOpen(true)}
+              >
+                <input
+                  type="text"
+                  placeholder="Seleccionar artículo..."
+                  value={
+                    isArticuloMenuOpen ? articuloSearch : selectedArticuloLabel
+                  }
+                  onFocus={() => {
+                    setIsArticuloMenuOpen(true);
+                    setArticuloSearch("");
+                  }}
+                  onChange={(e) => {
+                    setArticuloSearch(e.target.value);
+                    setIsArticuloMenuOpen(true);
+                  }}
+                  className="w-full outline-none bg-transparent text-sm"
+                />
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </div>
+
+              {isArticuloMenuOpen && (
+                <div className="absolute z-50 mt-1 w-full border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto bg-card">
+                  <Command>
+                    <CommandList>
+                      {articulosFiltrados.length > 0 ? (
+                        articulosFiltrados.map((a) => (
+                          <CommandItem
+                            key={a.idarticulo}
+                            onSelect={() => {
+                              setFormDetalle((prev) => {
+                                const cantidadNum = prev.cantidad
+                                  ? Number(prev.cantidad)
+                                  : 0;
+                                const precio = a.precio ?? 0;
+                                return {
+                                  ...prev,
+                                  idarticulo: a.idarticulo,
+                                  precio,
+                                  subtotal:
+                                    precio *
+                                    (isNaN(cantidadNum) ? 0 : cantidadNum),
+                                };
+                              });
+                              setSelectedArticuloLabel(a.nombre);
+                              setArticuloSearch("");
+                              setIsArticuloMenuOpen(false);
+                            }}
+                            className="cursor-pointer hover:bg-accent px-3 py-2 text-sm"
+                          >
+                            {a.nombre}
+                            {typeof a.stock === "number" && (
+                              <> (Stock: {a.stock})</>
+                            )}
+                          </CommandItem>
+                        ))
+                      ) : (
+                        <CommandEmpty className="px-3 py-2 text-gray-500">
+                          No se encontraron artículos.
+                        </CommandEmpty>
+                      )}
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Cantidad + Precio + Subtotal */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label>Cantidad</Label>
+              <Input
+                type="number"
+                value={formDetalle.cantidad}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = Number(value);
+                  setFormDetalle((prev) => ({
+                    ...prev,
+                    cantidad: value,
+                    subtotal: prev.precio * (isNaN(num) ? 0 : num),
+                  }));
+                }}
+                required
+              />
+            </div>
+            <div>
+              <Label>Precio</Label>
+              <Input
+                type="text"
+                value={formDetalle.precio.toFixed(2)}
+                readOnly
+              />
+            </div>
+            <div>
+              <Label>Subtotal</Label>
+              <Input
+                type="text"
+                value={formDetalle.subtotal.toFixed(2)}
+                readOnly
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                type="submit"
+                className="w-full bg-gray-800 text-white hover:bg-gray-700"
+              >
+                Agregar
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* TABS: Artículos vendidos / Historial devoluciones */}
+      <Tabs defaultValue="detalles" className="mt-2">
+        <TabsList>
+          <TabsTrigger value="detalles">Artículos vendidos</TabsTrigger>
+          <TabsTrigger value="devoluciones">
+            Historial de devoluciones
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB: DETALLES VENTA */}
+        <TabsContent value="detalles" className="mt-4">
+          <Table className="border border-gray-200 rounded-lg">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Artículo</TableHead>
+                <TableHead>Cantidad</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead>Subtotal (a pagar)</TableHead>
+                {isEditing && (
+                  <>
+                    <TableHead>Devuelto</TableHead>
+                    <TableHead>Pendiente</TableHead>
+                  </>
+                )}
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isEditing ? (
+                detallesBackend.length > 0 ? (
+                  detallesBackend.map((d) => {
+                    const devuelto = d.cantidad_devuelta ?? 0;
+                    const pendiente = (d.cantidad ?? 0) - devuelto;
+                    return (
+                      <TableRow key={d.iddetalle_venta}>
+                        <TableCell>{d.articulo}</TableCell>
+                        <TableCell>{d.cantidad}</TableCell>
+                        <TableCell>
+                          ${Number(d.precio ?? 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(d.subtotal ?? 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>{devuelto}</TableCell>
+                        <TableCell>{pendiente}</TableCell>
+                        <TableCell className="flex gap-2">
+                          {!isCancelada && pendiente > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenDevolucionParcial(d)}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" />
+                              Devolver
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-gray-500 py-4"
+                    >
+                      No hay detalles para esta venta.
+                    </TableCell>
+                  </TableRow>
+                )
+              ) : detallesLocal.length > 0 ? (
+                detallesLocal.map((d, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>{d.articulo}</TableCell>
+                    <TableCell>{d.cantidad}</TableCell>
+                    <TableCell>${Number(d.precio ?? 0).toFixed(2)}</TableCell>
+                    <TableCell>${Number(d.subtotal ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEliminarDetalleLocal(idx)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-500 py-4"
+                  >
+                    No hay artículos agregados.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          {/* Total solo en esta tab */}
+          <div className="mt-4 text-right font-semibold">
+            Total: ${Number(totalMostrar).toFixed(2)}
+          </div>
+        </TabsContent>
+
+        {/* TAB: HISTORIAL DEVOLUCIONES */}
+        <TabsContent value="devoluciones" className="mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Artículo</TableHead>
+                <TableHead>Cantidad devuelta</TableHead>
+                <TableHead>Subtotal</TableHead>
+                <TableHead>Motivo</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {historialDevoluciones.length > 0 ? (
+                historialDevoluciones.map((d) => (
+                  <TableRow key={d.iddevolucion_detalle}>
+                    <TableCell>{d.fecha_devolucion}</TableCell>
+                    <TableCell>{d.articulo}</TableCell>
+                    <TableCell>{d.cantidad_devuelta}</TableCell>
+                    <TableCell>${d.subtotal.toFixed(2)}</TableCell>
+                    <TableCell>{d.motivo}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-500 py-4"
+                  >
+                    No hay devoluciones registradas para esta venta.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialog cancelación */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar venta</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <Label className="text-sm">Motivo (catálogo)</Label>
+              <select
+                title="motivo"
+                className="mt-1 w-full border rounded-md p-2 text-sm"
+                value={selectedMotivoCancelId}
+                onChange={(e) => setSelectedMotivoCancelId(e.target.value)}
+              >
+                <option value="">-- Seleccionar motivo --</option>
+                {motivosCancel.map((m) => (
+                  <option key={m.idmotivo} value={m.idmotivo}>
+                    {m.nombre}
+                  </option>
+                ))}
+              </select>
+              {motivosCancel.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  No hay motivos de cancelación registrados, puedes crear uno
+                  abajo.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setShowNuevoMotivoCancel((prev) => !prev)}
+              >
+                <Plus className="h-4 w-4" />
+                {showNuevoMotivoCancel
+                  ? "Ocultar nuevo motivo"
+                  : "Agregar nuevo motivo"}
+              </Button>
+              {showNuevoMotivoCancel && (
+                <div>
+                  <Label className="text-sm">
+                    Crear nuevo motivo (si no existe)
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Ej. Error en el cobro"
+                    value={nuevoMotivoCancel}
+                    onChange={(e) => setNuevoMotivoCancel(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm">
+                Descripción adicional (opcional)
+              </Label>
+              <textarea
+                title="descripcion"
+                className="w-full border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-300 mt-1"
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+            >
+              Cerrar
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex items-center gap-2"
+              onClick={handleConfirmCancel}
+            >
+              <Ban className="h-4 w-4" />
+              Cancelar venta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog devolución parcial */}
+      <Dialog open={devolDialogOpen} onOpenChange={setDevolDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Devolución parcial</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-gray-600">
+              Artículo:{" "}
+              <strong>{selectedDetalleForDevol?.articulo ?? ""}</strong>
+            </p>
+            <div>
+              <Label className="text-sm">Cantidad a devolver</Label>
+              <Input
+                type="number"
+                value={devolCantidad}
+                onChange={(e) => setDevolCantidad(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm">Motivo (catálogo)</Label>
+              <select
+                title="motivo"
+                className="mt-1 w-full border rounded-md p-2 text-sm"
+                value={selectedMotivoDevolId}
+                onChange={(e) => setSelectedMotivoDevolId(e.target.value)}
+              >
+                <option value="">-- Seleccionar motivo --</option>
+                {motivosDevol.map((m) => (
+                  <option key={m.idmotivo} value={m.idmotivo}>
+                    {m.nombre}
+                  </option>
+                ))}
+              </select>
+              {motivosDevol.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  No hay motivos de devolución registrados, puedes crear uno
+                  abajo.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setShowNuevoMotivoDevol((prev) => !prev)}
+              >
+                <Plus className="h-4 w-4" />
+                {showNuevoMotivoDevol
+                  ? "Ocultar nuevo motivo"
+                  : "Agregar nuevo motivo"}
+              </Button>
+              {showNuevoMotivoDevol && (
+                <div>
+                  <Label className="text-sm">
+                    Crear nuevo motivo (si no existe)
+                  </Label>
+                  <Input
+                    className="mt-1"
+                    placeholder="Ej. Producto defectuoso"
+                    value={nuevoMotivoDevol}
+                    onChange={(e) => setNuevoMotivoDevol(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm">
+                Descripción adicional (opcional)
+              </Label>
+              <textarea
+                title="descripcion"
+                className="w-full border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-300 mt-1"
+                rows={3}
+                value={devolReason}
+                onChange={(e) => setDevolReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDevolDialogOpen(false)}>
+              Cerrar
+            </Button>
+            <Button
+              variant="default"
+              className="flex items-center gap-2"
+              onClick={handleConfirmDevolucionParcial}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Registrar devolución
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

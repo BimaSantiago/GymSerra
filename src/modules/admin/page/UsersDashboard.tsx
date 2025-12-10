@@ -394,7 +394,7 @@ const UsersDashboard = () => {
       </div>
 
       {/* Tabla de usuarios */}
-      <Table className="border border-gray-200 rounded-lg shadow-md">
+      <Table className="rounded-lg shadow-md">
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>

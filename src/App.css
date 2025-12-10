@@ -126,3 +126,7 @@
 .fc {
   --fc-today-bg-color: #58585a;
 }
+
+body {
+  scrollbar-color: gray transparent;
+}

@@ -54,6 +54,8 @@ interface Cancelacion {
   idmovimiento: number;
   descripcion: string | null;
   motivo: string;
+  /** Monto que afecta al corte (normalmente total de la venta cancelada) */
+  monto_cancelado?: number;
 }
 
 interface ApiDetalleResponse {
@@ -133,10 +135,22 @@ const CorteCajaDetalle: React.FC = () => {
   /* ======================= TOTALES / DERIVADOS ======================= */
 
   const totalVentas = ventas.reduce((sum, v) => sum + Number(v.total ?? 0), 0);
+
   const totalDevoluciones = devoluciones.reduce(
     (sum, d) => sum + Number(d.monto_devuelto ?? 0),
     0
   );
+
+  const totalCancelaciones = cancelaciones.reduce(
+    (sum, c) => sum + Number(c.monto_cancelado ?? 0),
+    0
+  );
+
+  // Si el corte está abierto, el total actual se calcula en base a:
+  // ventas - devoluciones - cancelaciones
+  const totalActualCorte = isCorteAbierto
+    ? totalVentas - totalDevoluciones - totalCancelaciones
+    : Number(info?.total_vendido ?? 0);
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -208,9 +222,11 @@ const CorteCajaDetalle: React.FC = () => {
               />
             </div>
             <div>
-              <Label>Total del corte</Label>
+              <Label>
+                {isCorteAbierto ? "Total actual del corte" : "Total del corte"}
+              </Label>
               <Input
-                value={`$ ${Number(info.total_vendido ?? 0).toFixed(2)}`}
+                value={`$ ${totalActualCorte.toFixed(2)}`}
                 readOnly
                 className="mt-1"
               />
@@ -233,6 +249,10 @@ const CorteCajaDetalle: React.FC = () => {
               <span>
                 Total devoluciones ligadas:{" "}
                 <strong>${totalDevoluciones.toFixed(2)}</strong>
+              </span>
+              <span>
+                Total cancelaciones ligadas:{" "}
+                <strong>${totalCancelaciones.toFixed(2)}</strong>
               </span>
             </div>
           </div>
@@ -279,8 +299,6 @@ const CorteCajaDetalle: React.FC = () => {
                     <TableHead>ID mov.</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Comentario</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -291,8 +309,7 @@ const CorteCajaDetalle: React.FC = () => {
                         <TableCell>{v.idmovimiento}</TableCell>
                         <TableCell>{v.fecha}</TableCell>
                         <TableCell>{v.idcliente ?? "—"}</TableCell>
-                        <TableCell>{v.iduser ?? "—"}</TableCell>
-                        <TableCell>{v.comentario || "—"}</TableCell>
+
                         <TableCell className="text-right">
                           ${Number(v.total ?? 0).toFixed(2)}
                         </TableCell>
@@ -369,32 +386,35 @@ const CorteCajaDetalle: React.FC = () => {
                   Cancelaciones asociadas al corte
                 </h3>
                 <span className="text-sm text-gray-400">
-                  {cancelaciones.length} cancelación(es)
+                  {cancelaciones.length} cancelación(es) • Total cancelado:{" "}
+                  <strong>${totalCancelaciones.toFixed(2)}</strong>
                 </span>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID cancelación</TableHead>
                     <TableHead>ID movimiento</TableHead>
                     <TableHead>Motivo</TableHead>
                     <TableHead>Descripción</TableHead>
+                    <TableHead className="text-right">Monto</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {cancelaciones.length > 0 ? (
                     cancelaciones.map((c) => (
                       <TableRow key={c.idcancelacion}>
-                        <TableCell>{c.idcancelacion}</TableCell>
                         <TableCell>{c.idmovimiento}</TableCell>
                         <TableCell>{c.motivo}</TableCell>
                         <TableCell>{c.descripcion || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          ${Number(c.monto_cancelado ?? 0).toFixed(2)}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={5}
                         className="text-center text-gray-500 py-4"
                       >
                         No hay cancelaciones asociadas a este corte.

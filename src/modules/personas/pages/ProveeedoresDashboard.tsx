@@ -643,7 +643,7 @@ const ProveedoresDashboard = () => {
                 {compras.map((c) => (
                   <TableRow
                     key={c.idcompra}
-                    className="cursor-pointer hover:bg-gray-100"
+                    className="cursor-pointer hover:bg-accent"
                     onClick={() => handleViewDetalleCompra(c)}
                   >
                     <TableCell>{c.idcompra}</TableCell>

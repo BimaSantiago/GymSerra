@@ -64,7 +64,7 @@ switch ($action) {
               p.correo_vendedor
             FROM proveedores p
             $whereSql
-            ORDER BY p.nombre ASC
+            ORDER BY p.idproveedor ASC
             LIMIT ? OFFSET ?
         ";
         $stmt = $conn->prepare($sql);

@@ -50,12 +50,12 @@ function listarCortes($conn)
   $types   = '';
 
   if (!empty($dateStart)) {
-    $where[]  = "DATE(fecha_inicio) >= ?";
+    $where[]  = "DATE(c.fecha_inicio) >= ?";
     $params[] = $dateStart;
     $types   .= 's';
   }
   if (!empty($dateEnd)) {
-    $where[]  = "DATE(fecha_inicio) <= ?";
+    $where[]  = "DATE(c.fecha_inicio) <= ?";
     $params[] = $dateEnd;
     $types   .= 's';
   }
@@ -63,7 +63,7 @@ function listarCortes($conn)
   $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
   // Total de registros
-  $sqlCount = "SELECT COUNT(*) AS total FROM corte_caja $whereSql";
+  $sqlCount = "SELECT COUNT(*) AS total FROM corte_caja c $whereSql";
   $stmtCount = mysqli_prepare($conn, $sqlCount);
   if ($stmtCount === false) {
     echo json_encode([
@@ -93,10 +93,41 @@ function listarCortes($conn)
   mysqli_stmt_close($stmtCount);
 
   // Lista de cortes
-  $sqlList = "SELECT idcorte, folio, fecha_inicio, fecha_corte, total_vendido
-              FROM corte_caja
+  // Si el corte está cerrado: usa total_vendido almacenado
+  // Si está abierto: calcula ventas - devoluciones - cancelaciones
+  $sqlList = "SELECT
+                c.idcorte,
+                c.folio,
+                c.fecha_inicio,
+                c.fecha_corte,
+                CASE
+                  WHEN c.fecha_corte IS NOT NULL THEN c.total_vendido
+                  ELSE (
+                    COALESCE((
+                      SELECT SUM(m.total)
+                      FROM movimiento m
+                      WHERE m.idcorte = c.idcorte
+                        AND m.tipo = 'Venta'
+                    ), 0)
+                    - COALESCE((
+                      SELECT SUM(d.monto_devuelto)
+                      FROM devolucion d
+                      WHERE d.idcorte = c.idcorte
+                    ), 0)
+                    - COALESCE((
+                      SELECT SUM(m2.total)
+                      FROM cancelacion ca
+                      INNER JOIN movimiento m2 ON m2.idmovimiento = ca.idmovimiento
+                      INNER JOIN motivos_cancelacion mc ON mc.idmotivo = ca.idmotivo
+                      WHERE m2.idcorte = c.idcorte
+                        AND m2.tipo = 'Venta'
+                        AND mc.tipo = 'Cancelacion'
+                    ), 0)
+                  )
+                END AS total_vendido
+              FROM corte_caja c
               $whereSql
-              ORDER BY fecha_inicio DESC
+              ORDER BY c.fecha_inicio DESC
               LIMIT ? OFFSET ?";
 
   $stmtList = mysqli_prepare($conn, $sqlList);
@@ -139,6 +170,7 @@ function listarCortes($conn)
     'total'   => $total,
   ]);
 }
+
 
 /**
  * CERRAR CORTE ACTUAL Y CREAR UNO NUEVO (mysqli)
@@ -502,14 +534,20 @@ function detalleCorte($conn)
   mysqli_free_result($resDevo);
   mysqli_stmt_close($stmtDevo);
 
-  // Cancelaciones asociadas (por ventas de este corte)
+    // Cancelaciones asociadas (por ventas de este corte)
   $sqlCanc = "
-    SELECT c.idcancelacion, c.idmovimiento, c.descripcion, mc.nombre AS motivo
+    SELECT 
+      c.idcancelacion, 
+      c.idmovimiento, 
+      c.descripcion, 
+      mc.nombre AS motivo,
+      m.total AS monto_cancelado
     FROM cancelacion c
     INNER JOIN motivos_cancelacion mc ON c.idmotivo = mc.idmotivo
     INNER JOIN movimiento m ON c.idmovimiento = m.idmovimiento
     WHERE m.idcorte = ?
       AND m.tipo = 'Venta'
+      AND mc.tipo = 'Cancelacion'
   ";
   $stmtCanc = mysqli_prepare($conn, $sqlCanc);
   if ($stmtCanc === false) {
@@ -547,3 +585,4 @@ function detalleCorte($conn)
     'cancelaciones' => $cancelaciones,
   ]);
 }
+
