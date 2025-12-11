@@ -15,7 +15,7 @@ const Menu = () => {
     "md:block md:max-h-none md:opacity-100 md:translate-y-0 md:overflow-visible";
 
   return (
-    <nav className="bg-gray-800 text-white py-3 px-4 fixed w-full z-50 shadow-lg">
+    <nav className="bg-blue-900 text-white py-3 px-4 fixed w-full z-50 shadow-lg">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold tracking-wide">GymSerra</h2>
         <Button
@@ -26,19 +26,16 @@ const Menu = () => {
         >
           <div className="w-6 h-6 relative">
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${
-                isOpen ? "rotate-45 top-2.5" : "top-1"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${isOpen ? "rotate-45 top-2.5" : "top-1"
+                }`}
             ></span>
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 top-3 ${
-                isOpen ? "opacity-0" : "opacity-100"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 top-3 ${isOpen ? "opacity-0" : "opacity-100"
+                }`}
             ></span>
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${
-                isOpen ? "-rotate-45 top-2.5" : "top-5"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${isOpen ? "-rotate-45 top-2.5" : "top-5"
+                }`}
             ></span>
           </div>
         </Button>

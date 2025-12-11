@@ -14,21 +14,21 @@ import {
 
 const HomePublic = () => {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-white text-gray-900 overflow-x-hidden">
       {/* Hero */}
       <section className="relative h-screen w-full overflow-hidden">
         <Principal />
       </section>
 
       {/* Quiénes Somos */}
-      <section className="bg-card py-16">
+      <section className="bg-white py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="mb-6 text-3xl font-bold tracking-tight text-foreground"
+            className="mb-6 text-3xl font-bold tracking-tight text-gray-900"
           >
             Quiénes Somos
           </motion.h2>
@@ -37,9 +37,9 @@ const HomePublic = () => {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="mx-auto max-w-3xl text-lg leading-relaxed text-muted-foreground"
+            className="mx-auto max-w-3xl text-lg leading-relaxed text-gray-600"
           >
-            En <span className="font-semibold text-foreground">GymSerra</span>{" "}
+            En <span className="font-semibold text-blue-600">GymSerra</span>{" "}
             formamos atletas, soñadores y seres humanos íntegros. A través de la
             gimnasia artística, el parkour y el entrenamiento funcional,
             desarrollamos no solo fuerza física, sino también disciplina,
@@ -54,9 +54,9 @@ const HomePublic = () => {
       </section>
 
       {/* Productos destacados */}
-      <section className="bg-gradient-to-b from-background to-muted/30 py-16">
+      <section className="bg-gradient-to-b from-white to-blue-50/50 py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-10 text-center text-3xl font-bold text-foreground">
+          <h2 className="mb-10 text-center text-3xl font-bold text-gray-900">
             Nuestros Productos
           </h2>
           <ArticulosCarousel />
@@ -64,30 +64,30 @@ const HomePublic = () => {
       </section>
 
       {/* Pilares */}
-      <section className="bg-gradient-to-b from-muted/30 to-background py-16">
+      <section className="bg-gradient-to-b from-blue-50/50 to-white py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <h2 className="mb-10 text-3xl font-bold text-foreground">
+          <h2 className="mb-10 text-3xl font-bold text-gray-900">
             Nuestros Pilares
           </h2>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                icon: <Dumbbell className="mb-4 h-10 w-10 text-primary" />,
+                icon: <Dumbbell className="mb-4 h-10 w-10 text-blue-600" />,
                 title: "Disciplina",
                 desc: "El esfuerzo diario y la constancia son la base del éxito.",
               },
               {
-                icon: <Users className="mb-4 h-10 w-10 text-primary" />,
+                icon: <Users className="mb-4 h-10 w-10 text-emerald-500" />,
                 title: "Trabajo en Equipo",
                 desc: "Nos apoyamos unos a otros para crecer juntos.",
               },
               {
-                icon: <Heart className="mb-4 h-10 w-10 text-primary" />,
+                icon: <Heart className="mb-4 h-10 w-10 text-blue-600" />,
                 title: "Pasión",
                 desc: "Cada entrenamiento es una oportunidad para amar el proceso.",
               },
               {
-                icon: <Star className="mb-4 h-10 w-10 text-primary" />,
+                icon: <Star className="mb-4 h-10 w-10 text-emerald-500" />,
                 title: "Superación",
                 desc: "Cada meta alcanzada es un paso más hacia nuestros sueños.",
               },
@@ -98,14 +98,14 @@ const HomePublic = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.15 }}
                 viewport={{ once: true }}
-                className="group rounded-2xl border border-border bg-card p-8 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="group rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="flex flex-col items-center">
                   {item.icon}
-                  <h3 className="mb-2 text-xl font-semibold text-foreground">
+                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  <p className="text-sm text-gray-600">{item.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -114,7 +114,7 @@ const HomePublic = () => {
       </section>
 
       {/* CTA Noticias */}
-      <section className="relative overflow-hidden bg-slate-900 py-16 text-center text-white">
+      <section className="relative overflow-hidden bg-blue-900 py-16 text-center text-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -125,29 +125,29 @@ const HomePublic = () => {
           <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
             ¡Únete a nuestra familia GymSerra!
           </h2>
-          <p className="mb-8 text-lg text-slate-100/90">
+          <p className="mb-8 text-lg text-blue-100/90">
             Vive una experiencia única donde el cuerpo, la mente y el espíritu
             se unen para crear tu mejor versión.
           </p>
           <Link to="/noticias">
-            <Button className="rounded-full bg-white px-8 py-3 text-lg font-semibold text-slate-900 shadow-md transition-transform hover:-translate-y-0.5 hover:bg-slate-100">
+            <Button className="rounded-full bg-white px-8 py-3 text-lg font-semibold text-blue-900 shadow-md transition-transform hover:-translate-y-0.5 hover:bg-blue-50">
               Ver Noticias y Eventos
             </Button>
           </Link>
         </motion.div>
 
-        <Heart className="absolute bottom-8 right-8 h-20 w-20 animate-pulse text-slate-400/40" />
+
       </section>
 
       {/* Programas + sección interactiva */}
-      <section className="bg-gradient-to-b from-background to-muted/30 py-20">
+      <section className="bg-gradient-to-b from-white to-gray-50 py-20">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="mb-10 text-3xl font-bold text-foreground"
+            className="mb-10 text-3xl font-bold text-gray-900"
           >
             Nuestros Programas
           </motion.h2>
@@ -158,7 +158,7 @@ const HomePublic = () => {
                 titulo: "Gimnasia Artística Inicial",
                 desc: "Para niños y niñas que comienzan su camino en la gimnasia. Desarrolla coordinación, fuerza y confianza en un entorno divertido.",
                 icon: (
-                  <Baby className="h-14 w-14 text-primary" strokeWidth={1.6} />
+                  <Baby className="h-14 w-14 text-blue-600" strokeWidth={1.6} />
                 ),
               },
               {
@@ -188,28 +188,28 @@ const HomePublic = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.15, duration: 0.6 }}
                 viewport={{ once: true }}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="flex flex-col items-center justify-center space-y-5">
                   <motion.div
                     whileHover={{ scale: 1.08 }}
                     transition={{ type: "spring", stiffness: 200 }}
-                    className="rounded-full bg-muted p-6"
+                    className="rounded-full bg-blue-50 p-6"
                   >
                     {programa.icon}
                   </motion.div>
 
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="text-xl font-bold text-gray-900">
                     {programa.titulo}
                   </h3>
-                  <p className="mb-4 px-4 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mb-4 px-4 text-sm leading-relaxed text-gray-600">
                     {programa.desc}
                   </p>
 
                   <Link to="/clases">
                     <Button
                       variant="outline"
-                      className="rounded-full border-primary/40 text-primary hover:bg-primary/10"
+                      className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50"
                     >
                       Ver más
                     </Button>
@@ -221,10 +221,10 @@ const HomePublic = () => {
 
           {/* FAQ interactivo */}
           <div className="mt-16 text-left">
-            <h3 className="mb-4 text-center text-2xl font-semibold text-foreground">
+            <h3 className="mb-4 text-center text-2xl font-semibold text-gray-900">
               Preguntas frecuentes
             </h3>
-            <p className="mb-6 text-center text-sm text-muted-foreground">
+            <p className="mb-6 text-center text-sm text-gray-600">
               Resolvemos algunas dudas rápidas antes de que te inscribas.
             </p>
             <div className="mx-auto max-w-3xl">

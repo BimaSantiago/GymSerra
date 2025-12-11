@@ -14,11 +14,11 @@ import {
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-800 text-gray-100 pt-12 pb-8 border-t border-gray-700">
+    <footer className="bg-blue-900 text-gray-100 pt-12 pb-8 border-t border-blue-800">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         {/* Contacto */}
         <div>
-          <h3 className="text-white text-xl font-semibold mb-4 border-b border-gray-600 pb-2">
+          <h3 className="text-white text-xl font-semibold mb-4 border-b border-blue-700 pb-2">
             Contáctanos
           </h3>
           <ul className="space-y-3 text-sm">
@@ -56,7 +56,7 @@ const Footer = () => {
 
         {/* Acceso rápido */}
         <div>
-          <h3 className="text-white text-xl font-semibold mb-4 border-b border-gray-600 pb-2">
+          <h3 className="text-white text-xl font-semibold mb-4 border-b border-blue-700 pb-2">
             Acceso Rápido
           </h3>
           <ul className="space-y-3 text-sm">
@@ -85,7 +85,7 @@ const Footer = () => {
 
         {/* Información general */}
         <div>
-          <h3 className="text-white text-xl font-semibold mb-4 border-b border-gray-600 pb-2">
+          <h3 className="text-white text-xl font-semibold mb-4 border-b border-blue-700 pb-2">
             Sobre GymSerra
           </h3>
           <p className="text-sm text-gray-100 leading-relaxed">
@@ -98,7 +98,7 @@ const Footer = () => {
       </div>
 
       {/* Línea inferior */}
-      <div className="mt-10 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
+      <div className="mt-10 border-t border-blue-800 pt-6 text-center text-sm text-blue-200">
         © {new Date().getFullYear()}{" "}
         <span className="text-white font-semibold">GymSerra</span>. Todos los
         derechos reservados.
