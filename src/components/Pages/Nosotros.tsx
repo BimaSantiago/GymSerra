@@ -94,8 +94,8 @@ const Nosotros = () => {
     <div className="bg-white min-h-screen text-gray-900 overflow-x-hidden">
       {/* 2. Sobre Nosotros */}
       <MetaBalls
-        color="#26ad4aff"
-        cursorBallColor="#20a945ff"
+        color="#2679adff"
+        cursorBallColor="#1e70c1ff"
         enableTransparency={true}
         clumpFactor={1.5}
         ballCount={20}

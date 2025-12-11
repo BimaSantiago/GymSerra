@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import BlurText from './layout/BlurText';
 import { Renderer, Program, Mesh, Triangle, Transform, Vec3, Camera } from 'ogl';
 
 type MetaBallsProps = {
@@ -301,9 +303,11 @@ const MetaBalls: React.FC<MetaBallsProps> = ({
 
       {/* Centered Text Overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-        <h1 className="text-6xl md:text-8xl font-bold text-blue-700 tracking-tighter drop-shadow-lg">
-          Sobre Nosotros
-        </h1>
+        <BlurText
+          text="Sobre Nosotros"
+          className="text-6xl md:text-8xl font-serif italic font-bold text-green-700 tracking-tighter drop-shadow-lg"
+          delay={0.5}
+        />
       </div>
     </div>
   );
