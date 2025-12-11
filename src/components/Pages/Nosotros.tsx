@@ -93,7 +93,13 @@ const Nosotros = () => {
   return (
     <div className="bg-white min-h-screen text-gray-900 overflow-x-hidden">
       {/* 2. Sobre Nosotros */}
-      <MetaBalls></MetaBalls>
+      <MetaBalls
+        color="#26ad4aff"
+        cursorBallColor="#20a945ff"
+        enableTransparency={true}
+        clumpFactor={1.5}
+        ballCount={20}
+      />
       {/* 2. Sobre Nosotros */}
       <section className="py-16 bg-white">
         <SubSeccion title="¿Quiénes Somos?">

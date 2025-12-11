@@ -248,8 +248,8 @@ const MetaBalls: React.FC<MetaBallsProps> = ({
         const th = p.st + dt;
         const x = Math.cos(th);
         const y = Math.sin(th + dt * p.toggle);
-        const posX = x * p.baseScale * clumpFactor;
-        const posY = y * p.baseScale * clumpFactor;
+        const posX = x * p.baseScale * clumpFactor * 1.5;
+        const posY = y * p.baseScale * clumpFactor * 1.2;
         metaBallsUniform[i].set(posX, posY, p.radius);
       }
 
@@ -260,8 +260,8 @@ const MetaBalls: React.FC<MetaBallsProps> = ({
       } else {
         const cx = gl.canvas.width * 0.5;
         const cy = gl.canvas.height * 0.5;
-        const rx = gl.canvas.width * 0.15;
-        const ry = gl.canvas.height * 0.15;
+        const rx = gl.canvas.width * 0.4;
+        const ry = gl.canvas.height * 0.3;
         targetX = cx + Math.cos(elapsed * speed) * rx;
         targetY = cy + Math.sin(elapsed * speed) * ry;
       }
@@ -295,7 +295,18 @@ const MetaBalls: React.FC<MetaBallsProps> = ({
     enableTransparency
   ]);
 
-  return <div ref={containerRef} className="w-full h-full relative" />;
+  return (
+    <div className="relative w-full h-screen overflow-hidden bg-white">
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* Centered Text Overlay */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <h1 className="text-6xl md:text-8xl font-bold text-blue-700 tracking-tighter drop-shadow-lg">
+          Sobre Nosotros
+        </h1>
+      </div>
+    </div>
+  );
 };
 
 export default MetaBalls;
