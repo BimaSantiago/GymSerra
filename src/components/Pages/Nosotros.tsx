@@ -2,6 +2,7 @@ import Parrafos from "../layout/Parrafos";
 import SubSeccion from "../layout/SubSeccion";
 import SeccionPequenia from "../layout/SeccionPequenia";
 import SeccionPequenia2 from "../layout/SeccionPequenia2";
+import MetaBalls from "../MetaBalls";
 import Imagenes from "../layout/Imagenes";
 import Imagen1 from "../../assets/img1familia.svg";
 import Imagen2 from "../../assets/img1historia.svg";
@@ -91,6 +92,8 @@ const Nosotros = () => {
 
   return (
     <div className="bg-white min-h-screen text-gray-900 overflow-x-hidden">
+      {/* 2. Sobre Nosotros */}
+      <MetaBalls></MetaBalls>
       {/* 2. Sobre Nosotros */}
       <section className="py-16 bg-white">
         <SubSeccion title="¿Quiénes Somos?">
