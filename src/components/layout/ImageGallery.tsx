@@ -47,7 +47,7 @@ const ImageGallery = ({ images = defaultImages }: { images?: string[] }) => {
                                 className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
                                 loading="lazy"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
                                 <p className="text-white font-medium translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                                     Gym Serra Momentos
                                 </p>

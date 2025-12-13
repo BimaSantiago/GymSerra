@@ -130,7 +130,7 @@ const HomePublic = () => {
             se unen para crear tu mejor versión.
           </p>
           <Link to="/noticias">
-            <Button className="rounded-full bg-white px-8 py-3 text-lg font-semibold text-blue-900 shadow-md transition-transform hover:-translate-y-0.5 hover:bg-blue-50">
+            <Button className="rounded-full bg-white px-8 py-3 text-lg font-semibold text-blue-900 shadow-md transition-transform hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-700">
               Ver Noticias y Eventos
             </Button>
           </Link>
@@ -208,8 +208,8 @@ const HomePublic = () => {
 
                   <Link to="/clases">
                     <Button
-                      variant="outline"
-                      className="rounded-full border-blue-200 text-blue-600 hover:bg-blue-50"
+                      variant="ghost"
+                      className="rounded-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-300"
                     >
                       Ver más
                     </Button>

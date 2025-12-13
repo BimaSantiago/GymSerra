@@ -120,7 +120,7 @@ const Productos: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Card className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 bg-white">
+                <Card className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:border-blue-300 hover:shadow-blue-100/50 transition-all duration-300 border border-gray-100 bg-white">
                   <div className="relative overflow-hidden">
                     <img
                       src={producto.img}
@@ -145,11 +145,10 @@ const Productos: React.FC = () => {
                       {producto.descripcion2}
                     </p>
                     <p
-                      className={`font-semibold mb-3 ${
-                        producto.stock > 0
+                      className={`font-semibold mb-3 ${producto.stock > 0
                           ? "text-green-600"
                           : "text-red-500 italic"
-                      }`}
+                        }`}
                     >
                       {producto.stock > 0
                         ? `En stock: ${producto.stock}`

@@ -16,11 +16,11 @@ const SimpleParallax = () => {
   // Capas con diferentes velocidades
   const yFondo = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]);
   const yArbol = useTransform(scrollYProgress, [0, 1], ["0%", "-28%"]);
-  const ySol = useTransform(scrollYProgress, [0, 1], ["5%", "-130%"]);
+  const ySol = useTransform(scrollYProgress, [0, 1], ["40%", "-130%"]);
   const yAtleta = useTransform(scrollYProgress, [0, 1], ["5%", "-70%"]);
   const yPasto = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]);
 
-  // ✨ Movimiento del texto (ligero hacia arriba)
+  // Movimiento del texto (ligero hacia arriba)
   const yTexto = useTransform(scrollYProgress, [0, 1], ["0%", "-45%"]);
   const opacityTexto = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
@@ -50,7 +50,7 @@ const SimpleParallax = () => {
           <img
             src="/img/sol.png"
             alt="Sol"
-            className="w-full h-full object-cover pointer-events-none"
+            className="w-full object-cover pointer-events-none"
           />
         </motion.div>
 

@@ -75,9 +75,9 @@ export function PrettyCarousel({
     items && items.length
       ? items
       : Array.from({ length: 5 }).map((_, i) => ({
-          src: `https://picsum.photos/seed/shadcn-${i}/1600/900`,
-          alt: `Placeholder ${i + 1}`,
-        }));
+        src: `https://picsum.photos/seed/shadcn-${i}/1600/900`,
+        alt: `Placeholder ${i + 1}`,
+      }));
 
   const aspectClass = aspect === "square" ? "aspect-square" : "aspect-video";
 
@@ -153,8 +153,8 @@ export function PrettyCarousel({
               </CarouselContent>
 
               {/* Arrow controls */}
-              <CarouselPrevious className=" sm:flex -left-3 md:-left-6 h-10 w-10 rounded-full bg-white hover:bg-gray-100 shadow-md" />
-              <CarouselNext className="hidden sm:flex -right-3 md:-right-6 h-10 w-10 rounded-full bg-white hover:bg-gray-100 shadow-md" />
+              <CarouselPrevious className=" sm:flex -left-3 md:-left-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
+              <CarouselNext className="hidden sm:flex -right-3 md:-right-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
             </Carousel>
 
             {/* Dots */}
@@ -168,7 +168,7 @@ export function PrettyCarousel({
                     "h-2.5 w-2.5 rounded-full transition-al",
                     i === current
                       ? "w-6 bg-white"
-                      : "bg-white/40 hover:bg-primary/60"
+                      : "bg-white/40 hover:bg-blue-600"
                   )}
                 />
               ))}

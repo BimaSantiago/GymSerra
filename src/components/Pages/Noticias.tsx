@@ -79,7 +79,7 @@ const Noticias = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {EXAMPLE_NEWS.map((news) => (
-            <Card key={news.id} className="hover:shadow-md transition-shadow">
+            <Card key={news.id} className="hover:shadow-xl hover:border-blue-300 hover:shadow-blue-100/50 transition-all duration-300 border border-transparent">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-lg font-semibold">{news.title}</span>
@@ -87,8 +87,8 @@ const Noticias = () => {
                     {news.type === "gimnasia-artistica"
                       ? "Gimnasia Artística"
                       : news.type === "parkour"
-                      ? "Parkour"
-                      : "Crossfit"}
+                        ? "Parkour"
+                        : "Crossfit"}
                   </Badge>
                 </CardTitle>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -118,7 +118,10 @@ const Noticias = () => {
             </Card>
           ))}
         </div>
-        <Button className="flex mx-auto my-6  bg-gray-800 hover:bg-gray-600 text-white font-medium">
+        <Button
+          variant="ghost"
+          className="flex mx-auto my-6 text-blue-600 hover:bg-blue-50 hover:text-blue-800 font-medium transition-all"
+        >
           Ver mas noticias
         </Button>
       </div>

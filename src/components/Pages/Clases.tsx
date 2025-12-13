@@ -171,9 +171,9 @@ const Clases: React.FC = () => {
     () =>
       selectedNivel && selectedDias
         ? planes.find(
-            (p) =>
-              p.idnivel === selectedNivel && p.dias_por_semana === selectedDias
-          ) || null
+          (p) =>
+            p.idnivel === selectedNivel && p.dias_por_semana === selectedDias
+        ) || null
         : null,
     [planes, selectedNivel, selectedDias]
   );
@@ -188,8 +188,8 @@ const Clases: React.FC = () => {
   const costoPorClaseAprox =
     planSeleccionado && planSeleccionado.dias_por_semana > 0
       ? Math.round(
-          (totalMensual / (planSeleccionado.dias_por_semana * 4)) * 10
-        ) / 10
+        (totalMensual / (planSeleccionado.dias_por_semana * 4)) * 10
+      ) / 10
       : 0;
 
   /* ------------------------- UI ------------------------- */
@@ -431,7 +431,7 @@ const Clases: React.FC = () => {
                             <span className="underline">
                               {planesDelNivel.length > 0
                                 ? niveles.find((n) => n.id === selectedNivel)
-                                    ?.nombre
+                                  ?.nombre
                                 : "este nivel"}
                             </span>
                           </span>
@@ -550,7 +550,7 @@ const Clases: React.FC = () => {
                   return (
                     <Card
                       key={nivel.id}
-                      className="rounded-xl border border-border bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                      className="rounded-xl border border-border bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-300 hover:shadow-blue-100/50"
                     >
                       <CardHeader>
                         <CardTitle className="text-base font-semibold">

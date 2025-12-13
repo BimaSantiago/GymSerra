@@ -18,7 +18,7 @@ const SubmenuItems = ({ data, paths, className }: Props) => {
       {data.map((item, index) => (
         <li
           key={index}
-          className="hover:bg-gray-700 rounded-md transition-colors"
+          className="hover:bg-blue-400 rounded-md transition-colors"
         >
           <Link
             to={paths[index]}

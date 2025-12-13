@@ -85,7 +85,7 @@ const NoticiasPublicas = () => {
             noticias.map((n) => (
               <Card
                 key={n.idnoticias}
-                className="shadow-lg hover:shadow-2xl border border-gray-200 rounded-xl overflow-hidden bg-white transition-transform hover:-translate-y-1"
+                className="shadow-lg hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-300 border border-gray-200 rounded-xl overflow-hidden bg-white transition-all duration-300 hover:-translate-y-1"
               >
                 <CardHeader className="p-0">
                   <img
@@ -139,7 +139,7 @@ const NoticiasPublicas = () => {
             <Button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="bg-gray-800 text-white hover:bg-gray-700 rounded-lg"
+              className="bg-blue-900 text-white hover:bg-blue-700 rounded-lg shadow-md transition-colors"
             >
               Anterior
             </Button>
@@ -149,7 +149,7 @@ const NoticiasPublicas = () => {
             <Button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="bg-gray-800 text-white hover:bg-gray-700 rounded-lg"
+              className="bg-blue-900 text-white hover:bg-blue-700 rounded-lg shadow-md transition-colors"
             >
               Siguiente
             </Button>

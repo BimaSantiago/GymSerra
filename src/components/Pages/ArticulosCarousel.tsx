@@ -129,7 +129,7 @@ export function ArticulosCarousel() {
                 }}
                 viewport={{ once: false, amount: 0.7 }}
               >
-                <Card className="overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <Card className="overflow-hidden shadow-md hover:shadow-xl hover:shadow-blue-100/50 hover:border-blue-300 transition-all duration-300 border border-gray-100">
                   <CardContent className="p-0">
                     <motion.img
                       src={articulo.img}
@@ -151,8 +151,8 @@ export function ArticulosCarousel() {
                       </p>
                       <Link to="/productos">
                         <Button
-                          variant="outline"
-                          className="rounded-full text-blue-600 border-blue-500 hover:bg-blue-100 hover:text-blue-800"
+                          variant="ghost"
+                          className="rounded-full text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition-colors duration-300"
                         >
                           Ver mas articulos
                         </Button>

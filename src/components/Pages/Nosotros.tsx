@@ -193,8 +193,10 @@ const Nosotros = () => {
                 key={index}
                 className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 border border-gray-100 flex flex-col items-center text-center group"
               >
-                <div className="mb-5 bg-blue-50 p-4 rounded-full group-hover:bg-blue-100 transition-colors">
-                  {valor.icono}
+                <div className="mb-5 bg-blue-50 p-4 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                  <div className="text-blue-600 group-hover:text-white transition-colors duration-300">
+                    {valor.icono}
+                  </div>
                 </div>
                 <h4 className="text-xl font-bold text-gray-900 mb-3">
                   {valor.titulo}

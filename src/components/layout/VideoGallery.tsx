@@ -95,11 +95,11 @@ const VideoGallery = () => {
                             />
 
                             {/* Overlay Oscuro */}
-                            <div className="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40" />
+                            <div className="absolute inset-0 bg-blue-900/20 transition-colors group-hover:bg-blue-900/40" />
 
                             {/* Botón Play */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/30">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:border-blue-400 border border-white/30">
                                     <Play className="h-8 w-8 fill-white text-white ml-1" />
                                 </div>
                             </div>
