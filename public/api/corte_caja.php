@@ -5,9 +5,13 @@ header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(200);
+  exit;
+}
+
 include 'conexion.php';
 $conn = ConcectarBd();
-// Asegurar UTF-8
 mysqli_set_charset($conn, "utf8");
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
@@ -16,573 +20,366 @@ switch ($action) {
   case 'list':
     listarCortes($conn);
     break;
-
-  case 'closeCurrent':
-    cerrarCorteActual($conn);
+  case 'closeShift': // Cerrar Turno (X)
+    cerrarTurnoX($conn);
     break;
-
+  case 'closeDay': // Cerrar Día (Z)
+    cerrarDiaZ($conn);
+    break;
+  case 'getCurrent': 
+    obtenerCorteActual($conn);
+    break;
   case 'detalle':
     detalleCorte($conn);
     break;
-
   default:
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Acción no válida.',
-    ]);
+    echo json_encode(['success' => false, 'error' => 'Acción no válida.']);
     break;
 }
 
-/**
- * LISTAR CORTES CON PAGINACIÓN Y RANGO DE FECHAS (mysqli)
- */
-function listarCortes($conn)
-{
+// --- HELPERS ---
+
+function tipoDbDesdeUI($tipoUI) {
+  $t = strtoupper(trim((string)$tipoUI));
+  // En BD: X = Turno, Y = Día (Z)
+  return ($t === 'Z' || $t === 'Y') ? 'Y' : 'X';
+}
+
+function tipoUIDesdeDb($tipoDb) {
+  $t = strtoupper(trim((string)$tipoDb));
+  return $t === 'Y' ? 'Z' : 'X';
+}
+
+// Calcula el total neto (Ventas - Devoluciones - Cancelaciones) de un corte X
+function calcularTotalCorteX($conn, $idcorte) {
+  $sql = "
+    SELECT
+      (
+        COALESCE((SELECT SUM(total) FROM movimiento WHERE idcorte = ? AND tipo = 'Venta'), 0)
+        - COALESCE((SELECT SUM(monto_devuelto) FROM devolucion WHERE idcorte = ?), 0)
+        - COALESCE((
+            SELECT SUM(m.total)
+            FROM cancelacion ca
+            INNER JOIN movimiento m ON m.idmovimiento = ca.idmovimiento
+            INNER JOIN motivos_cancelacion mc ON mc.idmotivo = ca.idmotivo
+            WHERE m.idcorte = ? AND m.tipo = 'Venta' AND mc.tipo = 'Cancelacion'
+        ), 0)
+      ) AS total_neto
+  ";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "iii", $idcorte, $idcorte, $idcorte);
+  mysqli_stmt_execute($stmt);
+  $res = mysqli_stmt_get_result($stmt);
+  $row = mysqli_fetch_assoc($res);
+  return (float)($row['total_neto'] ?? 0);
+}
+
+function generarFolio($prefix) {
+  return $prefix . '-' . date('Ymd') . '-' . date('His');
+}
+
+// --- FUNCIONES PRINCIPALES ---
+
+function listarCortes($conn) {
   $page   = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
   $limit  = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
   $offset = ($page - 1) * $limit;
 
-  $dateStart = isset($_GET['dateStart']) ? $_GET['dateStart'] : null;
-  $dateEnd   = isset($_GET['dateEnd']) ? $_GET['dateEnd'] : null;
+  $dateStart = $_GET['dateStart'] ?? null;
+  $dateEnd   = $_GET['dateEnd'] ?? null;
+  $tipoUI    = $_GET['tipo'] ?? null;
 
-  $where   = [];
-  $params  = [];
-  $types   = '';
+  $where = [];
+  $params = [];
+  $types = '';
 
-  if (!empty($dateStart)) {
-    $where[]  = "DATE(c.fecha_inicio) >= ?";
-    $params[] = $dateStart;
-    $types   .= 's';
+  if ($dateStart) {
+    $where[] = "DATE(c.fecha_inicio) >= ?";
+    $params[] = $dateStart; $types .= 's';
   }
-  if (!empty($dateEnd)) {
-    $where[]  = "DATE(c.fecha_inicio) <= ?";
-    $params[] = $dateEnd;
-    $types   .= 's';
+  if ($dateEnd) {
+    $where[] = "DATE(c.fecha_inicio) <= ?";
+    $params[] = $dateEnd; $types .= 's';
+  }
+  if ($tipoUI) {
+    $tipoDb = tipoDbDesdeUI($tipoUI);
+    $where[] = "c.tipo = ?";
+    $params[] = $tipoDb; $types .= 's';
   }
 
-  $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+  $whereSql = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
-  // Total de registros
-  $sqlCount = "SELECT COUNT(*) AS total FROM corte_caja c $whereSql";
+  // 1. Total records
+  $sqlCount = "SELECT COUNT(*) as total FROM corte_caja c $whereSql";
   $stmtCount = mysqli_prepare($conn, $sqlCount);
-  if ($stmtCount === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de conteo: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
+  if (!empty($params)) mysqli_stmt_bind_param($stmtCount, $types, ...$params);
+  mysqli_stmt_execute($stmtCount);
+  $total = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCount))['total'];
 
-  if (!empty($params)) {
-    mysqli_stmt_bind_param($stmtCount, $types, ...$params);
-  }
-
-  if (!mysqli_stmt_execute($stmtCount)) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de conteo: ' . mysqli_stmt_error($stmtCount),
-    ]);
-    mysqli_stmt_close($stmtCount);
-    return;
-  }
-
-  $resultCount = mysqli_stmt_get_result($stmtCount);
-  $rowCount    = mysqli_fetch_assoc($resultCount);
-  $total       = (int)$rowCount['total'];
-  mysqli_free_result($resultCount);
-  mysqli_stmt_close($stmtCount);
-
-  // Lista de cortes
-  // Si el corte está cerrado: usa total_vendido almacenado
-  // Si está abierto: calcula ventas - devoluciones - cancelaciones
-  $sqlList = "SELECT
-                c.idcorte,
-                c.folio,
-                c.fecha_inicio,
-                c.fecha_corte,
-                CASE
-                  WHEN c.fecha_corte IS NOT NULL THEN c.total_vendido
-                  ELSE (
-                    COALESCE((
-                      SELECT SUM(m.total)
-                      FROM movimiento m
-                      WHERE m.idcorte = c.idcorte
-                        AND m.tipo = 'Venta'
-                    ), 0)
-                    - COALESCE((
-                      SELECT SUM(d.monto_devuelto)
-                      FROM devolucion d
-                      WHERE d.idcorte = c.idcorte
-                    ), 0)
-                    - COALESCE((
-                      SELECT SUM(m2.total)
-                      FROM cancelacion ca
-                      INNER JOIN movimiento m2 ON m2.idmovimiento = ca.idmovimiento
-                      INNER JOIN motivos_cancelacion mc ON mc.idmotivo = ca.idmotivo
-                      WHERE m2.idcorte = c.idcorte
-                        AND m2.tipo = 'Venta'
-                        AND mc.tipo = 'Cancelacion'
-                    ), 0)
-                  )
-                END AS total_vendido
-              FROM corte_caja c
-              $whereSql
-              ORDER BY c.fecha_inicio DESC
-              LIMIT ? OFFSET ?";
-
+  // 2. Data
+  // Nota: Para cortes cerrados usamos el total guardado. Para abiertos, calculamos al vuelo.
+  $sqlList = "SELECT c.* FROM corte_caja c $whereSql ORDER BY c.idcorte DESC LIMIT ? OFFSET ?";
   $stmtList = mysqli_prepare($conn, $sqlList);
-  if ($stmtList === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de listado: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
-
-  // Agregamos limit y offset al final
-  $paramsList = $params;
-  $typesList  = $types . 'ii';
-  $paramsList[] = $limit;
+  
+  $paramsList = $params; 
+  $paramsList[] = $limit; 
   $paramsList[] = $offset;
-
+  $typesList = $types . 'ii';
+  
   mysqli_stmt_bind_param($stmtList, $typesList, ...$paramsList);
+  mysqli_stmt_execute($stmtList);
+  $resList = mysqli_stmt_get_result($stmtList);
 
-  if (!mysqli_stmt_execute($stmtList)) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de listado: ' . mysqli_stmt_error($stmtList),
-    ]);
-    mysqli_stmt_close($stmtList);
-    return;
-  }
-
-  $resultList = mysqli_stmt_get_result($stmtList);
   $cortes = [];
-  while ($row = mysqli_fetch_assoc($resultList)) {
+  while ($row = mysqli_fetch_assoc($resList)) {
+    // Si es X y está abierto, calcular. Si es Z y está abierto, el cálculo es complejo (suma de hijos), 
+    // pero para listados históricos solemos mostrar lo guardado o 0 si es muy costoso, 
+    // aqui optamos por calcular si es X. Si es Z abierto, lo dejaremos en 0 o requeriría subquery.
+    if (!$row['fecha_corte'] && $row['tipo'] === 'X') {
+        $row['total_vendido'] = calcularTotalCorteX($conn, $row['idcorte']);
+    }
+    
+    $row['tipo'] = tipoUIDesdeDb($row['tipo']);
     $cortes[] = $row;
   }
-  mysqli_free_result($resultList);
-  mysqli_stmt_close($stmtList);
+
+  echo json_encode(['success' => true, 'cortes' => $cortes, 'total' => $total]);
+}
+
+function obtenerCorteActual($conn) {
+  $tipoUI = $_GET['tipo'] ?? 'X';
+  $tipoDb = tipoDbDesdeUI($tipoUI);
+
+  // Buscar el último abierto de ese tipo
+  $sql = "SELECT * FROM corte_caja WHERE tipo = ? AND fecha_corte IS NULL ORDER BY idcorte DESC LIMIT 1";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "s", $tipoDb);
+  mysqli_stmt_execute($stmt);
+  $corte = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+  if ($corte) {
+    $corte['tipo'] = tipoUIDesdeDb($corte['tipo']);
+    
+    if ($tipoDb === 'X') {
+      // Total de X es directo
+      $corte['total_vendido'] = calcularTotalCorteX($conn, $corte['idcorte']);
+    } else {
+      // Total de Z (Y) es la suma de sus hijos X (Cerrados + Abierto actual)
+      // Buscamos hijos X que tengan corte_principal = este corte Z
+      $sqlSum = "SELECT idcorte, fecha_corte, total_vendido FROM corte_caja WHERE corte_principal = ?";
+      $stmtSum = mysqli_prepare($conn, $sqlSum);
+      mysqli_stmt_bind_param($stmtSum, "i", $corte['idcorte']);
+      mysqli_stmt_execute($stmtSum);
+      $resSum = mysqli_stmt_get_result($stmtSum);
+      
+      $totalZ = 0;
+      while($child = mysqli_fetch_assoc($resSum)) {
+         if($child['fecha_corte']) {
+            $totalZ += (float)$child['total_vendido'];
+         } else {
+            // Hijo abierto, calcular al vuelo
+            $totalZ += calcularTotalCorteX($conn, $child['idcorte']);
+         }
+      }
+      $corte['total_vendido'] = $totalZ;
+    }
+  }
+
+  echo json_encode(['success' => true, 'corte' => $corte]);
+}
+
+function detalleCorte($conn) {
+  $idcorte = (int)($_GET['idcorte'] ?? 0);
+  
+  // Obtener info básica
+  $sql = "SELECT * FROM corte_caja WHERE idcorte = ?";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "i", $idcorte);
+  mysqli_stmt_execute($stmt);
+  $info = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+  if (!$info) {
+    echo json_encode(['success' => false, 'error' => 'Corte no encontrado']);
+    return;
+  }
+
+  $tipoDb = $info['tipo']; // X o Y
+  $info['tipo'] = tipoUIDesdeDb($tipoDb);
+
+  // Si está abierto, calculamos el total al vuelo para mostrarlo actualizado
+  if (!$info['fecha_corte']) {
+      if ($tipoDb === 'X') {
+          $info['total_vendido'] = calcularTotalCorteX($conn, $idcorte);
+      } else {
+          // Si es Z abierto, sumar hijos
+          $sqlSumZ = "SELECT idcorte FROM corte_caja WHERE corte_principal = ?";
+          $stmtZ = mysqli_prepare($conn, $sqlSumZ);
+          mysqli_stmt_bind_param($stmtZ, "i", $idcorte);
+          mysqli_stmt_execute($stmtZ);
+          $resZ = mysqli_stmt_get_result($stmtZ);
+          $tot = 0;
+          while($rowZ = mysqli_fetch_assoc($resZ)){
+              $tot += calcularTotalCorteX($conn, $rowZ['idcorte']); // Ojo: esto asume que X cerrado tiene total correcto en BD, pero calcularlo de nuevo es más seguro para consistencia
+          }
+          $info['total_vendido'] = $tot;
+      }
+  }
+
+  $ventas = [];
+  $devoluciones = [];
+  $cancelaciones = [];
+  $turnos = [];
+
+  if ($tipoDb === 'X') {
+    // Detalle de movimientos
+    $qV = "SELECT * FROM movimiento WHERE idcorte = ? AND tipo='Venta' ORDER BY idmovimiento DESC";
+    $stmtV = mysqli_prepare($conn, $qV);
+    mysqli_stmt_bind_param($stmtV, "i", $idcorte);
+    mysqli_stmt_execute($stmtV);
+    $resV = mysqli_stmt_get_result($stmtV);
+    while($r = mysqli_fetch_assoc($resV)) $ventas[] = $r;
+
+    $qD = "SELECT * FROM devolucion WHERE idcorte = ? ORDER BY iddevolucion DESC";
+    $stmtD = mysqli_prepare($conn, $qD);
+    mysqli_stmt_bind_param($stmtD, "i", $idcorte);
+    mysqli_stmt_execute($stmtD);
+    $resD = mysqli_stmt_get_result($stmtD);
+    while($r = mysqli_fetch_assoc($resD)) $devoluciones[] = $r;
+
+    $qC = "SELECT ca.*, mc.nombre as motivo, m.total as monto_cancelado 
+           FROM cancelacion ca 
+           JOIN motivos_cancelacion mc ON ca.idmotivo = mc.idmotivo
+           JOIN movimiento m ON ca.idmovimiento = m.idmovimiento
+           WHERE m.idcorte = ? AND m.tipo='Venta' ORDER BY ca.idcancelacion DESC";
+    $stmtC = mysqli_prepare($conn, $qC);
+    mysqli_stmt_bind_param($stmtC, "i", $idcorte);
+    mysqli_stmt_execute($stmtC);
+    $resC = mysqli_stmt_get_result($stmtC);
+    while($r = mysqli_fetch_assoc($resC)) $cancelaciones[] = $r;
+
+  } else {
+    // Es tipo Y (Z) -> Listar Turnos (Hijos X)
+    $qT = "SELECT * FROM corte_caja WHERE corte_principal = ? ORDER BY idcorte ASC";
+    $stmtT = mysqli_prepare($conn, $qT);
+    mysqli_stmt_bind_param($stmtT, "i", $idcorte);
+    mysqli_stmt_execute($stmtT);
+    $resT = mysqli_stmt_get_result($stmtT);
+    while($r = mysqli_fetch_assoc($resT)) {
+        // Si el hijo está abierto o cerrado, asegurarse de tener su total
+        if(!$r['fecha_corte']) {
+            $r['total_vendido'] = calcularTotalCorteX($conn, $r['idcorte']);
+        }
+        $r['tipo'] = 'X';
+        $turnos[] = $r;
+    }
+  }
 
   echo json_encode([
     'success' => true,
-    'cortes'  => $cortes,
-    'total'   => $total,
+    'info' => $info,
+    'ventas' => $ventas,
+    'devoluciones' => $devoluciones,
+    'cancelaciones' => $cancelaciones,
+    'turnos' => $turnos
   ]);
 }
 
-
-/**
- * CERRAR CORTE ACTUAL Y CREAR UNO NUEVO (mysqli)
- */
-function cerrarCorteActual($conn)
-{
-  // Desactivar autocommit para manejar transacción
-  mysqli_autocommit($conn, false);
-
+function cerrarTurnoX($conn) {
+  mysqli_begin_transaction($conn);
   try {
-    $hoy = date('Y-m-d');
-
-    // Buscar corte abierto (fecha_corte IS NULL)
-    $sqlCorteAbierto = "SELECT * FROM corte_caja WHERE fecha_corte IS NULL ORDER BY fecha_inicio DESC LIMIT 1";
-    $resCorte = mysqli_query($conn, $sqlCorteAbierto);
-    if ($resCorte === false) {
-      throw new Exception('Error al buscar corte actual: ' . mysqli_error($conn));
+    // 1. Obtener X abierto
+    $res = mysqli_query($conn, "SELECT idcorte, corte_principal FROM corte_caja WHERE tipo='X' AND fecha_corte IS NULL LIMIT 1");
+    $corteX = mysqli_fetch_assoc($res);
+    
+    // 2. Obtener Z abierto (si no existe, crearlo)
+    $resZ = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='Y' AND fecha_corte IS NULL LIMIT 1");
+    $corteZ = mysqli_fetch_assoc($resZ);
+    $idZ = $corteZ ? $corteZ['idcorte'] : 0;
+    
+    if (!$idZ) {
+        $folioZ = generarFolio('CCZ');
+        mysqli_query($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio) VALUES ('$folioZ', 'Y', NOW())");
+        $idZ = mysqli_insert_id($conn);
     }
 
-    $corteActual = mysqli_fetch_assoc($resCorte);
-    mysqli_free_result($resCorte);
-
-    $corteActualData = null;
-
-    if ($corteActual) {
-      $idcorteActual = (int)$corteActual['idcorte'];
-
-      // Total ventas del día (tipo Venta)
-      $sqlVentas = "
-        SELECT IFNULL(SUM(total), 0) AS total_ventas
-        FROM movimiento
-        WHERE tipo = 'Venta'
-          AND DATE(fecha) = ?
-      ";
-      $stmtVentas = mysqli_prepare($conn, $sqlVentas);
-      if ($stmtVentas === false) {
-        throw new Exception('Error al preparar consulta de ventas: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtVentas, 's', $hoy);
-      if (!mysqli_stmt_execute($stmtVentas)) {
-        $err = mysqli_stmt_error($stmtVentas);
-        mysqli_stmt_close($stmtVentas);
-        throw new Exception('Error al ejecutar consulta de ventas: ' . $err);
-      }
-
-      $resVentas = mysqli_stmt_get_result($stmtVentas);
-      $rowVentas = mysqli_fetch_assoc($resVentas);
-      $totalVentas = (float)$rowVentas['total_ventas'];
-      mysqli_free_result($resVentas);
-      mysqli_stmt_close($stmtVentas);
-
-      // Total devoluciones del día
-      $sqlDevo = "
-        SELECT IFNULL(SUM(monto_devuelto), 0) AS total_devoluciones
-        FROM devolucion
-        WHERE DATE(fecha_devolucion) = ?
-      ";
-      $stmtDevo = mysqli_prepare($conn, $sqlDevo);
-      if ($stmtDevo === false) {
-        throw new Exception('Error al preparar consulta de devoluciones: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtDevo, 's', $hoy);
-      if (!mysqli_stmt_execute($stmtDevo)) {
-        $err = mysqli_stmt_error($stmtDevo);
-        mysqli_stmt_close($stmtDevo);
-        throw new Exception('Error al ejecutar consulta de devoluciones: ' . $err);
-      }
-
-      $resDevo = mysqli_stmt_get_result($stmtDevo);
-      $rowDevo = mysqli_fetch_assoc($resDevo);
-      $totalDevoluciones = (float)$rowDevo['total_devoluciones'];
-      mysqli_free_result($resDevo);
-      mysqli_stmt_close($stmtDevo);
-
-      // Total cancelaciones del día (ventas canceladas)
-      $sqlCanc = "
-        SELECT IFNULL(SUM(m.total), 0) AS total_cancelaciones
-        FROM cancelacion c
-        INNER JOIN motivos_cancelacion mc ON c.idmotivo = mc.idmotivo
-        LEFT JOIN movimiento m ON c.idmovimiento = m.idmovimiento
-        WHERE mc.tipo = 'Cancelacion'
-          AND m.tipo = 'Venta'
-          AND DATE(m.fecha) = ?
-      ";
-      $stmtCanc = mysqli_prepare($conn, $sqlCanc);
-      if ($stmtCanc === false) {
-        throw new Exception('Error al preparar consulta de cancelaciones: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtCanc, 's', $hoy);
-      if (!mysqli_stmt_execute($stmtCanc)) {
-        $err = mysqli_stmt_error($stmtCanc);
-        mysqli_stmt_close($stmtCanc);
-        throw new Exception('Error al ejecutar consulta de cancelaciones: ' . $err);
-      }
-
-      $resCanc = mysqli_stmt_get_result($stmtCanc);
-      $rowCanc = mysqli_fetch_assoc($resCanc);
-      $totalCancelaciones = (float)$rowCanc['total_cancelaciones'];
-      mysqli_free_result($resCanc);
-      mysqli_stmt_close($stmtCanc);
-
-      $totalCorte = $totalVentas - $totalDevoluciones - $totalCancelaciones;
-
-      // Actualizar corte actual (cerrarlo)
-      $sqlUpdateCorte = "
-        UPDATE corte_caja
-        SET fecha_corte = NOW(),
-            total_vendido = ?
-        WHERE idcorte = ?
-      ";
-      $stmtUpdate = mysqli_prepare($conn, $sqlUpdateCorte);
-      if ($stmtUpdate === false) {
-        throw new Exception('Error al preparar actualización de corte: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtUpdate, 'di', $totalCorte, $idcorteActual);
-      if (!mysqli_stmt_execute($stmtUpdate)) {
-        $err = mysqli_stmt_error($stmtUpdate);
-        mysqli_stmt_close($stmtUpdate);
-        throw new Exception('Error al ejecutar actualización de corte: ' . $err);
-      }
-      mysqli_stmt_close($stmtUpdate);
-
-      // Ligar movimientos de ventas del día sin corte a este corte
-      $sqlUpdateMov = "
-        UPDATE movimiento
-        SET idcorte = ?
-        WHERE idcorte IS NULL
-          AND tipo = 'Venta'
-          AND DATE(fecha) = ?
-      ";
-      $stmtMov = mysqli_prepare($conn, $sqlUpdateMov);
-      if ($stmtMov === false) {
-        throw new Exception('Error al preparar actualización de movimientos: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtMov, 'is', $idcorteActual, $hoy);
-      if (!mysqli_stmt_execute($stmtMov)) {
-        $err = mysqli_stmt_error($stmtMov);
-        mysqli_stmt_close($stmtMov);
-        throw new Exception('Error al ejecutar actualización de movimientos: ' . $err);
-      }
-      mysqli_stmt_close($stmtMov);
-
-      // Recargar info del corte actualizado
-      $sqlCorteData = "SELECT idcorte, folio, fecha_inicio, fecha_corte, total_vendido FROM corte_caja WHERE idcorte = ?";
-      $stmtCorteData = mysqli_prepare($conn, $sqlCorteData);
-      if ($stmtCorteData === false) {
-        throw new Exception('Error al preparar consulta de corte actualizado: ' . mysqli_error($conn));
-      }
-
-      mysqli_stmt_bind_param($stmtCorteData, 'i', $idcorteActual);
-      if (!mysqli_stmt_execute($stmtCorteData)) {
-        $err = mysqli_stmt_error($stmtCorteData);
-        mysqli_stmt_close($stmtCorteData);
-        throw new Exception('Error al ejecutar consulta de corte actualizado: ' . $err);
-      }
-
-      $resCorteData = mysqli_stmt_get_result($stmtCorteData);
-      $corteActualData = mysqli_fetch_assoc($resCorteData);
-      mysqli_free_result($resCorteData);
-      mysqli_stmt_close($stmtCorteData);
+    // 3. Cerrar X actual
+    if ($corteX) {
+        $totalX = calcularTotalCorteX($conn, $corteX['idcorte']);
+        $stmtUpdate = mysqli_prepare($conn, "UPDATE corte_caja SET fecha_corte = NOW(), total_vendido = ? WHERE idcorte = ?");
+        mysqli_stmt_bind_param($stmtUpdate, "di", $totalX, $corteX['idcorte']);
+        mysqli_stmt_execute($stmtUpdate);
     }
 
-    // Crear nuevo corte abierto (sin total todavía)
-    $sqlInsert = "
-      INSERT INTO corte_caja (folio, fecha_inicio, fecha_corte, total_vendido)
-      VALUES ('', NOW(), NULL, 0)
-    ";
-    if (!mysqli_query($conn, $sqlInsert)) {
-      throw new Exception('Error al crear nuevo corte: ' . mysqli_error($conn));
-    }
+    // 4. Abrir Nuevo X (vinculado al mismo Z)
+    $folioNew = generarFolio('CCX');
+    $stmtNew = mysqli_prepare($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio, corte_principal) VALUES (?, 'X', NOW(), ?)");
+    mysqli_stmt_bind_param($stmtNew, "si", $folioNew, $idZ);
+    mysqli_stmt_execute($stmtNew);
 
-    $idNuevo = (int)mysqli_insert_id($conn);
-
-    // Generar folio automático (CC-000001, etc.)
-    $folio = 'CC-' . str_pad((string)$idNuevo, 6, '0', STR_PAD_LEFT);
-    $sqlUpdateFolio = "UPDATE corte_caja SET folio = ? WHERE idcorte = ?";
-    $stmtFolio = mysqli_prepare($conn, $sqlUpdateFolio);
-    if ($stmtFolio === false) {
-      throw new Exception('Error al preparar actualización de folio: ' . mysqli_error($conn));
-    }
-
-    mysqli_stmt_bind_param($stmtFolio, 'si', $folio, $idNuevo);
-    if (!mysqli_stmt_execute($stmtFolio)) {
-      $err = mysqli_stmt_error($stmtFolio);
-      mysqli_stmt_close($stmtFolio);
-      throw new Exception('Error al ejecutar actualización de folio: ' . $err);
-    }
-    mysqli_stmt_close($stmtFolio);
-
-    // Obtener datos del nuevo corte
-    $sqlNuevo = "SELECT idcorte, folio, fecha_inicio, fecha_corte, total_vendido FROM corte_caja WHERE idcorte = ?";
-    $stmtNuevo = mysqli_prepare($conn, $sqlNuevo);
-    if ($stmtNuevo === false) {
-      throw new Exception('Error al preparar consulta del nuevo corte: ' . mysqli_error($conn));
-    }
-
-    mysqli_stmt_bind_param($stmtNuevo, 'i', $idNuevo);
-    if (!mysqli_stmt_execute($stmtNuevo)) {
-      $err = mysqli_stmt_error($stmtNuevo);
-      mysqli_stmt_close($stmtNuevo);
-      throw new Exception('Error al ejecutar consulta del nuevo corte: ' . $err);
-    }
-
-    $resNuevo = mysqli_stmt_get_result($stmtNuevo);
-    $nuevoCorte = mysqli_fetch_assoc($resNuevo);
-    mysqli_free_result($resNuevo);
-    mysqli_stmt_close($stmtNuevo);
-
-    // Todo OK, commit
     mysqli_commit($conn);
-    mysqli_autocommit($conn, true);
+    echo json_encode(['success' => true, 'message' => 'Turno cerrado correctamente.']);
 
-    $message = $corteActualData
-      ? 'Corte de caja actual cerrado correctamente. Se creó un nuevo corte.'
-      : 'No había corte de caja abierto. Se creó un nuevo corte.';
-
-    echo json_encode([
-      'success'     => true,
-      'message'     => $message,
-      'corteActual' => $corteActualData,
-      'nuevoCorte'  => $nuevoCorte,
-    ]);
   } catch (Exception $e) {
     mysqli_rollback($conn);
-    mysqli_autocommit($conn, true);
-
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al cerrar el corte de caja: ' . $e->getMessage(),
-    ]);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
   }
 }
 
-/**
- * DETALLE DE CORTE (info + ventas + devoluciones + cancelaciones) (mysqli)
- */
-function detalleCorte($conn)
-{
-  $idcorte = isset($_GET['idcorte']) ? (int)$_GET['idcorte'] : 0;
+function cerrarDiaZ($conn) {
+  mysqli_begin_transaction($conn);
+  try {
+    // 1. Identificar Z abierto
+    $resZ = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='Y' AND fecha_corte IS NULL LIMIT 1");
+    $corteZ = mysqli_fetch_assoc($resZ);
+    
+    // Si no hay Z, creamos uno temporal para cerrarlo (caso borde)
+    if (!$corteZ) {
+       $folioZ = generarFolio('CCZ');
+       mysqli_query($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio) VALUES ('$folioZ', 'Y', NOW())");
+       $idZ = mysqli_insert_id($conn);
+    } else {
+       $idZ = $corteZ['idcorte'];
+    }
 
-  if ($idcorte <= 0) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'ID de corte no válido.',
-    ]);
-    return;
+    // 2. Cerrar el X abierto pendiente (si existe) vinculado a este Z o huérfano
+    // Buscamos cualquier X abierto
+    $resX = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='X' AND fecha_corte IS NULL");
+    if ($rowX = mysqli_fetch_assoc($resX)) {
+        $totalX = calcularTotalCorteX($conn, $rowX['idcorte']);
+        $stmtUpX = mysqli_prepare($conn, "UPDATE corte_caja SET fecha_corte=NOW(), total_vendido=?, corte_principal=? WHERE idcorte=?");
+        mysqli_stmt_bind_param($stmtUpX, "dii", $totalX, $idZ, $rowX['idcorte']);
+        mysqli_stmt_execute($stmtUpX);
+    }
+
+    // 3. Calcular Total de Z (Suma de todos los X que pertenecen a este Z)
+    // Como ya cerramos el último X, todos deben estar cerrados y tener total_vendido
+    $sqlSum = "SELECT SUM(total_vendido) as total_dia FROM corte_caja WHERE corte_principal = ?";
+    $stmtSum = mysqli_prepare($conn, $sqlSum);
+    mysqli_stmt_bind_param($stmtSum, "i", $idZ);
+    mysqli_stmt_execute($stmtSum);
+    $totalZ = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtSum))['total_dia'] ?? 0;
+
+    // 4. Cerrar Z
+    $stmtUpZ = mysqli_prepare($conn, "UPDATE corte_caja SET fecha_corte=NOW(), total_vendido=? WHERE idcorte=?");
+    mysqli_stmt_bind_param($stmtUpZ, "di", $totalZ, $idZ);
+    mysqli_stmt_execute($stmtUpZ);
+
+    // 5. Abrir Nuevo Z y Nuevo X
+    $newFolioZ = generarFolio('CCZ');
+    mysqli_query($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio) VALUES ('$newFolioZ', 'Y', NOW())");
+    $newIdZ = mysqli_insert_id($conn);
+
+    $newFolioX = generarFolio('CCX');
+    $stmtNewX = mysqli_prepare($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio, corte_principal) VALUES (?, 'X', NOW(), ?)");
+    mysqli_stmt_bind_param($stmtNewX, "si", $newFolioX, $newIdZ);
+    mysqli_stmt_execute($stmtNewX);
+
+    mysqli_commit($conn);
+    echo json_encode(['success' => true, 'message' => 'Día cerrado correctamente.']);
+
+  } catch (Exception $e) {
+    mysqli_rollback($conn);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
   }
-
-  // Info del corte
-  $sqlInfo = "
-    SELECT idcorte, folio, fecha_inicio, fecha_corte, total_vendido
-    FROM corte_caja
-    WHERE idcorte = ?
-  ";
-  $stmtInfo = mysqli_prepare($conn, $sqlInfo);
-  if ($stmtInfo === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de información de corte: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
-
-  mysqli_stmt_bind_param($stmtInfo, 'i', $idcorte);
-  if (!mysqli_stmt_execute($stmtInfo)) {
-    $err = mysqli_stmt_error($stmtInfo);
-    mysqli_stmt_close($stmtInfo);
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de información de corte: ' . $err,
-    ]);
-    return;
-  }
-
-  $resInfo = mysqli_stmt_get_result($stmtInfo);
-  $info = mysqli_fetch_assoc($resInfo);
-  mysqli_free_result($resInfo);
-  mysqli_stmt_close($stmtInfo);
-
-  if (!$info) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Corte de caja no encontrado.',
-    ]);
-    return;
-  }
-
-  // Ventas ligadas al corte
-  $sqlVentas = "
-    SELECT idmovimiento, fecha, total, tipo, comentario, idcliente, iduser
-    FROM movimiento
-    WHERE idcorte = ?
-      AND tipo = 'Venta'
-    ORDER BY fecha ASC
-  ";
-  $stmtVentas = mysqli_prepare($conn, $sqlVentas);
-  if ($stmtVentas === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de ventas del corte: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
-
-  mysqli_stmt_bind_param($stmtVentas, 'i', $idcorte);
-  if (!mysqli_stmt_execute($stmtVentas)) {
-    $err = mysqli_stmt_error($stmtVentas);
-    mysqli_stmt_close($stmtVentas);
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de ventas del corte: ' . $err,
-    ]);
-    return;
-  }
-
-  $resVentas = mysqli_stmt_get_result($stmtVentas);
-  $ventas = [];
-  while ($row = mysqli_fetch_assoc($resVentas)) {
-    $ventas[] = $row;
-  }
-  mysqli_free_result($resVentas);
-  mysqli_stmt_close($stmtVentas);
-
-  // Devoluciones ligadas al corte
-  $sqlDevo = "
-    SELECT iddevolucion, idmovimiento, monto_devuelto, fecha_devolucion
-    FROM devolucion
-    WHERE idcorte = ?
-    ORDER BY fecha_devolucion ASC
-  ";
-  $stmtDevo = mysqli_prepare($conn, $sqlDevo);
-  if ($stmtDevo === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de devoluciones del corte: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
-
-  mysqli_stmt_bind_param($stmtDevo, 'i', $idcorte);
-  if (!mysqli_stmt_execute($stmtDevo)) {
-    $err = mysqli_stmt_error($stmtDevo);
-    mysqli_stmt_close($stmtDevo);
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de devoluciones del corte: ' . $err,
-    ]);
-    return;
-  }
-
-  $resDevo = mysqli_stmt_get_result($stmtDevo);
-  $devoluciones = [];
-  while ($row = mysqli_fetch_assoc($resDevo)) {
-    $devoluciones[] = $row;
-  }
-  mysqli_free_result($resDevo);
-  mysqli_stmt_close($stmtDevo);
-
-    // Cancelaciones asociadas (por ventas de este corte)
-  $sqlCanc = "
-    SELECT 
-      c.idcancelacion, 
-      c.idmovimiento, 
-      c.descripcion, 
-      mc.nombre AS motivo,
-      m.total AS monto_cancelado
-    FROM cancelacion c
-    INNER JOIN motivos_cancelacion mc ON c.idmotivo = mc.idmotivo
-    INNER JOIN movimiento m ON c.idmovimiento = m.idmovimiento
-    WHERE m.idcorte = ?
-      AND m.tipo = 'Venta'
-      AND mc.tipo = 'Cancelacion'
-  ";
-  $stmtCanc = mysqli_prepare($conn, $sqlCanc);
-  if ($stmtCanc === false) {
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al preparar consulta de cancelaciones del corte: ' . mysqli_error($conn),
-    ]);
-    return;
-  }
-
-  mysqli_stmt_bind_param($stmtCanc, 'i', $idcorte);
-  if (!mysqli_stmt_execute($stmtCanc)) {
-    $err = mysqli_stmt_error($stmtCanc);
-    mysqli_stmt_close($stmtCanc);
-    echo json_encode([
-      'success' => false,
-      'error'   => 'Error al ejecutar consulta de cancelaciones del corte: ' . $err,
-    ]);
-    return;
-  }
-
-  $resCanc = mysqli_stmt_get_result($stmtCanc);
-  $cancelaciones = [];
-  while ($row = mysqli_fetch_assoc($resCanc)) {
-    $cancelaciones[] = $row;
-  }
-  mysqli_free_result($resCanc);
-  mysqli_stmt_close($stmtCanc);
-
-  echo json_encode([
-    'success'       => true,
-    'info'          => $info,
-    'ventas'        => $ventas,
-    'devoluciones'  => $devoluciones,
-    'cancelaciones' => $cancelaciones,
-  ]);
 }
-
+?>

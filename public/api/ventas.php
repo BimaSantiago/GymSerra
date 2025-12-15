@@ -200,21 +200,38 @@ function createFullVenta($conn)
     return;
   }
 
-  // Corte de caja activo
-  $sqlCorte = "
+  // Corte de caja activo (TURNO X)
+// Nota: En esta versión, el corte Z puede estar abierto (tipo 'Y') y NO debe usarse para ligar ventas.
+// Por eso intentamos primero el corte X abierto. Si la columna `tipo` no existiera (versiones viejas),
+// hacemos fallback al query anterior.
+$sqlCorte = "
+  SELECT idcorte
+  FROM corte_caja
+  WHERE fecha_corte IS NULL
+    AND (tipo = 'X' OR tipo IS NULL)
+  ORDER BY fecha_inicio DESC
+  LIMIT 1
+";
+$resCorte = mysqli_query($conn, $sqlCorte);
+$idcorteSql = "NULL";
+
+if (!$resCorte) {
+  // Fallback (BD antigua sin columna tipo)
+  $sqlCorteFallback = "
     SELECT idcorte
     FROM corte_caja
     WHERE fecha_corte IS NULL
     ORDER BY fecha_inicio DESC
     LIMIT 1
   ";
-  $resCorte = mysqli_query($conn, $sqlCorte);
-  $idcorteSql = "NULL";
-  if ($resCorte && mysqli_num_rows($resCorte) > 0) {
-    $rowCorte = mysqli_fetch_assoc($resCorte);
-    mysqli_free_result($resCorte);
-    $idcorteSql = (int)$rowCorte['idcorte'];
-  }
+  $resCorte = mysqli_query($conn, $sqlCorteFallback);
+}
+
+if ($resCorte && mysqli_num_rows($resCorte) > 0) {
+  $rowCorte = mysqli_fetch_assoc($resCorte);
+  mysqli_free_result($resCorte);
+  $idcorteSql = (int)$rowCorte['idcorte'];
+}
 
   mysqli_begin_transaction($conn);
 
@@ -979,18 +996,6 @@ function devolverParcial($conn)
     if (!mysqli_query($conn, $sqlStock)) {
       throw new Exception(
         'Error al actualizar stock en devolución: ' . mysqli_error($conn)
-      );
-    }
-
-    // Reducir total de la venta
-    $sqlUTotal = "
-      UPDATE movimiento
-      SET total = total - $montoDev
-      WHERE idmovimiento = $idventa
-    ";
-    if (!mysqli_query($conn, $sqlUTotal)) {
-      throw new Exception(
-        'Error al actualizar total de venta: ' . mysqli_error($conn)
       );
     }
 

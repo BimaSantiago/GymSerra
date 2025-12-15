@@ -92,13 +92,14 @@ const Nosotros = () => {
 
   return (
     <div className="bg-white min-h-screen text-gray-900 overflow-x-hidden">
-      {/* 2. Sobre Nosotros */}
+      {/* 1. Animacion MetaBalls */}
       <MetaBalls
         color="#2679adff"
         cursorBallColor="#1e70c1ff"
+        cursorBallSize={1.7}
         enableTransparency={true}
-        clumpFactor={1.5}
-        ballCount={20}
+        clumpFactor={1.6}
+        ballCount={55}
       />
       {/* 2. Sobre Nosotros */}
       <section className="py-16 bg-white">
@@ -108,7 +109,7 @@ const Nosotros = () => {
             dedicamos a fomentar la gimnasia artística, el parkour y el
             crossfit, con un enfoque especial en la gimnasia artística. Nuestra
             misión es inspirar a niñas y niños a desarrollar sus habilidades
-            físicas y valores personales en un entorno seguro y motivador.
+            físicas y valores personales en un entorno seguro y 7motivador.
           </Parrafos>
         </SubSeccion>
       </section>
