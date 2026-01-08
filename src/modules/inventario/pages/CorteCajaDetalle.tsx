@@ -79,6 +79,7 @@ const CorteCajaDetalle: React.FC = () => {
   const idcorteParam = searchParams.get("idcorte");
 
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
@@ -140,7 +141,7 @@ const CorteCajaDetalle: React.FC = () => {
   const isOpen = info && !info.fecha_corte;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 min-w-10/12 mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
         <div>

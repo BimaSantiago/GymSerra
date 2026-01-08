@@ -20,10 +20,10 @@ switch ($action) {
   case 'list':
     listarCortes($conn);
     break;
-  case 'closeShift': // Cerrar Turno (X)
+  case 'closeShift':
     cerrarTurnoX($conn);
     break;
-  case 'closeDay': // Cerrar Día (Z)
+  case 'closeDay':
     cerrarDiaZ($conn);
     break;
   case 'getCurrent': 
@@ -41,7 +41,6 @@ switch ($action) {
 
 function tipoDbDesdeUI($tipoUI) {
   $t = strtoupper(trim((string)$tipoUI));
-  // En BD: X = Turno, Y = Día (Z)
   return ($t === 'Z' || $t === 'Y') ? 'Y' : 'X';
 }
 
@@ -50,28 +49,61 @@ function tipoUIDesdeDb($tipoDb) {
   return $t === 'Y' ? 'Z' : 'X';
 }
 
-// Calcula el total neto (Ventas - Devoluciones - Cancelaciones) de un corte X
+// CORREGIDO: Calcula el total neto considerando correctamente devoluciones y cancelaciones
 function calcularTotalCorteX($conn, $idcorte) {
-  $sql = "
-    SELECT
-      (
-        COALESCE((SELECT SUM(total) FROM movimiento WHERE idcorte = ? AND tipo = 'Venta'), 0)
-        - COALESCE((SELECT SUM(monto_devuelto) FROM devolucion WHERE idcorte = ?), 0)
-        - COALESCE((
-            SELECT SUM(m.total)
-            FROM cancelacion ca
-            INNER JOIN movimiento m ON m.idmovimiento = ca.idmovimiento
-            INNER JOIN motivos_cancelacion mc ON mc.idmotivo = ca.idmotivo
-            WHERE m.idcorte = ? AND m.tipo = 'Venta' AND mc.tipo = 'Cancelacion'
-        ), 0)
-      ) AS total_neto
+  // Total de ventas
+  $sqlVentas = "SELECT COALESCE(SUM(total), 0) as total_ventas 
+                FROM movimiento 
+                WHERE idcorte = ? AND tipo = 'Venta'";
+  $stmtV = mysqli_prepare($conn, $sqlVentas);
+  mysqli_stmt_bind_param($stmtV, "i", $idcorte);
+  mysqli_stmt_execute($stmtV);
+  $resV = mysqli_stmt_get_result($stmtV);
+  $totalVentas = (float)(mysqli_fetch_assoc($resV)['total_ventas'] ?? 0);
+
+  // Total de devoluciones
+  $sqlDev = "SELECT COALESCE(SUM(monto_devuelto), 0) as total_devuelto 
+             FROM devolucion 
+             WHERE idcorte = ?";
+  $stmtD = mysqli_prepare($conn, $sqlDev);
+  mysqli_stmt_bind_param($stmtD, "i", $idcorte);
+  mysqli_stmt_execute($stmtD);
+  $resD = mysqli_stmt_get_result($stmtD);
+  $totalDevuelto = (float)(mysqli_fetch_assoc($resD)['total_devuelto'] ?? 0);
+
+  // Total de cancelaciones (SOLO monto pendiente, no el total de la venta)
+  // Para calcular el monto real cancelado, necesitamos:
+  // (total_venta - monto_ya_devuelto) de cada venta cancelada
+  $sqlCanc = "
+    SELECT m.idmovimiento, m.total,
+           COALESCE((
+             SELECT SUM(dv.monto_devuelto)
+             FROM devolucion dv
+             WHERE dv.idmovimiento = m.idmovimiento
+           ), 0) as ya_devuelto
+    FROM movimiento m
+    INNER JOIN cancelacion ca ON ca.idmovimiento = m.idmovimiento
+    INNER JOIN motivos_cancelacion mc ON mc.idmotivo = ca.idmotivo
+    WHERE m.idcorte = ? AND m.tipo = 'Venta' AND mc.tipo = 'Cancelacion'
   ";
-  $stmt = mysqli_prepare($conn, $sql);
-  mysqli_stmt_bind_param($stmt, "iii", $idcorte, $idcorte, $idcorte);
-  mysqli_stmt_execute($stmt);
-  $res = mysqli_stmt_get_result($stmt);
-  $row = mysqli_fetch_assoc($res);
-  return (float)($row['total_neto'] ?? 0);
+  $stmtC = mysqli_prepare($conn, $sqlCanc);
+  mysqli_stmt_bind_param($stmtC, "i", $idcorte);
+  mysqli_stmt_execute($stmtC);
+  $resC = mysqli_stmt_get_result($stmtC);
+  
+  $totalCancelado = 0;
+  while ($row = mysqli_fetch_assoc($resC)) {
+    $totalVenta = (float)$row['total'];
+    $yaDevuelto = (float)$row['ya_devuelto'];
+    // Solo restamos lo que quedaba pendiente al momento de cancelar
+    $montoCancelado = $totalVenta - $yaDevuelto;
+    $totalCancelado += $montoCancelado;
+  }
+
+  // Fórmula correcta: Ventas - Devoluciones - Cancelaciones_Pendientes
+  $totalNeto = $totalVentas - $totalDevuelto - $totalCancelado;
+  
+  return $totalNeto;
 }
 
 function generarFolio($prefix) {
@@ -109,15 +141,12 @@ function listarCortes($conn) {
 
   $whereSql = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
-  // 1. Total records
   $sqlCount = "SELECT COUNT(*) as total FROM corte_caja c $whereSql";
   $stmtCount = mysqli_prepare($conn, $sqlCount);
   if (!empty($params)) mysqli_stmt_bind_param($stmtCount, $types, ...$params);
   mysqli_stmt_execute($stmtCount);
   $total = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCount))['total'];
 
-  // 2. Data
-  // Nota: Para cortes cerrados usamos el total guardado. Para abiertos, calculamos al vuelo.
   $sqlList = "SELECT c.* FROM corte_caja c $whereSql ORDER BY c.idcorte DESC LIMIT ? OFFSET ?";
   $stmtList = mysqli_prepare($conn, $sqlList);
   
@@ -132,9 +161,6 @@ function listarCortes($conn) {
 
   $cortes = [];
   while ($row = mysqli_fetch_assoc($resList)) {
-    // Si es X y está abierto, calcular. Si es Z y está abierto, el cálculo es complejo (suma de hijos), 
-    // pero para listados históricos solemos mostrar lo guardado o 0 si es muy costoso, 
-    // aqui optamos por calcular si es X. Si es Z abierto, lo dejaremos en 0 o requeriría subquery.
     if (!$row['fecha_corte'] && $row['tipo'] === 'X') {
         $row['total_vendido'] = calcularTotalCorteX($conn, $row['idcorte']);
     }
@@ -150,7 +176,6 @@ function obtenerCorteActual($conn) {
   $tipoUI = $_GET['tipo'] ?? 'X';
   $tipoDb = tipoDbDesdeUI($tipoUI);
 
-  // Buscar el último abierto de ese tipo
   $sql = "SELECT * FROM corte_caja WHERE tipo = ? AND fecha_corte IS NULL ORDER BY idcorte DESC LIMIT 1";
   $stmt = mysqli_prepare($conn, $sql);
   mysqli_stmt_bind_param($stmt, "s", $tipoDb);
@@ -161,11 +186,8 @@ function obtenerCorteActual($conn) {
     $corte['tipo'] = tipoUIDesdeDb($corte['tipo']);
     
     if ($tipoDb === 'X') {
-      // Total de X es directo
       $corte['total_vendido'] = calcularTotalCorteX($conn, $corte['idcorte']);
     } else {
-      // Total de Z (Y) es la suma de sus hijos X (Cerrados + Abierto actual)
-      // Buscamos hijos X que tengan corte_principal = este corte Z
       $sqlSum = "SELECT idcorte, fecha_corte, total_vendido FROM corte_caja WHERE corte_principal = ?";
       $stmtSum = mysqli_prepare($conn, $sqlSum);
       mysqli_stmt_bind_param($stmtSum, "i", $corte['idcorte']);
@@ -177,7 +199,6 @@ function obtenerCorteActual($conn) {
          if($child['fecha_corte']) {
             $totalZ += (float)$child['total_vendido'];
          } else {
-            // Hijo abierto, calcular al vuelo
             $totalZ += calcularTotalCorteX($conn, $child['idcorte']);
          }
       }
@@ -191,7 +212,6 @@ function obtenerCorteActual($conn) {
 function detalleCorte($conn) {
   $idcorte = (int)($_GET['idcorte'] ?? 0);
   
-  // Obtener info básica
   $sql = "SELECT * FROM corte_caja WHERE idcorte = ?";
   $stmt = mysqli_prepare($conn, $sql);
   mysqli_stmt_bind_param($stmt, "i", $idcorte);
@@ -203,15 +223,13 @@ function detalleCorte($conn) {
     return;
   }
 
-  $tipoDb = $info['tipo']; // X o Y
+  $tipoDb = $info['tipo'];
   $info['tipo'] = tipoUIDesdeDb($tipoDb);
 
-  // Si está abierto, calculamos el total al vuelo para mostrarlo actualizado
   if (!$info['fecha_corte']) {
       if ($tipoDb === 'X') {
           $info['total_vendido'] = calcularTotalCorteX($conn, $idcorte);
       } else {
-          // Si es Z abierto, sumar hijos
           $sqlSumZ = "SELECT idcorte FROM corte_caja WHERE corte_principal = ?";
           $stmtZ = mysqli_prepare($conn, $sqlSumZ);
           mysqli_stmt_bind_param($stmtZ, "i", $idcorte);
@@ -219,7 +237,7 @@ function detalleCorte($conn) {
           $resZ = mysqli_stmt_get_result($stmtZ);
           $tot = 0;
           while($rowZ = mysqli_fetch_assoc($resZ)){
-              $tot += calcularTotalCorteX($conn, $rowZ['idcorte']); // Ojo: esto asume que X cerrado tiene total correcto en BD, pero calcularlo de nuevo es más seguro para consistencia
+              $tot += calcularTotalCorteX($conn, $rowZ['idcorte']);
           }
           $info['total_vendido'] = $tot;
       }
@@ -231,7 +249,6 @@ function detalleCorte($conn) {
   $turnos = [];
 
   if ($tipoDb === 'X') {
-    // Detalle de movimientos
     $qV = "SELECT * FROM movimiento WHERE idcorte = ? AND tipo='Venta' ORDER BY idmovimiento DESC";
     $stmtV = mysqli_prepare($conn, $qV);
     mysqli_stmt_bind_param($stmtV, "i", $idcorte);
@@ -258,14 +275,12 @@ function detalleCorte($conn) {
     while($r = mysqli_fetch_assoc($resC)) $cancelaciones[] = $r;
 
   } else {
-    // Es tipo Y (Z) -> Listar Turnos (Hijos X)
     $qT = "SELECT * FROM corte_caja WHERE corte_principal = ? ORDER BY idcorte ASC";
     $stmtT = mysqli_prepare($conn, $qT);
     mysqli_stmt_bind_param($stmtT, "i", $idcorte);
     mysqli_stmt_execute($stmtT);
     $resT = mysqli_stmt_get_result($stmtT);
     while($r = mysqli_fetch_assoc($resT)) {
-        // Si el hijo está abierto o cerrado, asegurarse de tener su total
         if(!$r['fecha_corte']) {
             $r['total_vendido'] = calcularTotalCorteX($conn, $r['idcorte']);
         }
@@ -287,11 +302,9 @@ function detalleCorte($conn) {
 function cerrarTurnoX($conn) {
   mysqli_begin_transaction($conn);
   try {
-    // 1. Obtener X abierto
     $res = mysqli_query($conn, "SELECT idcorte, corte_principal FROM corte_caja WHERE tipo='X' AND fecha_corte IS NULL LIMIT 1");
     $corteX = mysqli_fetch_assoc($res);
     
-    // 2. Obtener Z abierto (si no existe, crearlo)
     $resZ = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='Y' AND fecha_corte IS NULL LIMIT 1");
     $corteZ = mysqli_fetch_assoc($resZ);
     $idZ = $corteZ ? $corteZ['idcorte'] : 0;
@@ -302,7 +315,6 @@ function cerrarTurnoX($conn) {
         $idZ = mysqli_insert_id($conn);
     }
 
-    // 3. Cerrar X actual
     if ($corteX) {
         $totalX = calcularTotalCorteX($conn, $corteX['idcorte']);
         $stmtUpdate = mysqli_prepare($conn, "UPDATE corte_caja SET fecha_corte = NOW(), total_vendido = ? WHERE idcorte = ?");
@@ -310,7 +322,6 @@ function cerrarTurnoX($conn) {
         mysqli_stmt_execute($stmtUpdate);
     }
 
-    // 4. Abrir Nuevo X (vinculado al mismo Z)
     $folioNew = generarFolio('CCX');
     $stmtNew = mysqli_prepare($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio, corte_principal) VALUES (?, 'X', NOW(), ?)");
     mysqli_stmt_bind_param($stmtNew, "si", $folioNew, $idZ);
@@ -328,11 +339,9 @@ function cerrarTurnoX($conn) {
 function cerrarDiaZ($conn) {
   mysqli_begin_transaction($conn);
   try {
-    // 1. Identificar Z abierto
     $resZ = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='Y' AND fecha_corte IS NULL LIMIT 1");
     $corteZ = mysqli_fetch_assoc($resZ);
     
-    // Si no hay Z, creamos uno temporal para cerrarlo (caso borde)
     if (!$corteZ) {
        $folioZ = generarFolio('CCZ');
        mysqli_query($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio) VALUES ('$folioZ', 'Y', NOW())");
@@ -341,8 +350,6 @@ function cerrarDiaZ($conn) {
        $idZ = $corteZ['idcorte'];
     }
 
-    // 2. Cerrar el X abierto pendiente (si existe) vinculado a este Z o huérfano
-    // Buscamos cualquier X abierto
     $resX = mysqli_query($conn, "SELECT idcorte FROM corte_caja WHERE tipo='X' AND fecha_corte IS NULL");
     if ($rowX = mysqli_fetch_assoc($resX)) {
         $totalX = calcularTotalCorteX($conn, $rowX['idcorte']);
@@ -351,20 +358,16 @@ function cerrarDiaZ($conn) {
         mysqli_stmt_execute($stmtUpX);
     }
 
-    // 3. Calcular Total de Z (Suma de todos los X que pertenecen a este Z)
-    // Como ya cerramos el último X, todos deben estar cerrados y tener total_vendido
     $sqlSum = "SELECT SUM(total_vendido) as total_dia FROM corte_caja WHERE corte_principal = ?";
     $stmtSum = mysqli_prepare($conn, $sqlSum);
     mysqli_stmt_bind_param($stmtSum, "i", $idZ);
     mysqli_stmt_execute($stmtSum);
     $totalZ = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtSum))['total_dia'] ?? 0;
 
-    // 4. Cerrar Z
     $stmtUpZ = mysqli_prepare($conn, "UPDATE corte_caja SET fecha_corte=NOW(), total_vendido=? WHERE idcorte=?");
     mysqli_stmt_bind_param($stmtUpZ, "di", $totalZ, $idZ);
     mysqli_stmt_execute($stmtUpZ);
 
-    // 5. Abrir Nuevo Z y Nuevo X
     $newFolioZ = generarFolio('CCZ');
     mysqli_query($conn, "INSERT INTO corte_caja (folio, tipo, fecha_inicio) VALUES ('$newFolioZ', 'Y', NOW())");
     $newIdZ = mysqli_insert_id($conn);
