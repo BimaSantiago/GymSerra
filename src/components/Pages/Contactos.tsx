@@ -214,7 +214,7 @@ const Contactos: React.FC = () => {
                   setFormData({ ...formData, iddeporte: Number(value) })
                 }
               >
-                <SelectTrigger className="h-14 border-2 transition-colors text-black/70 text-start hover:border-blue-500">
+                <SelectTrigger className="h-14 border-2 transition-colors text-black/70 text-start hover:border-blue-800">
                   <SelectValue
                     placeholder="Selecciona un deporte..."
                     className="text-black/70"
@@ -273,7 +273,7 @@ const Contactos: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-base flex items-center gap-2">
-                    <User className="h-4 w-4 text-blue-500" />
+                    <User className="h-4 w-4 text-green-500" />
                     Nombre del Tutor <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -282,14 +282,14 @@ const Contactos: React.FC = () => {
                       setFormData({ ...formData, nombre_tutor: e.target.value })
                     }
                     placeholder="Ej. María García López"
-                    className="h-12 border-2 hover:border-blue-400 transition-colors"
+                    className="h-12 border-2 hover:border-blue-800 transition-colors"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-base flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
+                    <Users className="h-4 w-4 text-green-500" />
                     Nombre del Alumno <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -301,7 +301,7 @@ const Contactos: React.FC = () => {
                       })
                     }
                     placeholder="Ej. Juan García"
-                    className="h-12 border-2  hover:border-blue-400 transition-colors"
+                    className="h-12 border-2  hover:border-blue-800 transition-colors"
                     required
                   />
                 </div>
@@ -310,7 +310,7 @@ const Contactos: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-base flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-blue-500" />
+                    <Calendar className="h-4 w-4 text-green-500" />
                     Edad del Alumno <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -322,7 +322,7 @@ const Contactos: React.FC = () => {
                     placeholder="Ej. 8"
                     min="3"
                     max="100"
-                    className="h-12 border-2  hover:border-blue-400 transition-colors"
+                    className="h-12 border-2  hover:border-blue-800 transition-colors"
                     required
                   />
                 </div>
@@ -347,7 +347,7 @@ const Contactos: React.FC = () => {
 
               <div className="space-y-2">
                 <Label className="text-base flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-blue-500" />
+                  <Mail className="h-4 w-4 text-green-500" />
                   Mensaje Adicional (Opcional)
                 </Label>
                 <Textarea
@@ -356,7 +356,7 @@ const Contactos: React.FC = () => {
                     setFormData({ ...formData, mensaje: e.target.value })
                   }
                   placeholder="Cuéntanos más sobre tus expectativas, horarios preferidos, experiencia previa, etc."
-                  className="min-h-[120px] border-2  hover:border-blue-400 transition-colors resize-none"
+                  className="min-h-[120px] border-2  hover:border-blue-800 transition-colors resize-none"
                 />
               </div>
             </CardContent>

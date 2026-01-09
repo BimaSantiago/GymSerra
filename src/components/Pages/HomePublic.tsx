@@ -48,11 +48,6 @@ const HomePublic = () => {
         </div>
       </section>
 
-      {/* Mapa */}
-      <section>
-        <MapaUbicacion />
-      </section>
-
       {/* Productos destacados */}
       <section className="bg-gradient-to-b from-white to-blue-50/50 py-16">
         <div className="mx-auto max-w-6xl px-6">
@@ -135,10 +130,11 @@ const HomePublic = () => {
             </Button>
           </Link>
         </motion.div>
-
-
       </section>
-
+      {/* Mapa */}
+      <section>
+        <MapaUbicacion />
+      </section>
       {/* Programas + sección interactiva */}
       <section className="bg-gradient-to-b from-white to-gray-50 py-20">
         <div className="mx-auto max-w-6xl px-6 text-center">

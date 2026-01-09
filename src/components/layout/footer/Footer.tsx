@@ -104,8 +104,7 @@ const Footer = () => {
       {/* Línea inferior */}
       <div className="mt-10 border-t border-blue-800 pt-6 text-center text-sm text-blue-200">
         © {new Date().getFullYear()}{" "}
-        <span className="text-white font-semibold">GymSerra</span>. Todos los
-        derechos reservados.
+        <span className="text-white font-semibold">GymSerra</span>.
       </div>
     </footer>
   );

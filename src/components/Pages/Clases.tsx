@@ -11,7 +11,6 @@ import {
   Award,
   Users,
   TrendingUp,
-  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 /* ------------------------- Tipos de datos ------------------------- */
@@ -230,7 +229,7 @@ const Clases: React.FC = () => {
   /* ------------------------- UI ------------------------- */
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Hero Section */}
+      {/* Main Section */}
 
       <section className="relative h-full overflow-hidden bg-gradient-to-br from-blue-800 via-blue-800 to-purple-800">
         <motion.div
@@ -350,15 +349,15 @@ const Clases: React.FC = () => {
                       />
                       <CardHeader>
                         <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-2xl font-bold mb-2">
+                          <div className="max-w-10/12">
+                            <CardTitle className="text-2xl font-bold mb-2 text-black">
                               {deporte.nombre}
                             </CardTitle>
                             <p className="text-sm text-gray-600">
                               {deporte.descripcion}
                             </p>
                           </div>
-                          <Award className="h-8 w-8 text-gray-400" />
+                          <Award className="h-8 w-8 text-gray-500" />
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -374,12 +373,12 @@ const Clases: React.FC = () => {
                                 (plan) => (
                                   <div
                                     key={plan.idplan}
-                                    className="rounded-lg border-2 border-gray-200 p-4 hover:border-blue-400 transition-colors bg-gradient-to-br from-white to-gray-50"
+                                    className="rounded-lg border-2 border-gray-200 p-4 hover:border-blue-800 transition-colors bg-gradient-to-br from-white to-gray-50"
                                   >
-                                    <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center justify-between mb-3 text-black/70">
                                       <Badge
                                         variant="outline"
-                                        className="text-sm font-semibold"
+                                        className="text-sm font-semibold text-black/40"
                                       >
                                         {plan.dias_por_semana}{" "}
                                         {plan.dias_por_semana === 1
@@ -387,7 +386,6 @@ const Clases: React.FC = () => {
                                           : "días"}{" "}
                                         / semana
                                       </Badge>
-                                      <Zap className="h-4 w-4 text-yellow-500" />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -596,9 +594,9 @@ const Clases: React.FC = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                   >
-                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-3 text-black/70">
                       <div
-                        className="w-1 h-8 rounded"
+                        className="w-1 h-8 rounded "
                         style={{ backgroundColor: deporte.color }}
                       />
                       {deporte.nombre}
