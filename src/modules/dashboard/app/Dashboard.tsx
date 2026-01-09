@@ -29,6 +29,7 @@ import CategoriasDashboard from "@/modules/articulo/page/CategoriasDashboard";
 import ClientesDashboard from "@/modules/personas/pages/ClientessDashboard";
 import CorteCaja from "@/modules/inventario/pages/CorteCaja";
 import CorteCajaDetalle from "@/modules/inventario/pages/CorteCajaDetalle";
+import HomePage from "@/modules/dashboard/pages/HomeDashboard";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -45,6 +46,7 @@ export default function Page() {
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Routes>
+            <Route index element={<HomePage />} />
             <Route path="/alumnos" element={<AlumnosDashboard />} />
             <Route path="/articulo" element={<ArticulosDashboard />} />
             <Route path="/horarios" element={<HorariosDashboard />} />

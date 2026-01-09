@@ -20,13 +20,18 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+interface DetallePreview {
+  articulo: string;
+  cantidad: number;
+}
+
 interface Venta {
   idventa: number;
   fecha: string;
   total: number;
-  // Puede venir del backend como "Activa" / "Cancelada"
+  cliente?: string | null;
+  detalles?: DetallePreview[];
   estado?: "Activa" | "Cancelada" | string;
-  // O puede venir como flag numérico / booleano
   cancelada?: boolean | 0 | 1 | "0" | "1";
 }
 
@@ -76,13 +81,11 @@ const Ventas: React.FC = () => {
   };
 
   const handleNuevaVenta = (): void => {
-    // Solo navega, la creación del movimiento se hace en VentasDetalle
     navigate("/dashboard/ventasDetalle");
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  // Helper robusto: decide si una venta está cancelada
   const esCancelada = (v: Venta): boolean => {
     if (v.estado === "Cancelada") return true;
     if (v.cancelada === true) return true;
@@ -93,6 +96,30 @@ const Ventas: React.FC = () => {
 
   const ventasCanceladas = ventas.filter((v) => esCancelada(v));
   const ventasActivas = ventas.filter((v) => !esCancelada(v));
+
+  const renderProductosPreview = (detalles?: DetallePreview[]) => {
+    if (!detalles || detalles.length === 0) {
+      return <span className="text-gray-400 text-sm">Sin detalles</span>;
+    }
+
+    const primeros = detalles.slice(0, 2);
+    const resto = detalles.length - 2;
+
+    return (
+      <div className="text-sm">
+        {primeros.map((d, idx) => (
+          <div key={idx} className="text-gray-700">
+            • {d.articulo} <span className="text-gray-500">({d.cantidad})</span>
+          </div>
+        ))}
+        {resto > 0 && (
+          <div className="text-gray-500 text-xs mt-1">
+            +{resto} producto{resto > 1 ? "s" : ""} más
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-4">
@@ -113,7 +140,6 @@ const Ventas: React.FC = () => {
         </Alert>
       )}
 
-      {/* Encabezado */}
       <div className="flex justify-between items-center mb-6">
         <Input
           placeholder="Buscar por fecha o ID..."
@@ -133,7 +159,6 @@ const Ventas: React.FC = () => {
         </Button>
       </div>
 
-      {/* Tabs: Ventas / Ventas canceladas */}
       <Tabs defaultValue="activas" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="activas" className="flex items-center gap-2">
@@ -146,13 +171,14 @@ const Ventas: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* VENTAS ACTIVAS */}
         <TabsContent value="activas">
           <Table className="border border-gray-200 rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Fecha</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Productos</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -163,7 +189,17 @@ const Ventas: React.FC = () => {
                   <TableRow key={v.idventa}>
                     <TableCell>{v.idventa}</TableCell>
                     <TableCell>{v.fecha}</TableCell>
-                    <TableCell>${v.total.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {v.cliente || (
+                        <span className="text-gray-400 text-sm">
+                          Sin cliente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{renderProductosPreview(v.detalles)}</TableCell>
+                    <TableCell className="font-semibold">
+                      ${v.total.toFixed(2)}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
@@ -182,7 +218,7 @@ const Ventas: React.FC = () => {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={6}
                     className="text-center text-gray-600 py-4"
                   >
                     No se encontraron ventas activas.
@@ -193,13 +229,14 @@ const Ventas: React.FC = () => {
           </Table>
         </TabsContent>
 
-        {/* VENTAS CANCELADAS */}
         <TabsContent value="canceladas">
           <Table className="border border-gray-200 rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Fecha</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Productos</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -210,7 +247,17 @@ const Ventas: React.FC = () => {
                   <TableRow key={v.idventa}>
                     <TableCell>{v.idventa}</TableCell>
                     <TableCell>{v.fecha}</TableCell>
-                    <TableCell>${v.total.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {v.cliente || (
+                        <span className="text-gray-400 text-sm">
+                          Sin cliente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{renderProductosPreview(v.detalles)}</TableCell>
+                    <TableCell className="font-semibold">
+                      ${v.total.toFixed(2)}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
@@ -229,7 +276,7 @@ const Ventas: React.FC = () => {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={6}
                     className="text-center text-gray-600 py-4"
                   >
                     No hay ventas canceladas.
@@ -241,7 +288,6 @@ const Ventas: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Paginación */}
       <div className="flex justify-between mt-4">
         <Button
           disabled={page === 1}

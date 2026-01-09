@@ -40,13 +40,12 @@ import {
 
 const API_BASE = "http://localhost/GymSerra/public/api";
 
-/* ---------- Tipos ---------- */
 interface Articulo {
   idarticulo: number;
   nombre: string;
   stock?: number;
   descripcion2?: string;
-  precio: number; // viene de ventas.php?action=articulosVenta
+  precio: number;
 }
 
 interface Cliente {
@@ -85,7 +84,16 @@ interface DevolucionHistorial {
 interface Motivo {
   idmotivo: number;
   nombre: string;
-  tipo: string; // "Cancelacion" | "Devolucion"
+  tipo: string;
+}
+
+interface DevolucionItem {
+  iddetalle_venta: number;
+  idarticulo: number;
+  articulo: string;
+  cantidadMaxima: number;
+  cantidadDevolver: number;
+  precio: number;
 }
 
 interface ApiDetalleResponse {
@@ -121,7 +129,6 @@ const VentasDetalle: React.FC = () => {
   const [articulos, setArticulos] = useState<Articulo[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
 
-  // Form de detalle: incluye precio y subtotal
   const [formDetalle, setFormDetalle] = useState<{
     idarticulo: number;
     cantidad: string;
@@ -139,19 +146,16 @@ const VentasDetalle: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // Command Artículos
   const [articuloSearch, setArticuloSearch] = useState("");
   const [isArticuloMenuOpen, setIsArticuloMenuOpen] = useState(false);
   const articuloMenuRef = useRef<HTMLDivElement | null>(null);
   const [selectedArticuloLabel, setSelectedArticuloLabel] = useState("");
 
-  // Command Clientes
   const [clienteSearch, setClienteSearch] = useState("");
   const [isClienteMenuOpen, setIsClienteMenuOpen] = useState(false);
   const clienteMenuRef = useRef<HTMLDivElement | null>(null);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
 
-  // Motivos cancelación / devolución
   const [motivosCancel, setMotivosCancel] = useState<Motivo[]>([]);
   const [motivosDevol, setMotivosDevol] = useState<Motivo[]>([]);
   const [selectedMotivoCancelId, setSelectedMotivoCancelId] =
@@ -163,16 +167,15 @@ const VentasDetalle: React.FC = () => {
   const [showNuevoMotivoCancel, setShowNuevoMotivoCancel] = useState(false);
   const [showNuevoMotivoDevol, setShowNuevoMotivoDevol] = useState(false);
 
-  // Dialog cancelación
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
-  // Dialog devolución parcial
-  const [devolDialogOpen, setDevolDialogOpen] = useState(false);
+  // Modal de devoluciones múltiples
+  const [devolMultipleDialogOpen, setDevolMultipleDialogOpen] = useState(false);
+  const [devolucionesItems, setDevolucionesItems] = useState<DevolucionItem[]>(
+    []
+  );
   const [devolReason, setDevolReason] = useState("");
-  const [devolCantidad, setDevolCantidad] = useState("");
-  const [selectedDetalleForDevol, setSelectedDetalleForDevol] =
-    useState<DetalleVenta | null>(null);
 
   const showAlert = (type: "success" | "error", message: string) => {
     setAlert({ type, message });
@@ -181,14 +184,12 @@ const VentasDetalle: React.FC = () => {
   const isCancelada =
     info?.cancelada === true || info?.cancelada === 1 ? true : false;
 
-  /* ------- autocierre de alertas ------- */
   useEffect(() => {
     if (!alert) return;
     const t = setTimeout(() => setAlert(null), 3500);
     return () => clearTimeout(t);
   }, [alert]);
 
-  /* ---------- Click fuera para cerrar commands ---------- */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -206,7 +207,6 @@ const VentasDetalle: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ---------- Cargar catálogos (artículos, clientes, motivos) ---------- */
   useEffect(() => {
     void fetchArticulos();
     void fetchClientes();
@@ -214,19 +214,17 @@ const VentasDetalle: React.FC = () => {
     void fetchMotivos("Devolucion");
   }, []);
 
-  // ⚠️ AQUÍ SE ARREGLA: obtenemos artículos con precio desde ventas.php
   const fetchArticulos = async (): Promise<void> => {
     try {
       const res = await fetch(`${API_BASE}/ventas.php?action=articulosVenta`);
       const data = await res.json();
       if (data.success && Array.isArray(data.articulos)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsed: Articulo[] = data.articulos.map((a: any) => ({
           idarticulo: Number(a.idarticulo),
           nombre: a.nombre,
           stock: a.stock ?? 0,
           descripcion2: a.descripcion2,
-          precio: Number(a.precio) || 0, // viene directo del backend
+          precio: Number(a.precio) || 0,
         }));
         setArticulos(parsed);
       } else {
@@ -242,7 +240,6 @@ const VentasDetalle: React.FC = () => {
       const res = await fetch(`${API_BASE}/clientes.php?action=list`);
       const data = await res.json();
       if (Array.isArray(data.clientes)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsed: Cliente[] = data.clientes.map((c: any) => ({
           idcliente: Number(c.idcliente),
           nombre: c.nombre ?? c.nombre_completo,
@@ -263,7 +260,6 @@ const VentasDetalle: React.FC = () => {
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.motivos)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsed: Motivo[] = data.motivos.map((m: any) => ({
           idmotivo: Number(m.idmotivo),
           nombre: m.nombre,
@@ -312,11 +308,9 @@ const VentasDetalle: React.FC = () => {
     return null;
   };
 
-  /* ---------- Modo edición: cargar venta existente ---------- */
   useEffect(() => {
     if (!isEditing || !idventa) return;
     void fetchDetalleVenta(idventa);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, idventa]);
 
   const fetchDetalleVenta = async (id: number): Promise<void> => {
@@ -345,7 +339,6 @@ const VentasDetalle: React.FC = () => {
     }
   };
 
-  /* ---------- Helpers de filtros para Command ---------- */
   const articulosFiltrados = articulos.filter((a) =>
     a.nombre.toLowerCase().includes(articuloSearch.toLowerCase())
   );
@@ -354,7 +347,6 @@ const VentasDetalle: React.FC = () => {
     c.nombre.toLowerCase().includes(clienteSearch.toLowerCase())
   );
 
-  /* ---------- Nueva venta: agregar detalle (solo en front) ---------- */
   const handleAgregarDetalleLocal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formDetalle.idarticulo || !formDetalle.cantidad) {
@@ -388,7 +380,6 @@ const VentasDetalle: React.FC = () => {
         (d) => d.idarticulo === articulo.idarticulo
       );
 
-      // Si ya existe el artículo, sumamos la cantidad
       if (existingIndex >= 0) {
         return prev.map((d, idx) => {
           if (idx !== existingIndex) return d;
@@ -402,7 +393,6 @@ const VentasDetalle: React.FC = () => {
         });
       }
 
-      // Nuevo renglón
       return [
         ...prev,
         {
@@ -434,7 +424,6 @@ const VentasDetalle: React.FC = () => {
     0
   );
 
-  /* ---------- Hacer compra: se crea la venta en backend (1 sola inserción) ---------- */
   const handleHacerCompra = async () => {
     if (isEditing) return;
     if (!selectedCliente) {
@@ -479,7 +468,6 @@ const VentasDetalle: React.FC = () => {
     }
   };
 
-  /* ---------- Cancelar / Reactivar venta ---------- */
   const handleClickCancelar = () => {
     if (!isEditing || !idventa) return;
 
@@ -554,43 +542,72 @@ const VentasDetalle: React.FC = () => {
     setCancelDialogOpen(false);
   };
 
-  /* ---------- Devolución parcial ---------- */
-  const handleOpenDevolucionParcial = (detalle: DetalleVenta) => {
+  // Abrir modal de devoluciones múltiples
+  const handleOpenDevolucionMultiple = () => {
     if (!isEditing || !idventa || isCancelada) return;
-    if (!detalle.iddetalle_venta) return;
 
-    const devuelto = detalle.cantidad_devuelta ?? 0;
-    const pendiente = (detalle.cantidad ?? 0) - devuelto;
-    if (pendiente <= 0) {
-      showAlert("error", "Este artículo ya fue devuelto por completo.");
+    const itemsDisponibles = detallesBackend
+      .filter((d) => {
+        const devuelto = d.cantidad_devuelta ?? 0;
+        const pendiente = (d.cantidad ?? 0) - devuelto;
+        return pendiente > 0 && d.iddetalle_venta;
+      })
+      .map((d) => {
+        const devuelto = d.cantidad_devuelta ?? 0;
+        const pendiente = (d.cantidad ?? 0) - devuelto;
+        return {
+          iddetalle_venta: d.iddetalle_venta!,
+          idarticulo: d.idarticulo,
+          articulo: d.articulo,
+          cantidadMaxima: pendiente,
+          cantidadDevolver: 0,
+          precio: d.precio ?? 0,
+        };
+      });
+
+    if (itemsDisponibles.length === 0) {
+      showAlert("error", "No hay artículos disponibles para devolución.");
       return;
     }
 
-    setSelectedDetalleForDevol(detalle);
-    setDevolCantidad(String(pendiente));
+    setDevolucionesItems(itemsDisponibles);
     setDevolReason("");
     setNuevoMotivoDevol("");
     setSelectedMotivoDevolId("");
     setShowNuevoMotivoDevol(false);
-    setDevolDialogOpen(true);
+    setDevolMultipleDialogOpen(true);
   };
 
-  const handleConfirmDevolucionParcial = async () => {
-    if (!isEditing || !idventa || !selectedDetalleForDevol) return;
+  const handleUpdateCantidadDevolucion = (
+    iddetalle_venta: number,
+    cantidad: number
+  ) => {
+    setDevolucionesItems((prev) =>
+      prev.map((item) =>
+        item.iddetalle_venta === iddetalle_venta
+          ? {
+              ...item,
+              cantidadDevolver: Math.max(
+                0,
+                Math.min(cantidad, item.cantidadMaxima)
+              ),
+            }
+          : item
+      )
+    );
+  };
 
-    const inputCant = Number(devolCantidad);
-    if (!inputCant || inputCant <= 0) {
-      showAlert("error", "Cantidad de devolución inválida.");
-      return;
-    }
+  const handleConfirmDevolucionMultiple = async () => {
+    if (!isEditing || !idventa) return;
 
-    const devuelto = selectedDetalleForDevol.cantidad_devuelta ?? 0;
-    const pendiente = (selectedDetalleForDevol.cantidad ?? 0) - devuelto;
+    const itemsADevolver = devolucionesItems.filter(
+      (item) => item.cantidadDevolver > 0
+    );
 
-    if (inputCant > pendiente) {
+    if (itemsADevolver.length === 0) {
       showAlert(
         "error",
-        "La cantidad a devolver no puede ser mayor a la pendiente."
+        "Debes indicar al menos un artículo con cantidad a devolver."
       );
       return;
     }
@@ -599,7 +616,7 @@ const VentasDetalle: React.FC = () => {
 
     if (!selectedMotivoDevolId && !nuevoMotivoDevol.trim()) {
       const ok = confirm(
-        "No seleccionaste ni escribiste motivo, ¿quieres registrar la devolución de todos modos?"
+        "No seleccionaste ni escribiste motivo, ¿quieres registrar las devoluciones de todos modos?"
       );
       if (!ok) return;
     }
@@ -612,42 +629,49 @@ const VentasDetalle: React.FC = () => {
       idmotivo = Number(selectedMotivoDevolId);
     }
 
-    const payload = {
-      idventa,
-      iddetalle_venta: selectedDetalleForDevol.iddetalle_venta,
-      cantidad: inputCant,
-      idmotivo,
-      descripcion: devolReason.trim() || undefined,
-    };
+    // Procesar cada devolución
+    let errorOcurrido = false;
+    for (const item of itemsADevolver) {
+      const payload = {
+        idventa,
+        iddetalle_venta: item.iddetalle_venta,
+        cantidad: item.cantidadDevolver,
+        idmotivo,
+        descripcion: devolReason.trim() || undefined,
+      };
 
-    try {
-      const res = await fetch(`${API_BASE}/ventas.php?action=devolverParcial`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data: ApiDetalleResponse = await res.json();
-      if (data.success && data.info) {
-        setInfo(data.info);
-        setDetallesBackend(data.detalles ?? []);
-        setHistorialDevoluciones(data.devoluciones ?? []);
-        showAlert("success", "Devolución registrada correctamente.");
-        setDevolDialogOpen(false);
-      } else {
-        showAlert(
-          "error",
-          data.error ?? "No se pudo registrar la devolución parcial."
+      try {
+        const res = await fetch(
+          `${API_BASE}/ventas.php?action=devolverParcial`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
         );
+        const data: ApiDetalleResponse = await res.json();
+        if (!data.success) {
+          showAlert(
+            "error",
+            data.error ?? `Error al devolver ${item.articulo}`
+          );
+          errorOcurrido = true;
+          break;
+        }
+      } catch {
+        showAlert("error", `Error de conexión al devolver ${item.articulo}`);
+        errorOcurrido = true;
+        break;
       }
-    } catch {
-      showAlert(
-        "error",
-        "Error de conexión al registrar la devolución parcial."
-      );
+    }
+
+    if (!errorOcurrido) {
+      showAlert("success", "Devoluciones registradas correctamente.");
+      setDevolMultipleDialogOpen(false);
+      await fetchDetalleVenta(idventa);
     }
   };
 
-  /* ---------- Render ---------- */
   const tituloPantalla = isEditing
     ? `Detalles de Venta #${idventa}`
     : "Nueva venta";
@@ -656,7 +680,6 @@ const VentasDetalle: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Encabezado */}
       <div className="flex justify-between mb-4">
         <h2 className="text-2xl font-bold">{tituloPantalla}</h2>
         <div className="flex gap-2">
@@ -680,7 +703,6 @@ const VentasDetalle: React.FC = () => {
         </div>
       </div>
 
-      {/* Alertas */}
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
@@ -698,7 +720,6 @@ const VentasDetalle: React.FC = () => {
         </Alert>
       )}
 
-      {/* Info de venta (solo modo editar) */}
       {isEditing && info && (
         <div className="mb-6 bg-card rounded-lg p-4 shadow-sm space-y-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -741,11 +762,21 @@ const VentasDetalle: React.FC = () => {
               <Ban className="h-4 w-4" />
               {isCancelada ? "Dar de alta venta" : "Cancelar venta"}
             </Button>
+
+            {!isCancelada && (
+              <Button
+                variant="outline"
+                onClick={handleOpenDevolucionMultiple}
+                className="flex items-center gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Registrar devoluciones
+              </Button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Cliente (Command) */}
       <div className="mb-6 bg-card rounded-xl p-4 shadow-lg">
         <Label>Cliente</Label>
         <div ref={clienteMenuRef} className="mt-1 relative">
@@ -807,13 +838,11 @@ const VentasDetalle: React.FC = () => {
         </div>
       </div>
 
-      {/* Formulario de detalle (solo nueva venta) */}
       {!isEditing && (
         <form
           onSubmit={handleAgregarDetalleLocal}
           className="space-y-6 bg-card p-6 rounded-xl shadow-lg mb-6"
         >
-          {/* Artículo (Command) */}
           <div>
             <Label>Artículo</Label>
             <div ref={articuloMenuRef} className="mt-1 relative">
@@ -887,7 +916,6 @@ const VentasDetalle: React.FC = () => {
             </div>
           </div>
 
-          {/* Cantidad + Precio + Subtotal */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Cantidad</Label>
@@ -934,7 +962,6 @@ const VentasDetalle: React.FC = () => {
         </form>
       )}
 
-      {/* TABS: Artículos vendidos / Historial devoluciones */}
       <Tabs defaultValue="detalles" className="mt-2">
         <TabsList>
           <TabsTrigger value="detalles">Artículos vendidos</TabsTrigger>
@@ -943,7 +970,6 @@ const VentasDetalle: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB: DETALLES VENTA */}
         <TabsContent value="detalles" className="mt-4">
           <Table className="border border-gray-200 rounded-lg">
             <TableHeader>
@@ -958,7 +984,7 @@ const VentasDetalle: React.FC = () => {
                     <TableHead>Pendiente</TableHead>
                   </>
                 )}
-                <TableHead>Acciones</TableHead>
+                {!isEditing && <TableHead>Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -979,25 +1005,13 @@ const VentasDetalle: React.FC = () => {
                         </TableCell>
                         <TableCell>{devuelto}</TableCell>
                         <TableCell>{pendiente}</TableCell>
-                        <TableCell className="flex gap-2">
-                          {!isCancelada && pendiente > 0 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenDevolucionParcial(d)}
-                            >
-                              <RotateCcw className="h-4 w-4 mr-1" />
-                              Devolver
-                            </Button>
-                          )}
-                        </TableCell>
                       </TableRow>
                     );
                   })
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="text-center text-gray-500 py-4"
                     >
                       No hay detalles para esta venta.
@@ -1035,13 +1049,11 @@ const VentasDetalle: React.FC = () => {
             </TableBody>
           </Table>
 
-          {/* Total solo en esta tab */}
           <div className="mt-4 text-right font-semibold">
             Total: ${Number(totalMostrar).toFixed(2)}
           </div>
         </TabsContent>
 
-        {/* TAB: HISTORIAL DEVOLUCIONES */}
         <TabsContent value="devoluciones" className="mt-4">
           <Table>
             <TableHeader>
@@ -1169,25 +1181,71 @@ const VentasDetalle: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog devolución parcial */}
-      <Dialog open={devolDialogOpen} onOpenChange={setDevolDialogOpen}>
-        <DialogContent>
+      {/* Dialog devolución múltiple */}
+      <Dialog
+        open={devolMultipleDialogOpen}
+        onOpenChange={setDevolMultipleDialogOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Devolución parcial</DialogTitle>
+            <DialogTitle>Registrar devoluciones</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 mt-2">
-            <p className="text-sm text-gray-600">
-              Artículo:{" "}
-              <strong>{selectedDetalleForDevol?.articulo ?? ""}</strong>
-            </p>
-            <div>
-              <Label className="text-sm">Cantidad a devolver</Label>
-              <Input
-                type="number"
-                value={devolCantidad}
-                onChange={(e) => setDevolCantidad(e.target.value)}
-                className="mt-1"
-              />
+          <div className="space-y-4 mt-2">
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="font-semibold mb-3">
+                Artículos disponibles para devolución
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Artículo</TableHead>
+                    <TableHead>Disponible</TableHead>
+                    <TableHead>Precio Unit.</TableHead>
+                    <TableHead>Cantidad a devolver</TableHead>
+                    <TableHead>Subtotal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {devolucionesItems.map((item) => (
+                    <TableRow key={item.iddetalle_venta}>
+                      <TableCell className="font-medium">
+                        {item.articulo}
+                      </TableCell>
+                      <TableCell>{item.cantidadMaxima}</TableCell>
+                      <TableCell>${item.precio.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          max={item.cantidadMaxima}
+                          value={item.cantidadDevolver}
+                          onChange={(e) =>
+                            handleUpdateCantidadDevolucion(
+                              item.iddetalle_venta,
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-24"
+                        />
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        ${(item.cantidadDevolver * item.precio).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="mt-3 text-right">
+                <span className="text-lg font-bold">
+                  Total a devolver: $
+                  {devolucionesItems
+                    .reduce(
+                      (sum, item) => sum + item.cantidadDevolver * item.precio,
+                      0
+                    )
+                    .toFixed(2)}
+                </span>
+              </div>
             </div>
 
             <div>
@@ -1255,16 +1313,19 @@ const VentasDetalle: React.FC = () => {
             </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setDevolDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDevolMultipleDialogOpen(false)}
+            >
               Cerrar
             </Button>
             <Button
               variant="default"
-              className="flex items-center gap-2"
-              onClick={handleConfirmDevolucionParcial}
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={handleConfirmDevolucionMultiple}
             >
               <RotateCcw className="h-4 w-4" />
-              Registrar devolución
+              Registrar devoluciones
             </Button>
           </DialogFooter>
         </DialogContent>
