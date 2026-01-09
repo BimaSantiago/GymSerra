@@ -14,7 +14,7 @@ import {
 
 const Footer = () => {
   return (
-    <footer className="bg-blue-900 text-gray-100 pt-12 pb-8 border-t border-blue-800">
+    <footer className="relative z-20 bg-blue-900 text-gray-100 pt-12 pb-8 border-t border-blue-800">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         {/* Contacto */}
         <div>
