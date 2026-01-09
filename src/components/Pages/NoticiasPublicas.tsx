@@ -23,6 +23,18 @@ import {
 } from "lucide-react";
 import EventCalendar from "../layout/EventCalendar";
 
+// Imports of local assets
+import img1familia from "../../assets/img1familia.svg";
+import img1nosostros from "../../assets/img1nosostros.svg";
+import img1programas from "../../assets/img1programas.svg";
+import img1somos from "../../assets/img1somos.svg";
+import img2nosostros from "../../assets/img2nosostros.svg";
+import img2programas from "../../assets/img2programas.svg";
+import img2somos from "../../assets/img2somos.svg";
+import img3programas from "../../assets/img3programas.svg";
+import img3somos from "../../assets/img3somos.svg";
+import img1pilares from "../../assets/img1pilares.svg";
+
 interface Noticia {
   idnoticias: number;
   titulo: string;
@@ -55,41 +67,37 @@ const NoticiasPublicas = () => {
   const logros: Logro[] = [
     {
       id: 1,
-      titulo: "Campeonato Nacional 2024",
+      titulo: "Logro 1",
       descripcion:
-        "Nuestros atletas obtuvieron 5 medallas de oro en el Campeonato Nacional de Gimnasia Artística",
-      imagen:
-        "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800",
+        "fgjgfkjfkjgkhgfmh",
+      imagen: img1programas,
       fecha: "Marzo 2024",
       tipo: "competencia",
     },
     {
       id: 2,
-      titulo: "Mejor Gimnasio del Estado",
+      titulo: "Logro 2",
       descripcion:
-        "Reconocimiento como el mejor centro deportivo de gimnasia artística en Michoacán",
-      imagen:
-        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800",
+        "kyhfjyfsjhfjgfxgd",
+      imagen: img2programas,
       fecha: "Julio 2024",
       tipo: "reconocimiento",
     },
     {
       id: 3,
-      titulo: "Copa Internacional Parkour",
+      titulo: "Logro 3",
       descripcion:
-        "Primer lugar en la categoría avanzada del torneo internacional de parkour",
-      imagen:
-        "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
+        "jgjhfyjdkuffd",
+      imagen: img3programas,
       fecha: "Septiembre 2024",
       tipo: "competencia",
     },
     {
       id: 4,
-      titulo: "Exhibición Anual 2024",
+      titulo: "Logro 4",
       descripcion:
-        "Más de 200 asistentes en nuestra exhibición anual con presentaciones de todos los niveles",
-      imagen:
-        "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800",
+        "jhfkhgchhkhhgcu",
+      imagen: img1familia,
       fecha: "Noviembre 2024",
       tipo: "evento",
     },
@@ -97,12 +105,12 @@ const NoticiasPublicas = () => {
 
   // Imágenes para el collage inicial
   const collageImages = [
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800",
-    "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800",
-    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
-    "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800",
-    "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800",
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800",
+    img1nosostros,
+    img1somos,
+    img2nosostros,
+    img2somos,
+    img3somos,
+    img1pilares,
   ];
 
   const fetchNoticias = async () => {
@@ -136,11 +144,11 @@ const NoticiasPublicas = () => {
   const getLogroColor = (tipo: string) => {
     switch (tipo) {
       case "competencia":
-        return "from-yellow-500 to-orange-500";
+        return "from-green-500 to-emerald-600"; // Changed to green
       case "reconocimiento":
         return "from-blue-500 to-indigo-600";
       case "evento":
-        return "from-purple-500 to-pink-500";
+        return "from-teal-500 to-green-500"; // Changed to teal/green
       default:
         return "from-gray-500 to-gray-600";
     }
@@ -180,7 +188,7 @@ const NoticiasPublicas = () => {
           >
             <h1 className="text-6xl md:text-8xl font-extrabold text-white mb-6 tracking-tight">
               Noticias
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500">
                 & Eventos
               </span>
             </h1>
@@ -195,9 +203,9 @@ const NoticiasPublicas = () => {
               transition={{ duration: 0.5, delay: 1, type: "spring" }}
               className="mt-10 flex flex-wrap justify-center gap-4"
             >
-              <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-6 py-3 text-lg border-0">
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 text-lg border-0">
                 <Trophy className="mr-2 h-5 w-5" />
-                100+ Logros
+                Logros
               </Badge>
               <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 text-lg border-0">
                 <Calendar className="mr-2 h-5 w-5" />
@@ -261,7 +269,7 @@ const NoticiasPublicas = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center justify-center p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center p-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mb-4">
               <Trophy className="h-8 w-8 text-white" />
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -311,13 +319,24 @@ const NoticiasPublicas = () => {
                     </div>
                   </div>
 
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  <CardContent className="p-8 relative">
+                    <div className="absolute top-0 right-0 -mt-8 mr-8">
+                      <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50">
+                        <span className="text-2xl font-bold text-gray-300">
+                          {idx + 1}
+                        </span>
+                      </div>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4 pr-12 group-hover:text-green-600 transition-colors">
                       {logro.titulo}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-gray-600 leading-relaxed text-lg">
                       {logro.descripcion}
                     </p>
+                    <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
+
+
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
