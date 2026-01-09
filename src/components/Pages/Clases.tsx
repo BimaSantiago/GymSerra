@@ -1,40 +1,24 @@
-"use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Calculator, Info } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import GridMotion from "@/components/GridMotion";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  Clock,
+  Award,
+  Users,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
 /* ------------------------- Tipos de datos ------------------------- */
 interface PlanPago {
   idplan: number;
-  idnivel: number;
+  iddeporte: number;
+  deporte: string;
   dias_por_semana: number;
   costo: number;
   costo_promocion: number;
@@ -48,12 +32,61 @@ interface Horario {
   dia: number;
   deporte: string;
   nivel: string;
+  color: string;
 }
+
+interface Deporte {
+  iddeporte: number;
+  nombre: string;
+  descripcion: string;
+  color: string;
+}
+
+interface Instructor {
+  idinstructor: number;
+  iddeporte: number;
+  nombre: string;
+  appaterno: string;
+  apmaterno: string;
+  telefono: string;
+  correo: string;
+}
+
+// note: you'll need to make sure the parent container of this component is sized properly
+const items = [
+  "Item 1",
+  <div key="jsx-item-1">Custom JSX Content</div>,
+  "https://images.unsplash.com/photo-1723403804231-f4e9b515fe9d?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "Item 2",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "Item 4",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "https://images.unsplash.com/photo-1723403804231-f4e9b515fe9d?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "Item 5",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "Item 7",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "https://images.unsplash.com/photo-1723403804231-f4e9b515fe9d?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "Item 8",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "Item 10",
+  <div key="jsx-item-3">Custom JSX Content</div>,
+  "https://images.unsplash.com/photo-1723403804231-f4e9b515fe9d?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "Item 11",
+  <div key="jsx-item-2">Custom JSX Content</div>,
+  "Item 13",
+  <div key="jsx-item-4">Custom JSX Content</div>,
+  "https://images.unsplash.com/photo-1723403804231-f4e9b515fe9d?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "Item 14",
+  // Add more items as needed
+];
 
 /* ------------------------- Componente principal ------------------------- */
 const Clases: React.FC = () => {
   const [planes, setPlanes] = useState<PlanPago[]>([]);
   const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [deportes, setDeportes] = useState<Deporte[]>([]);
+  const [instructores, setInstructores] = useState<Instructor[]>([]);
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
@@ -61,47 +94,53 @@ const Clases: React.FC = () => {
 
   const [loadingPlanes, setLoadingPlanes] = useState(true);
   const [loadingHorarios, setLoadingHorarios] = useState(true);
-
-  // Estado calculadora
-  const [selectedNivel, setSelectedNivel] = useState<number | null>(1);
-  const [selectedDias, setSelectedDias] = useState<number | null>(2);
-  const [numAlumnos, setNumAlumnos] = useState<number>(1);
-  const [usarPromocion, setUsarPromocion] = useState<boolean>(true);
+  const [loadingDeportes, setLoadingDeportes] = useState(true);
+  const [loadingInstructores, setLoadingInstructores] = useState(true);
 
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const horas = [
     1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000,
   ];
 
-  const niveles = [
-    { id: 1, nombre: "Gimnasia Inicial (Prenivel)" },
-    { id: 2, nombre: "Gimnasia General (Nivel 1 al 4)" },
-    { id: 3, nombre: "Parkour" },
-  ];
-
   /* ------------------------- Fetch data ------------------------- */
   useEffect(() => {
+    fetchDeportes();
     fetchPlanes();
     fetchHorarios();
+    fetchInstructores();
   }, []);
+
+  const fetchDeportes = async () => {
+    setLoadingDeportes(true);
+    try {
+      const res = await fetch(
+        "http://localhost/GymSerra/public/api/clases.php?action=deportes"
+      );
+      const data = await res.json();
+      if (data.success && Array.isArray(data.deportes)) {
+        setDeportes(data.deportes);
+      } else {
+        setAlert({
+          type: "error",
+          message: "Error al cargar los deportes",
+        });
+      }
+    } catch {
+      setAlert({ type: "error", message: "Error de conexión con el servidor" });
+    } finally {
+      setLoadingDeportes(false);
+    }
+  };
 
   const fetchPlanes = async () => {
     setLoadingPlanes(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/plan_pago.php?action=list"
+        "http://localhost/GymSerra/public/api/clases.php?action=planes"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.planes)) {
-        const normalizados: PlanPago[] = data.planes.map((p: any) => ({
-          idplan: Number(p.idplan),
-          idnivel: Number(p.idnivel),
-          dias_por_semana: Number(p.dias_por_semana),
-          costo: Number(p.costo),
-          costo_promocion: Number(p.costo_promocion),
-          costo_penalizacion: Number(p.costo_penalizacion),
-        }));
-        setPlanes(normalizados);
+        setPlanes(data.planes);
       } else {
         setAlert({
           type: "error",
@@ -119,23 +158,37 @@ const Clases: React.FC = () => {
     setLoadingHorarios(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/horarios.php?action=list"
+        "http://localhost/GymSerra/public/api/clases.php?action=horarios"
       );
       const data = await res.json();
-      if (Array.isArray(data.horarios)) {
-        const normalizados: Horario[] = data.horarios.map((h: any) => ({
-          ...h,
-          idhorario: Number(h.idhorario),
-          hora_inicio: Number(h.hora_inicio),
-          hora_fin: Number(h.hora_fin),
-          dia: Number(h.dia),
-        }));
-        setHorarios(normalizados);
+      if (data.success && Array.isArray(data.horarios)) {
+        setHorarios(data.horarios);
+      } else {
+        setAlert({ type: "error", message: "Error al cargar horarios" });
       }
     } catch {
       setAlert({ type: "error", message: "Error al cargar horarios" });
     } finally {
       setLoadingHorarios(false);
+    }
+  };
+
+  const fetchInstructores = async () => {
+    setLoadingInstructores(true);
+    try {
+      const res = await fetch(
+        "http://localhost/GymSerra/public/api/clases.php?action=instructores"
+      );
+      const data = await res.json();
+      if (data.success && Array.isArray(data.instructores)) {
+        setInstructores(data.instructores);
+      } else {
+        setAlert({ type: "error", message: "Error al cargar instructores" });
+      }
+    } catch {
+      setAlert({ type: "error", message: "Error al cargar instructores" });
+    } finally {
+      setLoadingInstructores(false);
     }
   };
 
@@ -148,460 +201,488 @@ const Clases: React.FC = () => {
       .padStart(2, "0")}`;
   };
 
-  const colorDeporte = (nombre?: string) => {
-    switch (nombre) {
-      case "Gimnasia Artística":
-        return "bg-primary/10 border-primary/40";
-      case "Parkour":
-        return "bg-emerald-500/15 border-emerald-500/40";
-      case "Crossfit":
-        return "bg-amber-500/15 border-amber-500/40";
-      default:
-        return "bg-muted/40 border-border";
-    }
-  };
+  const planesAgrupados = useMemo(() => {
+    const grupos: { [key: number]: PlanPago[] } = {};
+    planes.forEach((plan) => {
+      if (!grupos[plan.iddeporte]) {
+        grupos[plan.iddeporte] = [];
+      }
+      grupos[plan.iddeporte].push(plan);
+    });
+    return grupos;
+  }, [planes]);
 
-  const planesDelNivel = useMemo(
-    () =>
-      selectedNivel ? planes.filter((p) => p.idnivel === selectedNivel) : [],
-    [planes, selectedNivel]
+  const instructoresPorDeporte = useMemo(() => {
+    const grupos: { [key: number]: Instructor[] } = {};
+    instructores.forEach((instructor) => {
+      if (!grupos[instructor.iddeporte]) {
+        grupos[instructor.iddeporte] = [];
+      }
+      grupos[instructor.iddeporte].push(instructor);
+    });
+    return grupos;
+  }, [instructores]);
+
+  const LoadingSkeleton = ({ height = "h-32" }: { height?: string }) => (
+    <div className={`${height} w-full animate-pulse rounded-lg bg-gray-200`} />
   );
-
-  const planSeleccionado = useMemo(
-    () =>
-      selectedNivel && selectedDias
-        ? planes.find(
-          (p) =>
-            p.idnivel === selectedNivel && p.dias_por_semana === selectedDias
-        ) || null
-        : null,
-    [planes, selectedNivel, selectedDias]
-  );
-
-  const costoBase = planSeleccionado
-    ? usarPromocion && planSeleccionado.costo_promocion > 0
-      ? planSeleccionado.costo_promocion
-      : planSeleccionado.costo
-    : 0;
-
-  const totalMensual = Math.max(0, costoBase * Math.max(1, numAlumnos));
-  const costoPorClaseAprox =
-    planSeleccionado && planSeleccionado.dias_por_semana > 0
-      ? Math.round(
-        (totalMensual / (planSeleccionado.dias_por_semana * 4)) * 10
-      ) / 10
-      : 0;
 
   /* ------------------------- UI ------------------------- */
   return (
-    <div className="mx-auto max-w-7xl space-y-16 px-4 py-16 bg-background text-foreground">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center text-3xl font-bold tracking-tight"
-      >
-        Clases y Planes
-      </motion.h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Hero Section */}
 
-      {alert && (
-        <Alert
-          variant={alert.type === "success" ? "default" : "destructive"}
-          className="rounded-lg border-border bg-card text-foreground"
-        >
-          {alert.type === "success" ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-          ) : (
-            <AlertCircle className="h-4 w-4 text-red-400" />
-          )}
-          <AlertTitle className="text-sm font-medium">
-            {alert.type === "success" ? "Éxito" : "Error"}
-          </AlertTitle>
-          <AlertDescription className="text-sm text-muted-foreground">
-            {alert.message}
-          </AlertDescription>
-        </Alert>
-      )}
+      <section className="relative h-full overflow-hidden bg-gradient-to-br from-blue-800 via-blue-800 to-purple-800">
+        <motion.div
+          initial={{ scale: 1.2, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.15 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0"
+        />
+        <GridMotion items={items} />
+        <div className="relative z-10 flex h-full items-center justify-center px-4 flex-col">
+          <div className="text-center">
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <h1 className="mb-6 text-5xl md:text-7xl font-extrabold text-white tracking-tight">
+                Descubre Nuestras
+                <span className="block bg-gradient-to-r from-green-300 to-green-500 bg-clip-text text-transparent">
+                  Disciplinas
+                </span>
+              </h1>
+              <p className="mx-auto max-w-2xl text-lg md:text-xl text-blue-100 font-medium">
+                Encuentra tu pasión en la gimnasia artística, parkour y más.
+                Instructores profesionales y horarios flexibles para ti.
+              </p>
+            </motion.div>
 
-      {/* ------------------------- HORARIOS ------------------------- */}
-      <section className="space-y-6">
-        <h2 className="text-center text-2xl font-semibold">
-          Horarios semanales
-        </h2>
-        <p className="text-center text-sm text-muted-foreground max-w-2xl mx-auto">
-          Consulta los horarios por día y disciplina. Los colores te ayudan a
-          ubicar rápidamente cada deporte.
-        </p>
-
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-          {loadingHorarios ? (
-            <div className="space-y-2 p-4">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full bg-muted/60" />
-              ))}
-            </div>
-          ) : (
-            <table className="min-w-full text-center text-xs sm:text-sm">
-              <thead className="bg-muted/70 text-muted-foreground">
-                <tr>
-                  <th className="border border-border px-2 py-2 font-semibold">
-                    Hora
-                  </th>
-                  {dias.map((d, idx) => (
-                    <th
-                      key={idx}
-                      className="border border-border px-2 py-2 font-semibold"
-                    >
-                      {d}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {horas.map((h) => (
-                  <tr key={h}>
-                    <td className="border border-border px-2 py-2 font-medium text-muted-foreground">
-                      {formatearHora(h)}
-                    </td>
-                    {dias.map((_, diaIdx) => {
-                      const horario = horarios.find(
-                        (x) =>
-                          Number(x.hora_inicio) === h &&
-                          Number(x.dia) === diaIdx + 1
-                      );
-                      const nombreDep = horario?.deporte;
-                      return (
-                        <td
-                          key={`${diaIdx}-${h}`}
-                          className={`border border-border px-2 py-2 align-top transition-all duration-200 ${colorDeporte(
-                            nombreDep
-                          )}`}
-                        >
-                          {horario ? (
-                            <div className="space-y-0.5">
-                              <p className="text-xs font-semibold">
-                                {horario.deporte}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {horario.nivel}
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              —
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.5, type: "spring" }}
+              className="mt-8 flex flex-wrap justify-center gap-4"
+            >
+              <div className="rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 text-white border border-white/30">
+                <Calendar className="inline-block mr-2 h-5 w-5" />
+                <span className="font-semibold">Clases Semanales</span>
+              </div>
+              <div className="rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 text-white border border-white/30">
+                <Users className="inline-block mr-2 h-5 w-5" />
+                <span className="font-semibold">Todos los Niveles</span>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ------------------------- PLANES & CALCULADORA ------------------------- */}
-      <section className="space-y-10">
-        <h2 className="text-center text-2xl font-semibold">
-          Planes de pago y calculadora
-        </h2>
+      <div className="mx-auto max-w-7xl px-4 pb-16">
+        {alert && (
+          <Alert
+            variant={alert.type === "success" ? "default" : "destructive"}
+            className="mt-8 rounded-lg"
+          >
+            {alert.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertTitle className="text-sm font-medium">
+              {alert.type === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription className="text-sm">
+              {alert.message}
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <Tabs defaultValue="calculadora" className="w-full">
-          <TabsList className="mx-auto mb-6 flex max-w-md justify-center">
-            <TabsTrigger value="calculadora">Calculadora</TabsTrigger>
-            <TabsTrigger value="tabla">Ver todos los planes</TabsTrigger>
-          </TabsList>
+        {/* Deportes y Planes de Pago */}
+        <section className="mt-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Nuestras Disciplinas y Planes
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Elige la disciplina que más te apasione y selecciona el plan que
+              mejor se adapte a tus objetivos. Todos nuestros planes incluyen
+              acceso completo a instalaciones y supervisión profesional.
+            </p>
+          </motion.div>
 
-          {/* CALCULADORA */}
-          <TabsContent value="calculadora" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-[1.2fr,1fr]">
-              <Card className="border-border bg-card/80 backdrop-blur">
-                <CardHeader className="flex flex-row items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
-                    <Calculator className="h-5 w-5 text-primary" />
+          {loadingDeportes || loadingPlanes ? (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-6">
+                  <LoadingSkeleton height="h-8" />
+                  <div className="mt-4">
+                    <LoadingSkeleton height="h-20" />
                   </div>
-                  <div>
-                    <CardTitle className="text-base">
-                      Calcula tu mensualidad aproximada
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Selecciona nivel, días por semana y número de alumnos.
-                    </p>
+                  <div className="mt-4">
+                    <LoadingSkeleton height="h-32" />
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {/* Nivel */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Nivel / disciplina
-                      </label>
-                      <Select
-                        value={selectedNivel?.toString() ?? ""}
-                        onValueChange={(val) =>
-                          setSelectedNivel(Number(val) || null)
-                        }
-                      >
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Elige un nivel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {niveles.map((n) => (
-                            <SelectItem key={n.id} value={n.id.toString()}>
-                              {n.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Días por semana */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Días por semana
-                      </label>
-                      <Select
-                        value={selectedDias?.toString() ?? ""}
-                        onValueChange={(val) =>
-                          setSelectedDias(Number(val) || null)
-                        }
-                      >
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Elige días" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5].map((d) => (
-                            <SelectItem key={d} value={d.toString()}>
-                              {d} día{d > 1 && "s"} por semana
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Num alumnos + promoción */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Número de alumnos
-                      </label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={numAlumnos}
-                        onChange={(e) =>
-                          setNumAlumnos(
-                            Math.max(1, Number(e.target.value) || 1)
-                          )
-                        }
-                        className="bg-background"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Ideal para calcular hermanos o amigos que se inscriben
-                        juntos.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground flex items-center justify-between">
-                        <span>Aplicar costo en promoción</span>
-                        <Switch
-                          checked={usarPromocion}
-                          onCheckedChange={setUsarPromocion}
-                        />
-                      </label>
-                      <p className="text-[11px] text-muted-foreground">
-                        Si el plan tiene costo de promoción, lo usamos como base
-                        para el cálculo.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Resumen del plan encontrado */}
-                  <div className="mt-4 space-y-3 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-                    {planSeleccionado ? (
-                      <>
-                        <div className="flex flex-wrap items-center gap-2 justify-between">
-                          <span className="font-medium">
-                            Plan encontrado para{" "}
-                            <span className="underline">
-                              {planesDelNivel.length > 0
-                                ? niveles.find((n) => n.id === selectedNivel)
-                                  ?.nombre
-                                : "este nivel"}
-                            </span>
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="border-primary/40"
-                          >
-                            {planSeleccionado.dias_por_semana} día
-                            {planSeleccionado.dias_por_semana > 1 && "s"} por
-                            semana
-                          </Badge>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-3">
-                          <div>
-                            <p className="text-[11px] text-muted-foreground">
-                              Costo base seleccionado
-                            </p>
-                            <p className="text-sm font-semibold">
-                              ${costoBase.toLocaleString("es-MX")}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-[11px] text-muted-foreground">
-                              Total mensual (x{numAlumnos})
-                            </p>
-                            <p className="text-sm font-semibold text-primary">
-                              ${totalMensual.toLocaleString("es-MX")}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-[11px] text-muted-foreground">
-                              Aproximado por clase
-                            </p>
-                            <p className="text-sm font-semibold">
-                              $
-                              {costoPorClaseAprox.toLocaleString("es-MX", {
-                                maximumFractionDigits: 1,
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex items-start gap-2 text-xs">
-                        <Info className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <p className="text-muted-foreground">
-                          Ajusta el nivel y los días por semana para encontrar
-                          un plan válido. Si no aparece nada, aún no hay un plan
-                          configurado con esa combinación.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t border-border/80 px-6 py-4 text-xs text-muted-foreground">
-                  <span>
-                    Los montos mostrados son aproximados y pueden variar por
-                    promociones vigentes.
-                  </span>
-                </CardFooter>
-              </Card>
-
-              <Card className="border-border bg-card/70 backdrop-blur">
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    ¿Cómo elegir el mejor plan?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    • Para{" "}
-                    <span className="font-semibold">
-                      niñas y niños que inician
-                    </span>
-                    , 2 días por semana suelen ser ideales.
-                  </p>
-                  <p>
-                    • Si buscan{" "}
-                    <span className="font-semibold">competencias</span> o
-                    avanzar más rápido, considera 3 a 4 días por semana.
-                  </p>
-                  <p>
-                    • Para <span className="font-semibold">parkour</span>, los
-                    días adicionales ayudan a mejorar fuerza y coordinación.
-                  </p>
-                  <p className="text-xs">
-                    Si tienes dudas, puedes acercarte directamente en recepción
-                    y ajustar tu plan.
-                  </p>
-                </CardContent>
-              </Card>
+                </Card>
+              ))}
             </div>
-          </TabsContent>
-
-          {/* TABLA COMPLETA */}
-          <TabsContent value="tabla" className="space-y-6">
-            {loadingPlanes ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                  <Card
-                    key={i}
-                    className="border-border bg-card/80 p-4 space-y-3"
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {deportes
+                .filter((d) => d.iddeporte !== 5)
+                .map((deporte, index) => (
+                  <motion.div
+                    key={deporte.iddeporte}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <Skeleton className="h-5 w-1/2 bg-muted/60" />
-                    <Skeleton className="h-8 w-full bg-muted/60" />
-                    <Skeleton className="h-8 w-full bg-muted/60" />
-                  </Card>
+                    <Card className="h-full overflow-hidden border-2 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                      <div
+                        className="h-2"
+                        style={{ backgroundColor: deporte.color }}
+                      />
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-2xl font-bold mb-2">
+                              {deporte.nombre}
+                            </CardTitle>
+                            <p className="text-sm text-gray-600">
+                              {deporte.descripcion}
+                            </p>
+                          </div>
+                          <Award className="h-8 w-8 text-gray-400" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                            <TrendingUp className="h-4 w-4" />
+                            <span>Planes disponibles</span>
+                          </div>
+
+                          {planesAgrupados[deporte.iddeporte]?.length > 0 ? (
+                            <div className="space-y-3">
+                              {planesAgrupados[deporte.iddeporte].map(
+                                (plan) => (
+                                  <div
+                                    key={plan.idplan}
+                                    className="rounded-lg border-2 border-gray-200 p-4 hover:border-blue-400 transition-colors bg-gradient-to-br from-white to-gray-50"
+                                  >
+                                    <div className="flex items-center justify-between mb-3">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-sm font-semibold"
+                                      >
+                                        {plan.dias_por_semana}{" "}
+                                        {plan.dias_por_semana === 1
+                                          ? "día"
+                                          : "días"}{" "}
+                                        / semana
+                                      </Badge>
+                                      <Zap className="h-4 w-4 text-yellow-500" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                      <div>
+                                        <p className="text-gray-500 text-xs mb-1">
+                                          Precio Promoción
+                                        </p>
+                                        <p className="text-lg font-bold text-green-600">
+                                          $
+                                          {plan.costo_promocion.toLocaleString(
+                                            "es-MX"
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-gray-500 text-xs mb-1">
+                                          Precio Regular
+                                        </p>
+                                        <p className="text-lg font-bold text-gray-700">
+                                          ${plan.costo.toLocaleString("es-MX")}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                      <p className="text-xs text-gray-500">
+                                        <span className="font-semibold">
+                                          Costo por clase aprox:
+                                        </span>{" "}
+                                        $
+                                        {Math.round(
+                                          plan.costo_promocion /
+                                            (plan.dias_por_semana * 4)
+                                        )}
+                                      </p>
+                                      <p className="text-xs text-red-600 mt-1">
+                                        Penalización por pago tardío: $
+                                        {plan.costo_penalizacion.toLocaleString(
+                                          "es-MX"
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">
+                              No hay planes disponibles para esta disciplina
+                              actualmente.
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+            </div>
+          )}
+        </section>
+
+        {/* Horarios */}
+        <section className="mt-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Horarios Semanales
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Consulta nuestros horarios organizados por día y disciplina.
+              Encuentra el horario perfecto que se adapte a tu rutina.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="overflow-x-auto rounded-2xl border-2 border-gray-200 shadow-xl bg-white"
+          >
+            {loadingHorarios ? (
+              <div className="p-8 space-y-4">
+                {[...Array(8)].map((_, i) => (
+                  <LoadingSkeleton key={i} height="h-12" />
                 ))}
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {niveles.map((nivel) => {
-                  const planesNivel = planes.filter(
-                    (p) => p.idnivel === nivel.id
-                  );
-                  return (
-                    <Card
-                      key={nivel.id}
-                      className="rounded-xl border border-border bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-300 hover:shadow-blue-100/50"
+              <table className="min-w-full text-center text-sm">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="border border-gray-300 px-4 py-4 font-bold text-gray-700">
+                      <Clock className="inline-block mr-2 h-5 w-5" />
+                      Hora
+                    </th>
+                    {dias.map((d, idx) => (
+                      <th
+                        key={idx}
+                        className="border border-gray-300 px-4 py-4 font-bold text-gray-700"
+                      >
+                        {d}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {horas.map((h, hIdx) => (
+                    <tr
+                      key={h}
+                      className={hIdx % 2 === 0 ? "bg-gray-50" : "bg-white"}
                     >
-                      <CardHeader>
-                        <CardTitle className="text-base font-semibold">
-                          {nivel.nombre}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {planesNivel.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Días</TableHead>
-                                <TableHead>Promoción</TableHead>
-                                <TableHead>Normal</TableHead>
-                                <TableHead>Penalización</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {planesNivel.map((p) => (
-                                <TableRow key={p.idplan}>
-                                  <TableCell>{p.dias_por_semana}</TableCell>
-                                  <TableCell>
-                                    ${p.costo_promocion.toLocaleString("es-MX")}
-                                  </TableCell>
-                                  <TableCell>
-                                    ${p.costo.toLocaleString("es-MX")}
-                                  </TableCell>
-                                  <TableCell>
-                                    $
-                                    {p.costo_penalizacion.toLocaleString(
-                                      "es-MX"
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            No hay planes registrados para este nivel.
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                      <td className="border border-gray-300 px-4 py-3 font-semibold text-gray-600">
+                        {formatearHora(h)}
+                      </td>
+                      {dias.map((_, diaIdx) => {
+                        const horario = horarios.find(
+                          (x) =>
+                            Number(x.hora_inicio) === h &&
+                            Number(x.dia) === diaIdx + 1
+                        );
+                        return (
+                          <td
+                            key={`${diaIdx}-${h}`}
+                            className={`border border-gray-300 px-3 py-3 align-top transition-all duration-200 ${
+                              horario ? "hover:scale-105 cursor-pointer" : ""
+                            }`}
+                            style={{
+                              backgroundColor: horario
+                                ? `${horario.color}20`
+                                : "transparent",
+                              borderLeft: horario
+                                ? `4px solid ${horario.color}`
+                                : undefined,
+                            }}
+                          >
+                            {horario ? (
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-gray-800">
+                                  {horario.deporte}
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  {horario.nivel}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
-          </TabsContent>
-        </Tabs>
-      </section>
+          </motion.div>
+        </section>
+
+        {/* Instructores */}
+        <section className="mt-24 mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Nuestros Instructores
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Conoce al equipo de profesionales certificados que te guiarán en
+              tu camino hacia el éxito deportivo.
+            </p>
+          </motion.div>
+
+          {loadingInstructores ? (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-6">
+                  <LoadingSkeleton height="h-8" />
+                  <div className="mt-4">
+                    <LoadingSkeleton height="h-20" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-12">
+              {deportes
+                .filter(
+                  (d) =>
+                    d.iddeporte !== 5 &&
+                    instructoresPorDeporte[d.iddeporte]?.length > 0
+                )
+                .map((deporte) => (
+                  <motion.div
+                    key={deporte.iddeporte}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                      <div
+                        className="w-1 h-8 rounded"
+                        style={{ backgroundColor: deporte.color }}
+                      />
+                      {deporte.nombre}
+                    </h3>
+
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {instructoresPorDeporte[deporte.iddeporte]?.map(
+                        (instructor, idx) => (
+                          <motion.div
+                            key={instructor.idinstructor}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: idx * 0.1 }}
+                          >
+                            <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-400">
+                              <div
+                                className="h-2"
+                                style={{ backgroundColor: deporte.color }}
+                              />
+                              <CardContent className="pt-6">
+                                <div className="flex items-start gap-4">
+                                  <div
+                                    className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0"
+                                    style={{ backgroundColor: deporte.color }}
+                                  >
+                                    {instructor.nombre.charAt(0)}
+                                    {instructor.appaterno.charAt(0)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-lg text-gray-900 mb-1">
+                                      {instructor.nombre} {instructor.appaterno}{" "}
+                                      {instructor.apmaterno}
+                                    </h4>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                      Instructor de {deporte.nombre}
+                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                      <p className="text-gray-700 flex items-center gap-2">
+                                        <span className="text-gray-500">
+                                          📞
+                                        </span>
+                                        <a
+                                          href={`tel:${instructor.telefono}`}
+                                          className="hover:text-blue-600 transition-colors"
+                                        >
+                                          {instructor.telefono}
+                                        </a>
+                                      </p>
+                                      <p className="text-gray-700 flex items-center gap-2 break-all">
+                                        <span className="text-gray-500">
+                                          ✉️
+                                        </span>
+                                        <a
+                                          href={`mailto:${instructor.correo}`}
+                                          className="hover:text-blue-600 transition-colors"
+                                        >
+                                          {instructor.correo}
+                                        </a>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        )
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+            </div>
+          )}
+
+          {!loadingInstructores && instructores.length === 0 && (
+            <Card className="p-12 text-center">
+              <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">
+                Actualmente no hay instructores registrados.
+              </p>
+            </Card>
+          )}
+        </section>
+      </div>
     </div>
   );
 };

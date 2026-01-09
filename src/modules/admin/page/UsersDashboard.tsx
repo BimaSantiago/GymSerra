@@ -431,7 +431,7 @@ const UsersDashboard = () => {
               </TableCell>
               <TableCell className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   onClick={() => handleEdit(u.iduser)}
                 >

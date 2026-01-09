@@ -672,6 +672,7 @@ const ComprasDetalle: React.FC = () => {
                 type="number"
                 step="0.01"
                 value={form.precioVenta}
+                required
                 placeholder={
                   precioRecomendadoForm != null
                     ? precioRecomendadoForm.toString()

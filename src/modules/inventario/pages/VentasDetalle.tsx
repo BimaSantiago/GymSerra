@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -767,7 +768,7 @@ const VentasDetalle: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={handleOpenDevolucionMultiple}
-                className="flex items-center gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                className="flex items-center gap-2 border-orange-500 text-orange-600 hover:bg-orange-700"
               >
                 <RotateCcw className="h-4 w-4" />
                 Registrar devoluciones
@@ -971,7 +972,7 @@ const VentasDetalle: React.FC = () => {
         </TabsList>
 
         <TabsContent value="detalles" className="mt-4">
-          <Table className="border border-gray-200 rounded-lg">
+          <Table className=" rounded-lg">
             <TableHeader>
               <TableRow>
                 <TableHead>Artículo</TableHead>
@@ -1102,11 +1103,14 @@ const VentasDetalle: React.FC = () => {
               <Label className="text-sm">Motivo (catálogo)</Label>
               <select
                 title="motivo"
-                className="mt-1 w-full border rounded-md p-2 text-sm"
+                className="mt-1 w-full border rounded-md p-2 text-sm bg-card"
                 value={selectedMotivoCancelId}
                 onChange={(e) => setSelectedMotivoCancelId(e.target.value)}
               >
-                <option value="">-- Seleccionar motivo --</option>
+                <option value="" disabled selected>
+                  {" "}
+                  Seleccionar motivo{" "}
+                </option>
                 {motivosCancel.map((m) => (
                   <option key={m.idmotivo} value={m.idmotivo}>
                     {m.nombre}
@@ -1186,12 +1190,12 @@ const VentasDetalle: React.FC = () => {
         open={devolMultipleDialogOpen}
         onOpenChange={setDevolMultipleDialogOpen}
       >
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] overflow-y-auto min-w-fit">
           <DialogHeader>
             <DialogTitle>Registrar devoluciones</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="border rounded-lg p-4 bg-gray-50">
+            <div className="border rounded-lg p-4 bg-card">
               <h3 className="font-semibold mb-3">
                 Artículos disponibles para devolución
               </h3>
@@ -1252,11 +1256,13 @@ const VentasDetalle: React.FC = () => {
               <Label className="text-sm">Motivo (catálogo)</Label>
               <select
                 title="motivo"
-                className="mt-1 w-full border rounded-md p-2 text-sm"
+                className="mt-1 w-full border rounded-md p-2 text-sm bg-card hover:bg-black"
                 value={selectedMotivoDevolId}
                 onChange={(e) => setSelectedMotivoDevolId(e.target.value)}
               >
-                <option value="">-- Seleccionar motivo --</option>
+                <option value="" disabled selected>
+                  Seleccionar motivo
+                </option>
                 {motivosDevol.map((m) => (
                   <option key={m.idmotivo} value={m.idmotivo}>
                     {m.nombre}

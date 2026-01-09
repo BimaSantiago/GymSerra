@@ -80,6 +80,10 @@ const Footer = () => {
               <Info className="h-4 w-4 text-gray-100" />
               <a href="/sobre-nosotros">Sobre Nosotros</a>
             </li>
+            <li className="flex items-center gap-2 hover:text-white transition">
+              <Info className="h-4 w-4 text-gray-100" />
+              <a href="/contactos">Contactanos</a>
+            </li>
           </ul>
         </div>
 

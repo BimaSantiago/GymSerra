@@ -10,6 +10,7 @@ import HomePublic from "./components/Pages/HomePublic";
 import Clases from "./components/Pages/Clases";
 import "./App.css";
 import Productos from "./components/Pages/Productos";
+import Contactos from "./components/Pages/Contactos";
 function App() {
   return (
     <Router>
@@ -21,6 +22,7 @@ function App() {
             <Route path="sobre-nosotros" element={<SobreNosotros />} />
             <Route path="clases" element={<Clases />} />
             <Route path="productos" element={<Productos />} />
+            <Route path="contactos" element={<Contactos />} />
           </Route>
           {/* Rutas de login y dashboard protegidas */}
           <Route path="/login" element={<Login />} />

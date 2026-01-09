@@ -99,7 +99,7 @@ const Ventas: React.FC = () => {
 
   const renderProductosPreview = (detalles?: DetallePreview[]) => {
     if (!detalles || detalles.length === 0) {
-      return <span className="text-gray-400 text-sm">Sin detalles</span>;
+      return <span className="text-gray-200 text-sm">Sin detalles</span>;
     }
 
     const primeros = detalles.slice(0, 2);
@@ -108,8 +108,8 @@ const Ventas: React.FC = () => {
     return (
       <div className="text-sm">
         {primeros.map((d, idx) => (
-          <div key={idx} className="text-gray-700">
-            • {d.articulo} <span className="text-gray-500">({d.cantidad})</span>
+          <div key={idx} className="text-gray-200">
+            • {d.articulo} <span className="text-gray-400">({d.cantidad})</span>
           </div>
         ))}
         {resto > 0 && (
@@ -126,7 +126,7 @@ const Ventas: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-4 rounded-2xl shadow-xl bg-gray-50"
+          className="mb-4 rounded-2xl shadow-xl"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -172,7 +172,7 @@ const Ventas: React.FC = () => {
         </TabsList>
 
         <TabsContent value="activas">
-          <Table className="border border-gray-200 rounded-lg shadow-sm">
+          <Table className="rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
@@ -230,7 +230,7 @@ const Ventas: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="canceladas">
-          <Table className="border border-gray-200 rounded-lg shadow-sm">
+          <Table className="rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>

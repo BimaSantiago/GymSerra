@@ -26,16 +26,19 @@ const Menu = () => {
         >
           <div className="w-6 h-6 relative">
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${isOpen ? "rotate-45 top-2.5" : "top-1"
-                }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${
+                isOpen ? "rotate-45 top-2.5" : "top-1"
+              }`}
             ></span>
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 top-3 ${isOpen ? "opacity-0" : "opacity-100"
-                }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 top-3 ${
+                isOpen ? "opacity-0" : "opacity-100"
+              }`}
             ></span>
             <span
-              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${isOpen ? "-rotate-45 top-2.5" : "top-5"
-                }`}
+              className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${
+                isOpen ? "-rotate-45 top-2.5" : "top-5"
+              }`}
             ></span>
           </div>
         </Button>
@@ -46,8 +49,22 @@ const Menu = () => {
         className={`transition-all duration-300 overflow-hidden ${mobileMenuClasses} ${desktopMenuClasses}`}
       >
         <SubmenuItems
-          data={["Inicio", "Productos", "Clases", "Noticias", "Sobre nosotros"]}
-          paths={["/", "/productos", "/clases", "/noticias", "/sobre-nosotros"]}
+          data={[
+            "Inicio",
+            "Productos",
+            "Clases y horarios",
+            "Eventos y Noticias",
+            "Sobre nosotros",
+            "Contactos",
+          ]}
+          paths={[
+            "/",
+            "/productos",
+            "/clases",
+            "/noticias",
+            "/sobre-nosotros",
+            "/contactos",
+          ]}
         />
       </div>
     </nav>

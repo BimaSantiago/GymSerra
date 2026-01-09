@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  BookCheck,
   Dumbbell,
   PersonStanding,
   Package2,
@@ -44,6 +45,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [loading, setLoading] = React.useState(true);
   const projects = [
     {
+      name: "Clase de prueba",
+      url: "#",
+      icon: BookCheck,
+    },
+    {
+      name: "Contactos",
+      url: "/dashboard/contactos",
+      icon: Waypoints,
+    },
+    {
       name: "Niveles",
       url: "/dashboard/niveles",
       icon: ChartNoAxesCombined,
@@ -52,11 +63,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       name: "Deportes",
       url: "/dashboard/deportesDashboard",
       icon: Trophy,
-    },
-    {
-      name: "Contactos",
-      url: "#",
-      icon: Waypoints,
     },
   ];
   const navMain = [
@@ -152,6 +158,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Proveedores",
           url: "/dashboard/proveedores",
+        },
+        {
+          title: "Instructores",
+          url: "/dashboard/instructores",
         },
       ],
     },

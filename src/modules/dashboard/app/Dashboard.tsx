@@ -30,6 +30,8 @@ import ClientesDashboard from "@/modules/personas/pages/ClientessDashboard";
 import CorteCaja from "@/modules/inventario/pages/CorteCaja";
 import CorteCajaDetalle from "@/modules/inventario/pages/CorteCajaDetalle";
 import HomePage from "@/modules/dashboard/pages/HomeDashboard";
+import Instructores from "@/modules/personas/pages/Instructores";
+import ContactosDashboard from "@/modules/personas/pages/ContactosDashboard";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -70,6 +72,8 @@ export default function Page() {
             <Route path="/clientes" element={<ClientesDashboard />} />
             <Route path="/corteCaja" element={<CorteCaja />} />
             <Route path="/corteCajaDetalle" element={<CorteCajaDetalle />} />
+            <Route path="/instructores" element={<Instructores />} />
+            <Route path="/contactos" element={<ContactosDashboard />} />
           </Routes>
         </div>
       </SidebarInset>

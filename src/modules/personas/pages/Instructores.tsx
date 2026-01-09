@@ -32,9 +32,9 @@ import {
   UserPlus,
   Search,
   Edit,
-  Trash2,
   Power,
   Save,
+  Pencil,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,6 @@ const Instructores: React.FC = () => {
   });
 
   // Estados para diálogos de confirmación
-  const [dialogEliminar, setDialogEliminar] = useState(false);
   const [dialogEstado, setDialogEstado] = useState(false);
   const [instructorParaAccion, setInstructorParaAccion] =
     useState<Instructor | null>(null);
@@ -229,37 +228,6 @@ const Instructores: React.FC = () => {
     }
   };
 
-  const handleAbrirDialogEliminar = (instructor: Instructor): void => {
-    setInstructorParaAccion(instructor);
-    setDialogEliminar(true);
-  };
-
-  const handleEliminar = async (): Promise<void> => {
-    if (!instructorParaAccion) return;
-
-    setProcessing(true);
-    try {
-      const res = await fetch(
-        `http://localhost/GymSerra/public/api/instructores.php?action=delete&idinstructor=${instructorParaAccion.idinstructor}`,
-        { method: "DELETE" }
-      );
-      const data = await res.json();
-
-      if (data.success) {
-        showAlert("success", "Instructor eliminado correctamente");
-        await fetchInstructores();
-      } else {
-        showAlert("error", data.error ?? "Error al eliminar");
-      }
-    } catch {
-      showAlert("error", "Error de conexión");
-    } finally {
-      setProcessing(false);
-      setDialogEliminar(false);
-      setInstructorParaAccion(null);
-    }
-  };
-
   const handleAbrirDialogEstado = (instructor: Instructor): void => {
     setInstructorParaAccion(instructor);
     setDialogEstado(true);
@@ -310,7 +278,7 @@ const Instructores: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="mb-4 rounded-2xl shadow-xl bg-gray-50"
+          className="mb-4 rounded-2xl shadow-xl"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
@@ -363,7 +331,7 @@ const Instructores: React.FC = () => {
         </TabsList>
 
         <TabsContent value="activos">
-          <Table className="border border-gray-200 rounded-lg shadow-sm">
+          <Table className="rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
@@ -411,7 +379,7 @@ const Instructores: React.FC = () => {
                           size="icon"
                           onClick={() => handleEditarInstructor(instructor)}
                         >
-                          <Edit className="h-4 w-4 text-blue-600" />
+                          <Pencil className="h-4 w-4 " />
                         </Button>
                         <Button
                           variant="ghost"
@@ -419,13 +387,6 @@ const Instructores: React.FC = () => {
                           onClick={() => handleAbrirDialogEstado(instructor)}
                         >
                           <Power className="h-4 w-4 text-orange-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleAbrirDialogEliminar(instructor)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </TableCell>
@@ -446,7 +407,7 @@ const Instructores: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="inactivos">
-          <Table className="border border-gray-200 rounded-lg shadow-sm">
+          <Table className="rounded-lg shadow-sm">
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
@@ -502,13 +463,6 @@ const Instructores: React.FC = () => {
                           onClick={() => handleAbrirDialogEstado(instructor)}
                         >
                           <Power className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleAbrirDialogEliminar(instructor)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </TableCell>
@@ -728,40 +682,12 @@ const Instructores: React.FC = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleToggleEstado} disabled={processing}>
+            <Button
+              onClick={handleToggleEstado}
+              disabled={processing}
+              className="bg-gray-800 text-gray-100 hover:bg-gray-600"
+            >
               {processing ? "Procesando..." : "Confirmar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Eliminar */}
-      <Dialog open={dialogEliminar} onOpenChange={setDialogEliminar}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar Instructor</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que deseas eliminar a{" "}
-              {instructorParaAccion
-                ? renderNombreCompleto(instructorParaAccion)
-                : ""}
-              ? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogEliminar(false)}
-              disabled={processing}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleEliminar}
-              disabled={processing}
-            >
-              {processing ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>

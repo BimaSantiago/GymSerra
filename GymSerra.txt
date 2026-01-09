@@ -1,0 +1,487 @@
+DROP DATABASE IF EXISTS gym_serra_1;
+CREATE DATABASE gym_serra_1;
+USE gym_serra_1;
+SET GLOBAL event_scheduler = ON;
+
+CREATE TABLE unidad_medida (
+  idunidad INT AUTO_INCREMENT PRIMARY KEY,
+  clave VARCHAR(10) NOT NULL UNIQUE,
+  descripcion VARCHAR(100) NOT NULL,
+  tipo VARCHAR(30)
+);
+CREATE TABLE categorias (
+  idcategoria INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(150) NOT NULL,
+  id_padre INT NULL,
+  orden INT UNSIGNED NOT NULL DEFAULT 0,
+  FOREIGN KEY (id_padre) REFERENCES categorias(idcategoria) ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE TABLE articulos (
+  idarticulo INT NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  codigo_barras VARCHAR(100),
+  descripcion TEXT,
+  descripcion2 ENUM('Mobiliario','Venta') DEFAULT 'Mobiliario',
+  stock INT DEFAULT 0,
+  estado ENUM('Activo','Inactivo') DEFAULT 'Activo',
+  ganancia DECIMAL(10,2),
+  iva_aplicable ENUM('Si', 'No') DEFAULT 'Si',
+  idunidad INT NOT NULL,
+  idcategoria INT NOT NULL,
+  img VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY(idarticulo),
+  FOREIGN KEY (idunidad) REFERENCES unidad_medida(idunidad),
+  FOREIGN KEY (idcategoria) REFERENCES categorias(idcategoria)
+);
+CREATE TABLE lista_precio (
+  idprecio INT NOT NULL AUTO_INCREMENT,
+  idarticulo INT NOT NULL,
+  precio DECIMAL(10,2) NOT NULL,
+  fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (idprecio),
+  FOREIGN KEY (idarticulo) REFERENCES articulos(idarticulo)
+);
+
+CREATE TABLE lista_costo (
+  idcosto INT NOT NULL AUTO_INCREMENT,
+  idarticulo INT NOT NULL,
+  precio DECIMAL(10,2) NOT NULL,
+  fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (idcosto),
+  FOREIGN KEY (idarticulo) REFERENCES articulos(idarticulo)
+);
+
+CREATE TABLE proveedores (
+  idproveedor INT NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(50) NOT NULL,
+  RFC VARCHAR(150) NOT NULL,
+  codigo_postal VARCHAR(150),
+  calle VARCHAR(250) NOT NULL,
+  localidad VARCHAR(150) NOT NULL,
+  municipio VARCHAR(150) NOT NULL,
+  telefono VARCHAR(20) NOT NULL,
+  correo VARCHAR(150) NOT NULL,
+  estado VARCHAR(20) NOT NULL,
+  nombre_vendedor VARCHAR(150) NOT NULL,
+  telefono_vendedor VARCHAR(15) NOT NULL,
+  correo_vendedor VARCHAR(100) NOT NULL,
+  PRIMARY KEY (idproveedor)
+);
+
+CREATE TABLE articulo_proveedor (
+  idarticulo INT NOT NULL,
+  idproveedor INT NOT NULL,
+  PRIMARY KEY (idarticulo, idproveedor),
+  FOREIGN KEY (idarticulo) REFERENCES articulos(idarticulo),
+  FOREIGN KEY (idproveedor) REFERENCES proveedores(idproveedor)
+);
+
+CREATE TABLE cliente (
+  idcliente INT NOT NULL AUTO_INCREMENT,
+  curp VARCHAR(50) NOT NULL,
+  nombre_completo VARCHAR(150) NOT NULL,
+  f_nacimiento DATE NOT NULL,
+  estado ENUM('Activo', 'Inactivo') DEFAULT 'Activo',
+  fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+  f_ultima_compra DATETIME DEFAULT NULL,
+  PRIMARY KEY (idcliente)
+);
+
+CREATE TABLE users (
+  iduser INT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  passw VARCHAR(100) NOT NULL,
+  avatar VARCHAR(100),
+  nombre VARCHAR(50) NOT NULL,
+  appaterno VARCHAR(50) NOT NULL,
+  apmaterno VARCHAR(50) NOT NULL,
+  correo VARCHAR(100) NOT NULL,
+  genero VARCHAR(15) NOT NULL,
+  rol ENUM('Administrador','Estandar') DEFAULT 'Estandar',
+  estatus ENUM('activo','inactivo','bloqueado') DEFAULT 'activo',
+  intentos_fallidos INT DEFAULT 0,
+  ultimo_intento_login DATETIME NULL,
+  bloqueado_hasta DATETIME NULL,
+  fecha_ultimo_login DATETIME NULL,
+  fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (iduser)
+);
+
+CREATE TABLE corte_caja (
+  idcorte INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  folio VARCHAR(30) NOT NULL,
+  fecha_inicio DATETIME DEFAULT CURRENT_TIMESTAMP,
+  fecha_corte DATETIME,
+  total_vendido DECIMAL(10,2),
+  tipo ENUM('X','Y') DEFAULT 'X',
+  corte_principal INT,
+  CONSTRAINT FK_cortes
+        FOREIGN KEY (corte_principal)
+        REFERENCES corte_caja (idcorte)
+);
+
+CREATE TABLE movimiento(
+  idmovimiento INT NOT NULL AUTO_INCREMENT,
+  comentario VARCHAR(100),
+  fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+  total DECIMAL(10,2),
+  iduser INT,
+  idcliente INT,
+  idcorte INT,
+  idproveedor INT,  
+  tipo ENUM('Entrada','Salida','Compra','Venta') DEFAULT NULL,
+  PRIMARY KEY (idmovimiento),
+  FOREIGN KEY (iduser) REFERENCES users(iduser),
+  FOREIGN KEY (idcliente) REFERENCES cliente(idcliente),
+  FOREIGN KEY (idcorte) REFERENCES corte_caja(idcorte),
+  FOREIGN KEY (idproveedor) REFERENCES proveedores(idproveedor)
+
+);
+CREATE TABLE detalle_movimiento (
+  iddetalle_movimiento INT NOT NULL AUTO_INCREMENT,
+  idmovimiento INT NOT NULL,
+  idarticulo INT NOT NULL,
+  conteo INT,
+  diferencia INT,
+  subtotal DECIMAL(10,2),
+  cantidad INT,
+  idcosto INT,
+  idprecio INT,
+  PRIMARY KEY (iddetalle_movimiento),
+  FOREIGN KEY (idmovimiento) REFERENCES movimiento(idmovimiento),
+  FOREIGN KEY (idarticulo) REFERENCES articulos(idarticulo),
+  FOREIGN KEY (idprecio) REFERENCES lista_precio(idprecio), 
+  FOREIGN KEY (idcosto) REFERENCES lista_costo(idcosto)
+
+);
+CREATE TABLE motivos_cancelacion (
+  idmotivo INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL,
+  tipo ENUM('Devolucion','Cancelacion') DEFAULT 'Cancelacion'
+);
+
+CREATE TABLE devolucion (
+  iddevolucion INT NOT NULL AUTO_INCREMENT,
+  idmovimiento INT NOT NULL,
+  monto_devuelto DECIMAL(10,2) NOT NULL DEFAULT 0,
+  fecha_devolucion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  idcorte INT NOT NULL,
+  PRIMARY KEY (iddevolucion),
+  FOREIGN KEY (idmovimiento) REFERENCES movimiento(idmovimiento),
+  FOREIGN KEY (idcorte) REFERENCES corte_caja(idcorte)
+);
+
+CREATE TABLE devolucion_detalle (
+  iddevolucion_detalle INT NOT NULL AUTO_INCREMENT,
+  iddevolucion INT NOT NULL,
+  idarticulo INT NOT NULL,
+  idprecio INT NOT NULL,
+  idmotivo INT NOT NULL,
+  cantidad_devuelta INT NOT NULL,
+  subtotal DECIMAL(10,2),
+  PRIMARY KEY (iddevolucion_detalle),
+  FOREIGN KEY (iddevolucion) REFERENCES devolucion(iddevolucion),
+  FOREIGN KEY (idarticulo) REFERENCES articulos(idarticulo),
+  FOREIGN KEY (idprecio) REFERENCES lista_precio(idprecio),
+  FOREIGN KEY (idmotivo) REFERENCES motivos_cancelacion(idmotivo)
+);
+
+CREATE TABLE cancelacion (
+  idcancelacion INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  idmovimiento INT DEFAULT NULL,
+  idmotivo INT NOT NULL,
+  descripcion VARCHAR(255) NOT NULL,
+  FOREIGN KEY (idmovimiento) REFERENCES movimiento(idmovimiento),
+  FOREIGN KEY (idmotivo) REFERENCES motivos_cancelacion(idmotivo)
+);
+
+CREATE TABLE deporte (
+  iddeporte INT NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(50) NOT NULL,
+  descripcion VARCHAR(150) NOT NULL,
+  color VARCHAR(20) NOT NULL,
+  PRIMARY KEY (iddeporte)
+);
+
+CREATE TABLE nivel (
+  idnivel INT NOT NULL AUTO_INCREMENT,
+  iddeporte INT NOT NULL,
+  nombre_nivel VARCHAR(50) NOT NULL,
+  PRIMARY KEY (idnivel),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte)
+);
+
+CREATE TABLE horarios (
+  idhorario INT NOT NULL AUTO_INCREMENT,
+  hora_inicio INT NOT NULL,
+  hora_fin INT NOT NULL,
+  dia INT NOT NULL,
+  idnivel INT NOT NULL,
+  iddeporte INT NOT NULL,
+  PRIMARY KEY (idhorario),
+  FOREIGN KEY (idnivel) REFERENCES nivel(idnivel),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte)
+);
+
+CREATE TABLE plan_pago (
+  idplan INT NOT NULL AUTO_INCREMENT,
+  iddeporte INT NOT NULL,
+  dias_por_semana INT NOT NULL,
+  costo DECIMAL(10,2) NOT NULL,
+  costo_promocion DECIMAL(10,2) NOT NULL,
+  costo_penalizacion DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (idplan),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte)
+);
+
+CREATE TABLE tutores (
+  idtutor INT NOT NULL AUTO_INCREMENT,
+  nombre_completo VARCHAR(150) NOT NULL,
+  curp VARCHAR(50) NOT NULL,
+  telefono VARCHAR(20) NOT NULL,
+  correo VARCHAR(100) NOT NULL,
+  estado_documentos ENUM('Completo', 'Incompleto') DEFAULT 'Incompleto',
+  PRIMARY KEY (idtutor)
+);
+
+CREATE TABLE alumnos (
+  idalumno INT NOT NULL AUTO_INCREMENT,
+  idtutor INT,
+  curp VARCHAR(50) NOT NULL UNIQUE,
+  nombre_completo VARCHAR(150) NOT NULL,
+  f_nacimiento DATE NOT NULL,
+  estado ENUM('Activo', 'Inactivo') DEFAULT 'Activo',
+  estado_documentos ENUM('Completo', 'Incompleto') DEFAULT 'Completo',
+  fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (idalumno),
+  FOREIGN KEY (idtutor) REFERENCES tutores(idtutor)
+);
+
+CREATE TABLE mensualidad (
+  idmensualidad INT NOT NULL AUTO_INCREMENT,
+  idalumno INT NOT NULL,
+  fecha_pago DATE DEFAULT '2025-01-01',
+  idplan INT NOT NULL,
+  total_pagado DECIMAL(10,2) NOT NULL,
+  estado ENUM('Pagado','Pendiente','Vencido') DEFAULT 'Pendiente',
+  PRIMARY KEY (idmensualidad),
+  FOREIGN KEY (idplan) REFERENCES plan_pago(idplan),
+  FOREIGN KEY (idalumno) REFERENCES alumnos(idalumno)
+);
+
+DELIMITER $$
+
+CREATE EVENT IF NOT EXISTS actualizar_mensualidades_vencidas
+ON SCHEDULE EVERY 1 MONTH
+STARTS TIMESTAMP(CURRENT_DATE + INTERVAL (1 - DAY(CURRENT_DATE)) DAY)
+DO
+BEGIN
+  UPDATE mensualidad
+  SET estado = 'Vencido'
+  WHERE estado != 'Pagado';
+END$$
+
+DELIMITER ;
+
+CREATE TABLE eventos (
+  idevento INT NOT NULL AUTO_INCREMENT,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  descripcion VARCHAR(100) NOT NULL,
+  iddeporte INT NOT NULL,
+  PRIMARY KEY (idevento),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte)
+);
+
+CREATE TABLE noticias (
+  idnoticias INT NOT NULL AUTO_INCREMENT,
+  titulo VARCHAR(50) NOT NULL,
+  fecha_publicacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  iddeporte INT NOT NULL,
+  idevento INT NOT NULL,
+  descripcion VARCHAR(150) NOT NULL,
+  imagen VARCHAR(150) NOT NULL,
+  PRIMARY KEY (idnoticias),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte),
+  FOREIGN KEY (idevento) REFERENCES eventos(idevento)
+);
+
+CREATE TABLE clase_prueba (
+  idclase_prueba INT NOT NULL AUTO_INCREMENT,
+  idalumno INT NOT NULL UNIQUE,
+  idhorario INT NOT NULL,
+  fecha_clase DATE NOT NULL,
+  estado ENUM('Programada','Tomada') DEFAULT 'Programada',
+  PRIMARY KEY (idclase_prueba),
+  FOREIGN KEY (idalumno) REFERENCES alumnos(idalumno),
+  FOREIGN KEY (idhorario) REFERENCES horarios(idhorario)
+);
+
+CREATE TABLE contactos (
+  idcontacto INT NOT NULL AUTO_INCREMENT,
+  iddeporte INT NOT NULL,
+  nombre_tutor VARCHAR(150) NOT NULL,
+  nombre_alumno VARCHAR(150) NOT NULL,
+  edad INT NOT NULL,
+  telefono VARCHAR(15) NOT NULL,
+  mensaje VARCHAR(255) NOT NULL,
+  PRIMARY KEY (idcontacto),
+  FOREIGN KEY (iddeporte) REFERENCES deporte(iddeporte)
+);
+
+CREATE TABLE instructores(
+  idinstructor INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  iddeporte INT NOT NULL,
+  nombre VARCHAR(50) NOT NULL,
+  appaterno VARCHAR(50) NOT NULL,
+  apmaterno VARCHAR(50) NOT NULL,
+  telefono VARCHAR(20) NOT NULL,
+  correo VARCHAR(255) NOT NULL,
+  estado ENUM('Activo','Inactivo') DEFAULT 'Activo',
+  fecha_creacion DATE
+);
+
+INSERT INTO deporte (nombre, descripcion, color) VALUES
+  ('Gimnasia Inicial',   'Disciplina de fuerza, equilibrio y coordinación en aparatos enfocada en niños y niñas', '#FFB6C1'),
+  ('Gimnasia Artística', 'Disciplina de fuerza, equilibrio y coordinación en aparatos.',                           '#1E90FF'),
+  ('Parkour',            'Deporte urbano basado en desplazamientos ágiles y acrobáticos.',                        '#32CD32'),
+  ('Crossfit',           'Entrenamiento funcional de alta intensidad.',                                           '#FFD700'),
+  ('Libre',              'Sin deporte asignado',                                                                  '#808080');
+
+INSERT INTO nivel (iddeporte, nombre_nivel) VALUES
+-- Gimnasia Inicial
+(1, 'Prenivel'),
+-- Gimnasia Artisitca
+(2, 'Nivel 1'),
+(2, 'Nivel 2'),
+(2, 'Nivel 3'),
+(2, 'Nivel 4'),
+-- Parkour
+(3, 'Principiante'),
+(3, 'Avanzado'),
+-- Crossfit (sin niveles asignados, solo referencia técnica)
+(4, 'General');
+
+INSERT INTO horarios (hora_inicio, hora_fin, dia, idnivel, iddeporte) VALUES
+(1430, 1500, 1, 4, 2),
+(1430, 1500, 3, 4, 2),
+(1430, 1500, 5, 4, 2),
+(1500, 1530, 1, 4, 2),
+(1500, 1530, 3, 4, 2),
+(1500, 1530, 5, 4, 2),
+(1530, 1600, 1, 4, 2),
+(1530, 1600, 2, 1, 1),
+(1530, 1600, 3, 4, 2),
+(1530, 1600, 4, 1, 1),
+(1530, 1600, 5, 4, 2),
+(1600, 1630, 1, 1, 1),
+(1600, 1630, 2, 1, 1),
+(1600, 1630, 3, 1, 1),
+(1600, 1630, 4, 1, 1),
+(1600, 1630, 5, 1, 1),
+(1630, 1700, 1, 1, 1),
+(1630, 1700, 2, 2, 2),
+(1630, 1700, 3, 1, 1),
+(1630, 1700, 4, 2, 2),
+(1630, 1700, 5, 1, 1),
+(1700, 1730, 1, 2, 2),
+(1700, 1730, 2, 2, 2),
+(1700, 1730, 3, 2, 2),
+(1700, 1730, 4, 2, 2),
+(1700, 1730, 5, 2, 2),
+(1730, 1800, 1, 2, 2),
+(1730, 1800, 2, 2, 2),
+(1730, 1800, 3, 2, 2),
+(1730, 1800, 4, 2, 2),
+(1730, 1800, 5, 2, 2),
+(1800, 1830, 1, 2, 2),
+(1800, 1830, 2, 6, 3),
+(1800, 1830, 3, 2, 2),
+(1800, 1830, 4, 6, 3),
+(1800, 1830, 5, 2, 2),
+(1830, 1900, 2, 6, 3),
+(1830, 1900, 4, 6, 3),
+(1900, 1915, 2, 6, 3),
+(1900, 1915, 4, 6, 3),
+(1915, 1930, 2, 7, 3),
+(1915, 1930, 4, 7, 3),
+(1930, 2000, 2, 7, 3),
+(1930, 2000, 4, 7, 3),
+(2000, 2030, 2, 7, 3),
+(2000, 2030, 4, 7, 3);
+
+INSERT INTO plan_pago (iddeporte, dias_por_semana, costo, costo_promocion, costo_penalizacion) VALUES 
+-- Gimnasia Inicial (Prenivel - idnivel = 1)
+(1, 1, 550.00, 500.00, 600.00),
+(1, 2, 700.00, 650.00, 750.00),
+(1, 3, 850.00, 800.00, 900.00),
+-- Gimnasia Artística (Niveles 1 al 4 - idnivel = 2,3,4,5)
+(2, 3,  950.00,  900.00, 1000.00),
+(2, 4, 1050.00, 1000.00, 1150.00),
+(2, 5, 1200.00, 1150.00, 1300.00),
+-- Parkour (Principiante y Avanzado - idnivel = 6 y 7)
+(3, 2, 600.00, 550.00, 650.00),
+(3, 3, 750.00, 700.00, 800.00),
+(3, 4, 900.00, 850.00, 950.00);
+
+INSERT INTO tutores (nombre_completo, curp, telefono, correo, estado_documentos)
+VALUES
+('Gabriel Hernández', 'HEGG790505HMNRRL08', '5512345678', 'gabriel.hdz@example.com', 'Completo'),
+('María Morales',     'MORM801015MMCRRL09', '5598765432', 'maria.morales@example.com', 'Completo'),
+('Carlos López',      'LOPC740902HMNRRL03', '5576543210', 'carlos.lopez@example.com',  'Incompleto');
+
+INSERT INTO `users` (`username`, `passw`, `nombre`, `appaterno`, `apmaterno`, `correo`, `genero`, `rol`, `estatus`, `intentos_fallidos`) VALUES ('bima', 'algo', 'Abimael', 'Hernandez', 'Santiago', 'abimaelsantiago297@gmail.com', 'Masculino', 'Administrador', 'Activo', '0');
+
+-- ALUMNOS
+INSERT INTO alumnos (idtutor, curp, nombre_completo, f_nacimiento, estado, estado_documentos) VALUES 
+ (1,'AAGH020301HMNRNL02','Ana Gabriela Hernández','2002-03-01','Activo','Completo'),
+ (2,'LPMJ041015HMNRRL08','Luis Pérez Morales','2004-10-15','Activo','Incompleto'),
+ (3,'MLSR990505HMNRDG05','María López Sánchez','1999-05-05','Inactivo','Completo');
+
+INSERT INTO proveedores
+  (nombre, RFC, codigo_postal, calle, localidad, municipio, telefono, correo, estado, nombre_vendedor, telefono_vendedor, correo_vendedor)
+VALUES
+('Deportes Elite SA de CV', 'DEL890512KJ1', NULL, 'Av. Universidad 123', 'Col. Roma', 'CDMX', '5512345678', 'contacto@deporteselite.com', 'Activo', 'Vendedor Deportes Elite', '5512345678', 'contacto@deporteselite.com'),
+('Suplementos MaxPower', 'SMP940715RT3', NULL, 'Blvd. Independencia 456', 'Torreón', 'Coahuila', '5587654321', 'ventas@maxpower.mx', 'Activo', 'Vendedor MaxPower', '5587654321', 'ventas@maxpower.mx'),
+('RopaFit México', 'RFM820210HG9', NULL, 'Calle Reforma 22', 'Guadalajara', 'Jalisco', '5545678901', 'info@ropafit.com', 'Activo', 'Vendedor RopaFit', '5545678901', 'info@ropafit.com'),
+('Equipamiento StrongGym', 'EST870321PO5', NULL, 'Av. Central 890', 'Monterrey', 'Nuevo León', '5565432198', 'ventas@stronggym.com', 'Activo', 'Vendedor StrongGym', '5565432198', 'ventas@stronggym.com'),
+('Fitness Nutrition SA', 'FNS880902JK8', NULL, 'Carretera Nacional 567', 'Puebla', 'Puebla', '5598765432', 'nutricion@fitness.mx', 'Activo', 'Vendedor Fitness Nutrition', '5598765432', 'nutricion@fitness.mx'),
+('TopBar Sportswear', 'TBS990411PQ3', NULL, 'Insurgentes Sur 701', 'CDMX', 'CDMX', '5581122334', 'contacto@topbar.mx', 'Activo', 'Vendedor TopBar', '5581122334', 'contacto@topbar.mx'),
+('ProSalud Distribuidores', 'PSD950908KL2', NULL, 'Calle Hidalgo 84', 'Toluca', 'Edo. Mex.', '5576541230', 'ventas@prosalud.com', 'Inactivo', 'Vendedor ProSalud', '5576541230', 'ventas@prosalud.com'),
+('ZonaGym Suministros', 'ZGS900401LM9', NULL, 'Circuito Interior 56', 'CDMX', 'CDMX', '5550987654', 'info@zonagym.com', 'Activo', 'Vendedor ZonaGym', '5550987654', 'info@zonagym.com'),
+('IronForce Equipos', 'IFE861123LK7', NULL, 'Av. Juárez 321', 'León', 'Guanajuato', '5532109876', 'ironforce@equipos.mx', 'Activo','Vendedor IronForce', '5532109876', 'ironforce@equipos.mx'),
+('NutriLife Distribuciones', 'NDL880701HJ5', NULL, 'Boulevard Colosio 234', 'Hermosillo', 'Sonora','5599988776', 'contacto@nutrilife.mx', 'Activo' , 'Vendedor NutriLife', '5599988776', 'contacto@nutrilife.mx');
+
+INSERT INTO unidad_medida (clave, descripcion, tipo) VALUES
+('PZA', 'Pieza', 'Conteo'),
+('CJ',  'Caja', 'Empaque'),
+('LT',  'Litro', 'Volumen'),
+('KG',  'Kilogramo', 'Peso'),
+('M',   'Metro', 'Longitud');
+
+
+-- Categorías principales
+INSERT INTO categorias (nombre, id_padre, orden) VALUES
+('Equipo de Gimnasia Artística', NULL, 1),
+('Accesorios y Consumo', NULL, 2);
+
+-- Subcategorías
+INSERT INTO categorias (nombre, id_padre, orden) VALUES
+('Aparatos', 1, 1),
+('Colchonetas', 1, 2),
+('Protecciones', 2, 1),
+('Suplementos', 2, 2);
+
+
+INSERT INTO articulos (nombre, codigo_barras, descripcion, descripcion2, stock, estado, ganancia, iva_aplicable, idunidad, idcategoria, img)
+VALUES
+('Magnesia en Polvo 100g', '750100001', 'Magnesia premium para barras y anillos.', 'Venta', 0, 'Activo', 30.00, 'Si', 1, 5, NULL),
+('Vendaje Kinesio Tape Azul', '750100002', 'Cinta kinesiológica elástica para soporte muscular.', 'Venta', 0, 'Activo', 25.00, 'Si', 1, 5, NULL),
+('Colchoneta de Aterrizaje 3x2m', '750100003', 'Colchoneta de caída profesional.', 'Mobiliario', 0, 'Activo', 800.00, 'Si', 1, 4, NULL),
+('Mini Trampolín de Impulso', '750100004', 'Trampolín para prácticas de salto.', 'Mobiliario', 0, 'Activo', 500.00, 'Si', 1, 3, NULL),
+('Barra Asimétrica Profesional', '750100005', 'Barras asimétricas ajustables en altura.', 'Mobiliario', 0, 'Activo', 1500.00, 'Si', 1, 3, NULL),
+('Faja de Soporte Lumbar', '750100006', 'Faja para soporte lumbar para entrenamiento.', 'Venta', 0, 'Activo', 40.00, 'Si', 1, 5, NULL),
+('Suplemento Electrolitos 500ml', '750100007', 'Bebida hidratante para atletas.', 'Venta', 0, 'Activo', 15.00, 'Si', 3, 6, NULL),
+('Pesa Rusa 8kg', '750100008', 'Kettlebell de entrenamiento funcional.', 'Mobiliario', 0, 'Activo', 60.00, 'Si', 4, 1, NULL),
+('Cinta Adhesiva Deportiva Blanca', '750100009', 'Tape deportivo para dedos y muñecas.', 'Venta', 0, 'Activo', 10.00, 'Si', 1, 5, NULL),
+('Colchoneta Plana 2m', '750100010', 'Colchoneta básica para entrenamiento general.', 'Mobiliario', 0, 'Activo', 200.00, 'Si', 1, 4, NULL);

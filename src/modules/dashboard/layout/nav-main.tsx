@@ -32,7 +32,9 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+      <SidebarGroupLabel>
+        <a href="/dashboard/">Menu Principal</a>
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
