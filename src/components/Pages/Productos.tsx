@@ -253,155 +253,156 @@ const Productos: React.FC = () => {
     producto: Producto;
     tipo: TipoArticulo;
   }) => {
-    const { parsed } = detectTipo(producto);
-    const price = tipo === "venta" ? formatPrice(parsed.extra) : null;
+    // const { parsed } = detectTipo(producto);
+    // const price = tipo === "venta" ? formatPrice(parsed.extra) : null;
 
     return (
-      <div className="max-w-7xl mx-auto py-16 px-6 space-y-12">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-bold text-center text-gray-800"
-        >
-          Nuestros Productos
-        </motion.h1>
-
-        {/* 🔴 Error */}
-        {error && (
-          <p className="text-center text-red-600 bg-red-50 border border-red-200 p-3 rounded">
-            {error}
+      <Card className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 bg-white">
+        <div className="relative overflow-hidden">
+          <img
+            src={producto.img}
+            alt={producto.nombre}
+            className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = "/uploads/articulos/default.jpg";
+            }}
+          />
+        </div>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold text-gray-800 text-center">
+            {producto.nombre}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center px-4 pb-5">
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+            {producto.descripcion}
           </p>
-        )}
-
-        {/* ⏳ Cargando */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-[360px] w-full rounded-lg" />
-            ))}
-          </div>
-        ) : displayedProductos.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No hay productos disponibles.
+          <p className="text-xs text-gray-500 mb-2">
+            {producto.descripcion2}
           </p>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {displayedProductos.map((producto, i) => (
-                <motion.div
-                  key={producto.idarticulo}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 bg-white">
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={producto.img}
-                        alt={producto.nombre}
-                        className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src = "/uploads/articulos/default.jpg";
-                        }}
-                      />
-                    </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-semibold text-gray-800 text-center">
-                        {producto.nombre}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center px-4 pb-5">
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                        {producto.descripcion}
-                      </p>
-                      <p className="text-xs text-gray-500 mb-2">
-                        {producto.descripcion2}
-                      </p>
-                      <p
-                        className={`font-semibold mb-3 ${producto.stock > 0
-                            ? "text-green-600"
-                            : "text-red-500 italic"
-                          }`}
-                      >
-                        {producto.stock > 0
-                          ? `En stock: ${producto.stock}`
-                          : "Sin stock"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-
-            <TabsContent value="venta" className="space-y-6">
-              {ventaList.length === 0 ? (
-                <EmptyState title="No hay artículos marcados como ventas con este filtro." />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {pagedVenta.map((p, i) => (
-                    <motion.div
-                      key={p.idarticulo}
-                      initial={{ opacity: 0, y: 18 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                    >
-                      <ProductCard producto={p} tipo="venta" />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="establecimiento" className="space-y-6">
-              {estList.length === 0 ? (
-                <EmptyState title="No hay artículos del establecimiento con este filtro." />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {pagedEst.map((p, i) => (
-                    <motion.div
-                      key={p.idarticulo}
-                      initial={{ opacity: 0, y: 18 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                    >
-                      <ProductCard producto={p} tipo="establecimiento" />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Paginación unificada por pestaña */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
-                <Button
-                  variant="secondary"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage <= 1}
-                >
-                  Anterior
-                </Button>
-
-                <div className="text-sm text-gray-600">
-                  Página <span className="font-medium">{currentPage}</span> de{" "}
-                  <span className="font-medium">{totalPages}</span>
-                </div>
-
-                <Button
-                  variant="secondary"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage >= totalPages}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            )}
-          </Tabs>
-      )}
-      </div>
+          <p
+            className={`font-semibold mb-3 ${producto.stock > 0 ? "text-green-600" : "text-red-500 italic"
+              }`}
+          >
+            {producto.stock > 0 ? `En stock: ${producto.stock}` : "Sin stock"}
+          </p>
+        </CardContent>
+      </Card>
     );
   };
 
-  export default Productos;
+  const EmptyState = ({ title }: { title: string }) => (
+    <div className="text-center py-12">
+      <p className="text-gray-500 text-lg">{title}</p>
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto py-16 px-6 space-y-12">
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-3xl font-bold text-center text-gray-800"
+      >
+        Nuestros Productos
+      </motion.h1>
+
+      {/* 🔴 Error */}
+      {error && (
+        <p className="text-center text-red-600 bg-red-50 border border-red-200 p-3 rounded">
+          {error}
+        </p>
+      )}
+
+      {/* ⏳ Cargando */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-[360px] w-full rounded-lg" />
+          ))}
+        </div>
+      ) : (
+        <Tabs
+          value={tab}
+          onValueChange={(v) => setTab(v as TipoArticulo)}
+          className="w-full"
+        >
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="venta">Venta</TabsTrigger>
+              <TabsTrigger value="establecimiento">Establecimiento</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="venta" className="space-y-6">
+            {ventaList.length === 0 ? (
+              <EmptyState title="No hay artículos marcados como ventas con este filtro." />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {pagedVenta.map((p, i) => (
+                  <motion.div
+                    key={p.idarticulo}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <ProductCard producto={p} tipo="venta" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="establecimiento" className="space-y-6">
+            {estList.length === 0 ? (
+              <EmptyState title="No hay artículos del establecimiento con este filtro." />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {pagedEst.map((p, i) => (
+                  <motion.div
+                    key={p.idarticulo}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <ProductCard producto={p} tipo="establecimiento" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Paginación unificada por pestaña */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+              >
+                Anterior
+              </Button>
+
+              <div className="text-sm text-gray-600">
+                Página <span className="font-medium">{currentPage}</span> de{" "}
+                <span className="font-medium">{totalPages}</span>
+              </div>
+
+              <Button
+                variant="secondary"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+              >
+                Siguiente
+              </Button>
+            </div>
+          )}
+        </Tabs>
+      )}
+    </div>
+  );
+};
+
+export default Productos;

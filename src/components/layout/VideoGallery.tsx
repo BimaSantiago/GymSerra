@@ -1,61 +1,33 @@
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 
+// Import videos
+import vid1 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM.mp4";
+import vid2 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (1).mp4";
+import vid3 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (2).mp4";
+import vid4 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (3).mp4";
+import vid5 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (4).mp4";
+import vid6 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (5).mp4";
+import vid7 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (6).mp4";
+import vid8 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (7).mp4";
+import vid9 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (8).mp4";
+import vid10 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (9).mp4";
+import vid11 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (10).mp4";
+import vid12 from "../../assets/videos/WhatsApp Video 2026-01-08 at 4.03.59 PM (11).mp4";
+
 const videos = [
-    {
-        id: 1,
-        title: "Entrenamiento Funcional",
-        thumbnail:
-            "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 2,
-        title: "Clase de Gimnasia",
-        thumbnail:
-            "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 3,
-        title: "Parkour en Acción",
-        thumbnail:
-            "https://images.unsplash.com/photo-1522898467493-49726bf28798?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 4,
-        title: "Fuerza y Resistencia",
-        thumbnail:
-            "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 5,
-        title: "Técnica de Salto",
-        thumbnail:
-            "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 6,
-        title: "Flexibilidad Avanzada",
-        thumbnail:
-            "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 7,
-        title: "Competencia Regional",
-        thumbnail:
-            "https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 8,
-        title: "Entrenamiento Infantil",
-        thumbnail:
-            "https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-        id: 9,
-        title: "Exhibición de Verano",
-        thumbnail:
-            "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop",
-    },
+    { id: 1, title: "Entrenamiento Funcional", src: vid1 },
+    { id: 2, title: "Clase de Gimnasia", src: vid2 },
+    { id: 3, title: "Parkour en Acción", src: vid3 },
+    { id: 4, title: "Fuerza y Resistencia", src: vid4 },
+    { id: 5, title: "Técnica de Salto", src: vid5 },
+    { id: 6, title: "Flexibilidad Avanzada", src: vid6 },
+    { id: 7, title: "Competencia Regional", src: vid7 },
+    { id: 8, title: "Entrenamiento Infantil", src: vid8 },
+    { id: 9, title: "Exhibición de Verano", src: vid9 },
+    { id: 10, title: "Entrenamiento Intensivo", src: vid10 },
+    { id: 11, title: "Rutina de Cardio", src: vid11 },
+    { id: 12, title: "Estiramientos", src: vid12 },
 ];
 
 const VideoGallery = () => {
@@ -85,31 +57,23 @@ const VideoGallery = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: index * 0.15 }}
                             viewport={{ once: true }}
-                            className="group relative aspect-video cursor-pointer overflow-hidden rounded-2xl shadow-lg"
+                            className="group relative aspect-video cursor-pointer overflow-hidden rounded-2xl shadow-lg bg-black"
                         >
-                            {/* Thumbnail */}
-                            <img
-                                src={video.thumbnail}
-                                alt={video.title}
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
+                            <video
+                                src={video.src}
+                                controls
+                                className="w-full h-full object-cover"
+                                preload="metadata"
+                            >
+                                Tu navegador no soporta el elemento de video.
+                            </video>
 
-                            {/* Overlay Oscuro */}
-                            <div className="absolute inset-0 bg-blue-900/20 transition-colors group-hover:bg-blue-900/40" />
-
-                            {/* Botón Play */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:border-blue-400 border border-white/30">
-                                    <Play className="h-8 w-8 fill-white text-white ml-1" />
-                                </div>
-                            </div>
-
-                            {/* Título */}
-                            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
-                                <h3 className="text-white font-semibold text-lg translate-y-2 opacity-90 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                            {/* Título (opcional, si quieres que aparezca sobre el video antes de reproducir) */}
+                            {/* <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                                <h3 className="text-white font-semibold text-sm">
                                     {video.title}
                                 </h3>
-                            </div>
+                            </div> */}
                         </motion.div>
                     ))}
                 </div>
