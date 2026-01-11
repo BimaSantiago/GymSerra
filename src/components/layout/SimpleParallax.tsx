@@ -111,7 +111,7 @@ const SimpleParallax = () => {
             transition={{ delay: 1, duration: 0.8 }}
           >
             <Link to="/clases">
-              <Button className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 text-lg rounded-full shadow-lg backdrop-blur-md">
+              <Button className="bg-blue-900 hover:bg-blue-700 text-white px-8 py-4 text-lg rounded-full shadow-lg backdrop-blur-md">
                 Explorar Clases <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

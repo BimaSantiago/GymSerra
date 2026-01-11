@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingBag } from "lucide-react";
 
 interface Articulo {
   idarticulo: number;
   nombre: string;
   descripcion: string;
   img: string;
-  precio: number;
 }
 
 export function ArticulosCarousel() {
@@ -33,24 +34,26 @@ export function ArticulosCarousel() {
 
   const plugin = React.useRef(
     Autoplay({
-      delay: 3000,
-      stopOnInteraction: false,
+      delay: 4000,
+      stopOnInteraction: true,
       stopOnMouseEnter: true,
+      stopOnFocusIn: true,
     })
   );
 
   React.useEffect(() => {
     const fetchArticulos = async () => {
       try {
+        // Obtener uniformes de categoría 3
         const res = await fetch(
-          "http://localhost/GymSerra/public/api/data.php?action=carruselArticulos"
+          "http://localhost/GymSerra/public/api/data.php?action=carruselUniformes"
         );
         const data = await res.json();
         if (data.success && Array.isArray(data.articulos)) {
           setArticulos(data.articulos);
         }
       } catch (error) {
-        console.error("Error al cargar artículos:", error);
+        console.error("Error al cargar uniformes:", error);
       } finally {
         setLoading(false);
       }
@@ -70,15 +73,19 @@ export function ArticulosCarousel() {
     setCurrent(api.selectedScrollSnap() + 1);
     api.on("select", handleSelect);
 
-    const pluginInstance = plugin.current;
-
     return () => {
       api.off("select", handleSelect);
-      pluginInstance?.reset();
     };
   }, [api]);
 
-  // 🔹 Skeletons mientras carga
+  // Reiniciar autoplay cuando el componente se monta o se actualiza
+  React.useEffect(() => {
+    if (api && articulos.length > 0) {
+      plugin.current.play();
+    }
+  }, [api, articulos]);
+
+  // Skeletons mientras carga
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -95,7 +102,15 @@ export function ArticulosCarousel() {
 
   if (articulos.length === 0) {
     return (
-      <p className="text-center text-gray-500">No hay productos disponibles.</p>
+      <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+        <ShoppingBag className="h-16 w-16 mx-auto text-blue-400 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          Uniformes Próximamente
+        </h3>
+        <p className="text-gray-600">
+          Estamos preparando nuestros uniformes oficiales para ti
+        </p>
+      </Card>
     );
   }
 
@@ -110,51 +125,70 @@ export function ArticulosCarousel() {
           align: "center",
           skipSnaps: false,
           containScroll: "trimSnaps",
+          duration: 20,
         }}
         onMouseEnter={() => plugin.current.stop()}
         onMouseLeave={() => plugin.current.play()}
       >
         <CarouselContent className="relative">
-          {articulos.map((articulo, index) => (
+          {articulos.map((articulo) => (
             <CarouselItem
-              key={index}
-              className="transition-transform duration-700 ease-in-out"
+              key={articulo.idarticulo}
+              className="pl-2 md:pl-4 transition-all duration-500 ease-out"
             >
               <motion.div
-                initial={{ opacity: 0.7, scale: 0.96 }}
+                initial={{ opacity: 0.7, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{
-                  duration: 0.8,
-                  ease: "easeOut",
+                  duration: 0.5,
+                  ease: [0.25, 0.1, 0.25, 1],
                 }}
-                viewport={{ once: false, amount: 0.7 }}
+                viewport={{ once: false, amount: 0.5 }}
               >
-                <Card className="overflow-hidden shadow-md hover:shadow-xl hover:shadow-blue-100/50 hover:border-blue-300 transition-all duration-300 border border-gray-100">
-                  <CardContent className="p-0">
-                    <motion.img
-                      src={articulo.img}
-                      alt={articulo.nombre}
-                      className="w-full h-60 object-cover"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.8 }}
-                    />
+                <Card className="overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-blue-100/50 hover:border-green-400 transition-all duration-300 border-2 border-gray-200 group">
+                  <CardContent className="p-0 relative">
+                    <div className="relative h-60 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                      <motion.img
+                        src={articulo.img || "/uploads/articulos/default.jpg"}
+                        alt={articulo.nombre}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.6 }}
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "/uploads/articulos/default.jpg";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                      <Badge className="absolute top-3 right-3 bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg ">
+                        <ShoppingBag className="h-3 w-3 mr-1" />
+                        Oficial
+                      </Badge>
+                    </div>
+
                     <div className="p-5 text-center">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-green-700 transition-colors">
                         {articulo.nombre}
                       </h3>
-                      <p className="text-gray-600 font-bold mb-2">
-                        ${articulo.precio ?? "N/A"}
-                      </p>
                       <p className="text-sm text-gray-600 line-clamp-3 mb-4">
                         {articulo.descripcion}
                       </p>
+
+                      <div className="max-w-1/2 mx-auto flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-green-50 rounded-lg border border-green-200 mb-4">
+                        <ShoppingBag className="h-4 w-4 text-green-600" />
+                        <p className="text-sm font-semibold text-green-900">
+                          Disponible en tienda
+                        </p>
+                      </div>
+
                       <Link to="/productos">
                         <Button
                           variant="ghost"
-                          className="rounded-full text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition-colors duration-300"
+                          className="rounded-full border text-green-600 hover:bg-blue-50 hover:text-green-800 transition-colors duration-300 font-semibold"
                         >
-                          Ver mas articulos
+                          Ver más productos
                         </Button>
                       </Link>
                     </div>
@@ -165,13 +199,30 @@ export function ArticulosCarousel() {
           ))}
         </CarouselContent>
 
-        {/* Botones */}
-        <CarouselPrevious className="hidden sm:flex -left-8 sm:-left-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg" />
-        <CarouselNext className="hidden sm:flex -right-8 sm:-right-10 bg-blue-600 hover:bg-blue-700 text-white shadow-lg" />
+        {/* Botones de navegación */}
+        <CarouselPrevious className="hidden sm:flex -left-8 sm:-left-12 bg-green-600 hover:bg-green-700 text-white shadow-lg border-0 h-12 w-12" />
+        <CarouselNext className="hidden sm:flex -right-8 sm:-right-12 bg-green-600 hover:bg-green-700 text-white shadow-lg border-0 h-12 w-12" />
       </Carousel>
 
       {/* Indicador de página */}
-      <div className="text-muted-foreground py-3 text-center text-sm md:text-base">
+      {count > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          {Array.from({ length: count }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => api?.scrollTo(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index + 1 === current
+                  ? "w-8 bg-green-600"
+                  : "w-2 bg-gray-300 hover:bg-gray-400"
+              }`}
+              aria-label={`Ir a slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="text-gray-500 py-3 text-center text-sm">
         Página {current} de {count}
       </div>
     </div>

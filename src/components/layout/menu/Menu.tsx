@@ -19,12 +19,12 @@ const Menu = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold tracking-wide">GymSerra</h2>
         <Button
-          className="md:hidden p-2 focus:outline-none"
+          className="md:hidden focus:outline-none bg-green-800 text-center justify-center items-center"
           onClick={toggleMenu}
           aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={isOpen}
         >
-          <div className="w-6 h-6 relative">
+          <div className="w-6 h-6 flex justify-center text-center items-center absolute">
             <span
               className={`absolute w-6 h-0.5 bg-white rounded transition-all duration-300 ${
                 isOpen ? "rotate-45 top-2.5" : "top-1"
@@ -50,19 +50,19 @@ const Menu = () => {
       >
         <SubmenuItems
           data={[
+            "Sobre nosotros",
             "Inicio",
-            "Productos",
             "Clases y horarios",
             "Eventos y Noticias",
-            "Sobre nosotros",
-            "Contactos",
+            "Otros Servicios",
+            "Contactanos",
           ]}
           paths={[
+            "/sobre-nosotros",
             "/",
-            "/productos",
             "/clases",
             "/noticias",
-            "/sobre-nosotros",
+            "/productos",
             "/contactos",
           ]}
         />

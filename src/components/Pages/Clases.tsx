@@ -238,7 +238,7 @@ const Clases: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-gray-900">
       {/* Sticky Background Animation */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden z-0">
+      <div className="relative top-0 h-screen w-full overflow-hidden z-0">
         <GridMotion items={items} />
         {/* Overlay gradient for better text readability in Hero */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-gray-900/90 z-[1]" />
@@ -284,7 +284,7 @@ const Clases: React.FC = () => {
         </section>
 
         {/* Content Container with Background */}
-        <div className="bg-white/95 backdrop-blur-sm shadow-2xl rounded-t-[3rem] pt-16 pb-16 px-4 md:px-8">
+        <div className="bg-white/95 backdrop-blur-sm shadow-2xl pt-16 pb-16 px-4 md:px-8">
           <div className="mx-auto max-w-7xl">
             {alert && (
               <Alert
@@ -458,6 +458,24 @@ const Clases: React.FC = () => {
                     ))}
                 </div>
               )}
+            </section>
+            {/* Clase de prueba */}
+            <section className="mt-24">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="text-center mb-12"
+              >
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                  Clase de prueba
+                </h2>
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                  Consulta nuestros horarios organizados por día y disciplina.
+                  Encuentra el horario perfecto que se adapte a tu rutina.
+                </p>
+              </motion.div>
             </section>
 
             {/* Horarios */}

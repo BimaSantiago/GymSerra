@@ -411,24 +411,24 @@ const EventDashboard: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="border border-gray-200 shadow-sm rounded-md"
+          className=" shadow-sm rounded-md"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-green-600" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-600" />
           )}
-          <AlertTitle className="text-sm font-medium text-gray-800">
+          <AlertTitle className="text-sm font-medium">
             {alert.type === "success" ? "Éxito" : "Error"}
           </AlertTitle>
-          <AlertDescription className="text-gray-600 text-sm">
+          <AlertDescription className=" text-sm">
             {alert.message}
           </AlertDescription>
         </Alert>
       )}
 
       {/* Calendario */}
-      <div className="rounded-xl border border-gray-200 bg-card shadow-sm p-4">
+      <div className="rounded-xl border border-gray-200 bg-card shadow-sm p-4 text-white">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"

@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import esLocale from "@fullcalendar/core/locales/es";
+import type { EventClickArg, ViewApi } from "@fullcalendar/core";
+
 import {
   Card,
   CardContent,
@@ -8,20 +15,29 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
 import {
   Calendar,
-  MapPin,
   Dumbbell,
   Search,
+  BookOpen,
+  MapPin,
   Trophy,
   Star,
   Award,
   Medal,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
-import EventCalendar from "../layout/EventCalendar";
 
 // Imports of local assets
 import img1familia from "../../assets/img1familia.svg";
@@ -35,6 +51,12 @@ import img3programas from "../../assets/img3programas.svg";
 import img3somos from "../../assets/img3somos.svg";
 import img1pilares from "../../assets/img1pilares.svg";
 
+// Importamos estilos
+import "./noticias.css";
+
+const API_BASE = "http://localhost/GymSerra/public";
+
+// Interfaces
 interface Noticia {
   idnoticias: number;
   titulo: string;
@@ -47,6 +69,31 @@ interface Noticia {
   fecha_fin: string;
 }
 
+interface Evento {
+  idevento: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  ubicacion: string; // "descripcion" en la tabla eventos
+  iddeporte: number;
+  deporte?: string;
+  color?: string;
+}
+interface Deporte {
+  iddeporte: number;
+  nombre: string;
+  color: string;
+}
+
+interface DeportesListResponse {
+  success: boolean;
+  deportes?: {
+    iddeporte: number | string;
+    nombre: string;
+    color: string;
+  }[];
+  error?: string;
+}
+
 interface Logro {
   id: number;
   titulo: string;
@@ -57,53 +104,56 @@ interface Logro {
 }
 
 const NoticiasPublicas = () => {
+  // --- Estados de Noticias ---
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
-  // Logros estáticos (se pueden hacer dinámicos después)
+  // --- Estados del Calendario ---
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
+  const [openDetails, setOpenDetails] = useState(false);
+  //--Deportes
+  const [deportes, setDeportes] = useState<Deporte[]>([]);
+
+  // --- Logros Estáticos ---
   const logros: Logro[] = [
     {
       id: 1,
-      titulo: "Logro 1",
-      descripcion:
-        "fgjgfkjfkjgkhgfmh",
+      titulo: "Torneo Regional",
+      descripcion: "Primer lugar en categoría infantil.",
       imagen: img1programas,
       fecha: "Marzo 2024",
       tipo: "competencia",
     },
     {
       id: 2,
-      titulo: "Logro 2",
-      descripcion:
-        "kyhfjyfsjhfjgfxgd",
+      titulo: "Reconocimiento Estatal",
+      descripcion: "Mejor academia deportiva del año.",
       imagen: img2programas,
       fecha: "Julio 2024",
       tipo: "reconocimiento",
     },
     {
       id: 3,
-      titulo: "Logro 3",
-      descripcion:
-        "jgjhfyjdkuffd",
+      titulo: "Copa Nacional",
+      descripcion: "Participación destacada en gimnasia.",
       imagen: img3programas,
       fecha: "Septiembre 2024",
       tipo: "competencia",
     },
     {
       id: 4,
-      titulo: "Logro 4",
-      descripcion:
-        "jhfkhgchhkhhgcu",
+      titulo: "Festival de Verano",
+      descripcion: "Exhibición anual con todas las categorías.",
       imagen: img1familia,
       fecha: "Noviembre 2024",
       tipo: "evento",
     },
   ];
 
-  // Imágenes para el collage inicial
   const collageImages = [
     img1nosostros,
     img1somos,
@@ -113,21 +163,103 @@ const NoticiasPublicas = () => {
     img1pilares,
   ];
 
+  // --- FETCHING ---
+
   const fetchNoticias = async () => {
-    const res = await fetch(
-      `http://localhost/GymSerra/public/api/noticias.php?action=listExtended&page=${page}&limit=${limit}&search=${search}`
-    );
-    const data = await res.json();
-    setNoticias(data.noticias || []);
-    setTotal(data.total || 0);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/noticias.php?action=listExtended&page=${page}&limit=${limit}&search=${encodeURIComponent(
+          search
+        )}`
+      );
+      const data = await res.json();
+      // Mapeo seguro para descripción
+      const noticiasMapeadas = (data.noticias || []).map((n: any) => ({
+        ...n,
+        descripcion: n.descripcion || n.descricpion,
+      }));
+      setNoticias(noticiasMapeadas);
+      setTotal(data.total || 0);
+    } catch (error) {
+      console.error("Error fetching noticias:", error);
+    }
+  };
+
+  const fetchEventos = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/eventos.php?action=list`);
+      const data = await res.json();
+      if (data.success && data.eventos) {
+        setEventos(data.eventos);
+      }
+    } catch (error) {
+      console.error("Error fetching eventos:", error);
+    }
   };
 
   useEffect(() => {
     fetchNoticias();
   }, [page, search]);
 
+  useEffect(() => {
+    fetchEventos();
+    fetchDeportes();
+  }, []);
+
   const totalPages = Math.ceil(total / limit);
 
+  // --- CONFIGURACIÓN CALENDARIO (Similar a EventDashboard) ---
+
+  const eventosById = useMemo(() => {
+    const map = new Map<string, Evento>();
+    eventos.forEach((e) => map.set(String(e.idevento), e));
+    return map;
+  }, [eventos]);
+
+  // Transformar eventos para FullCalendar
+  const calendarEvents = useMemo(() => {
+    return eventos.map((e) => ({
+      id: String(e.idevento),
+      title: `${e.deporte ?? "Evento"} • ${e.ubicacion}`,
+      start: e.fecha_inicio,
+      end: e.fecha_fin,
+      backgroundColor: e.color || "#3b82f6",
+      borderColor: e.color || "#3b82f6",
+      textColor: "#ffffff",
+      classNames: [
+        "rounded-md",
+        "px-2",
+        "py-1",
+        "text-xs",
+        "font-semibold",
+        "shadow-sm",
+        "cursor-pointer",
+        "hover:opacity-90",
+        "transition-opacity",
+      ],
+    }));
+  }, [eventos]);
+
+  // Handler al hacer click en un evento
+  const handleEventClick = (info: EventClickArg) => {
+    const ev = eventosById.get(info.event.id);
+    if (!ev) return;
+    setSelectedEvent(ev);
+    setOpenDetails(true);
+  };
+
+  // Poner títulos en mayúsculas (estilo visual)
+  const handleViewDidMount = useCallback(
+    (arg: { view: ViewApi; el: HTMLElement }) => {
+      const titleEl = arg.el.querySelector(".fc-toolbar-title");
+      if (titleEl && titleEl.textContent) {
+        titleEl.textContent = titleEl.textContent.toUpperCase();
+      }
+    },
+    []
+  );
+
+  // --- RENDER HELPERS ---
   const getLogroIcon = (tipo: string) => {
     switch (tipo) {
       case "competencia":
@@ -141,14 +273,34 @@ const NoticiasPublicas = () => {
     }
   };
 
+  const fetchDeportes = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/deportes.php?action=list`);
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      const data: DeportesListResponse = await res.json();
+      if (data.success && data.deportes) {
+        const list: Deporte[] = data.deportes.map((d) => ({
+          iddeporte: Number(d.iddeporte),
+          nombre: d.nombre,
+          color: d.color || "#6b7280",
+        }));
+        setDeportes(list);
+      }
+    } catch (error: unknown) {
+      console.error("Error al obtener deportes", error);
+    }
+  };
+
   const getLogroColor = (tipo: string) => {
     switch (tipo) {
       case "competencia":
-        return "from-green-500 to-emerald-600"; // Changed to green
+        return "from-green-500 to-emerald-600";
       case "reconocimiento":
         return "from-blue-500 to-indigo-600";
       case "evento":
-        return "from-teal-500 to-green-500"; // Changed to teal/green
+        return "from-teal-500 to-green-500";
       default:
         return "from-gray-500 to-gray-600";
     }
@@ -156,9 +308,8 @@ const NoticiasPublicas = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Hero Collage Section */}
+      {/* --- HERO SECTION --- */}
       <section className="relative h-[80vh] overflow-hidden bg-black">
-        {/* Collage Grid */}
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-1">
           {collageImages.map((img, idx) => (
             <motion.div
@@ -170,15 +321,12 @@ const NoticiasPublicas = () => {
             >
               <img
                 src={img}
-                alt={`Gimnasio ${idx + 1}`}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                alt={`Collage ${idx}`}
+                className="h-full w-full object-cover opacity-80"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60" />
             </motion.div>
           ))}
         </div>
-
-        {/* Overlay Content */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
           <motion.div
             initial={{ y: 50, opacity: 0 }}
@@ -192,30 +340,8 @@ const NoticiasPublicas = () => {
                 & Eventos
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto font-light">
-              Descubre nuestros logros, próximos eventos y mantente al día con
-              todo lo que sucede en nuestra comunidad deportiva
-            </p>
-
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, delay: 1, type: "spring" }}
-              className="mt-10 flex flex-wrap justify-center gap-4"
-            >
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 text-lg border-0">
-                <Trophy className="mr-2 h-5 w-5" />
-                Logros
-              </Badge>
-              <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 text-lg border-0">
-                <Calendar className="mr-2 h-5 w-5" />
-                Eventos Mensuales
-              </Badge>
-            </motion.div>
           </motion.div>
         </div>
-
-        {/* Decorative wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg
             viewBox="0 0 1440 120"
@@ -231,7 +357,7 @@ const NoticiasPublicas = () => {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Calendario de Eventos */}
+        {/* --- CALENDARIO DE EVENTOS --- */}
         <section className="py-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -244,23 +370,132 @@ const NoticiasPublicas = () => {
               Calendario de Eventos
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Planifica tu asistencia a nuestros próximos eventos, competencias
-              y actividades especiales
+              Haz clic en los eventos para ver más detalles.
             </p>
           </motion.div>
 
+          {/* Contenedor del Calendario */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="rounded-2xl border-2 border-gray-200 shadow-xl bg-white p-6 overflow-hidden"
+            className="rounded-2xl border-2 border-gray-200 shadow-xl bg-white p-6 overflow-hidden text-black"
           >
-            <EventCalendar />
+            {/* INYECCIÓN DEL CALENDARIO DIRECTA */}
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale={esLocale}
+              height="auto"
+              selectable={false} // Deshabilitar selección de fechas
+              dayMaxEventRows={3}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "",
+              }}
+              buttonText={{
+                today: "HOY",
+              }}
+              titleFormat={{ month: "long", year: "numeric" }}
+              firstDay={1}
+              eventClick={handleEventClick} // Solo click en evento
+              viewDidMount={handleViewDidMount}
+              events={calendarEvents}
+            />
+            {/* Leyenda */}
+            {deportes.length > 0 && (
+              <div className="rounded-xl border border-gray-200 bg-accent shadow-sm p-4 mt-3">
+                <h3 className="text-sm font-medium mb-2">Leyenda</h3>
+                <div className="flex flex-wrap gap-4 text-s">
+                  {deportes.map((d) => (
+                    <span key={d.iddeporte} className="flex items-center gap-2">
+                      <span
+                        className="h-3 w-3 rounded-sm border border-black/10"
+                        style={{ backgroundColor: d.color }}
+                      />
+                      {d.nombre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         </section>
 
-        {/* Nuestros Logros */}
+        {/* --- DIALOG DE DETALLES DEL EVENTO (Solo Lectura) --- */}
+        <Dialog open={openDetails} onOpenChange={setOpenDetails}>
+          <DialogContent className="sm:max-w-[500px] rounded-xl border-0 shadow-2xl bg-gray-50">
+            <DialogHeader className="border-b">
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-3 rounded-full shadow-md"
+                  style={{ backgroundColor: selectedEvent?.color || "#3b82f6" }}
+                >
+                  <Dumbbell className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-bold text-gray-800">
+                    {selectedEvent?.deporte || "Evento Deportivo"}
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-500 mt-1 flex items-center gap-2">
+                    {selectedEvent?.ubicacion}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            {selectedEvent && (
+              <div className="space-y-2 py-2">
+                {/* Fechas */}
+                <div className="bg-gray-50 p-4 rounded-lg flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-blue-600 mt-1" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-700">
+                      Horario / Fechas
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Inicia:{" "}
+                      <span className="font-medium text-gray-900">
+                        {selectedEvent.fecha_inicio}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Termina:{" "}
+                      <span className="font-medium text-gray-900">
+                        {selectedEvent.fecha_fin}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Detalles adicionales si existen */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" /> Descripción del evento
+                  </h4>
+                  <p className="text-gray-600 leading-relaxed text-sm">
+                    {selectedEvent.ubicacion} es una actividad organizada por el
+                    gimnasio para la disciplina de {selectedEvent.deporte}. ¡Te
+                    esperamos para apoyar a nuestros atletas!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                onClick={() => setOpenDetails(false)}
+                className="w-full sm:w-auto bg-blue-800 hover:bg-blue-700 text-white"
+              >
+                Cerrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* --- SECCIÓN DE LOGROS (Igual que antes) --- */}
         <section className="py-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -269,16 +504,9 @@ const NoticiasPublicas = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center justify-center p-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mb-4">
-              <Trophy className="h-8 w-8 text-white" />
-            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Nuestros Logros
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Celebramos los éxitos y momentos memorables que nos enorgullecen
-              como comunidad
-            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -290,16 +518,13 @@ const NoticiasPublicas = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
               >
-                <Card className="overflow-hidden border-2 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
+                <Card className="overflow-hidden border-2 hover:shadow-2xl transition-all duration-300 group">
                   <div className="relative h-64 overflow-hidden">
                     <img
                       src={logro.imagen}
                       alt={logro.titulo}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-                    {/* Badge flotante */}
                     <div className="absolute top-4 right-4">
                       <div
                         className={`p-3 rounded-full bg-gradient-to-r ${getLogroColor(
@@ -309,34 +534,12 @@ const NoticiasPublicas = () => {
                         {getLogroIcon(logro.tipo)}
                       </div>
                     </div>
-
-                    {/* Fecha */}
-                    <div className="absolute bottom-4 left-4">
-                      <Badge className="bg-white/90 text-gray-900 hover:bg-white">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {logro.fecha}
-                      </Badge>
-                    </div>
                   </div>
-
-                  <CardContent className="p-8 relative">
-                    <div className="absolute top-0 right-0 -mt-8 mr-8">
-                      <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-gray-50">
-                        <span className="text-2xl font-bold text-gray-300">
-                          {idx + 1}
-                        </span>
-                      </div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 pr-12 group-hover:text-green-600 transition-colors">
+                  <CardContent className="p-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
                       {logro.titulo}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed text-lg">
-                      {logro.descripcion}
-                    </p>
-                    <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-
-
-                    </div>
+                    <p className="text-gray-600">{logro.descripcion}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -410,7 +613,7 @@ const NoticiasPublicas = () => {
                   <Card className="h-full shadow-lg hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-300 border-2 border-gray-200 rounded-xl overflow-hidden bg-white transition-all duration-300 hover:-translate-y-2 group">
                     <CardHeader className="p-0 relative overflow-hidden">
                       <img
-                        src={`http://localhost/GymSerra/public/${n.imagen}`}
+                        src={API_BASE + n.imagen}
                         alt={n.titulo}
                         className="h-56 w-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />

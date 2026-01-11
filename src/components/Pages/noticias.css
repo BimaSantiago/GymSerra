@@ -1,0 +1,12 @@
+.fc .fc-toolbar-title {
+    text-transform: uppercase;
+}
+
+.fc .fc-col-header {
+    background-color: #000089;
+    color: white
+}
+
+.fc {
+    --fc-today-bg-color: hsl(198, 97%, 74%);
+}

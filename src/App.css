@@ -119,19 +119,10 @@
   display: none;
 }
 
+body {
+  scrollbar-color: gray transparent;
+}
 
 .fc .fc-toolbar-title {
   text-transform: uppercase;
-}
-
-.fc-col-header {
-  background-color: #040405;
-}
-
-.fc {
-  --fc-today-bg-color: #58585a;
-}
-
-body {
-  scrollbar-color: gray transparent;
 }

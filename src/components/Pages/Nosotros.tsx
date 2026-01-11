@@ -8,7 +8,9 @@ import Imagen1 from "../../assets/img1familia.svg";
 import Imagen2 from "../../assets/img1historia.svg";
 import Imagen3 from "../../assets/img1nosostros.svg";
 import Imagen4 from "../../assets/img1pilares.svg";
-import Imagen6 from "../../assets/img2historia.svg";
+import Imagen5 from "../../assets/img1programas.svg";
+import Imagen7 from "../../assets/img2pilares.svg";
+import Imagen8 from "../../assets/img2programas.svg";
 
 import { CarouselDemo } from "../layout/CarouselDemo";
 import ImageGallery from "../layout/ImageGallery";
@@ -109,7 +111,7 @@ const Nosotros = () => {
             dedicamos a fomentar la gimnasia artística, el parkour y el
             crossfit, con un enfoque especial en la gimnasia artística. Nuestra
             misión es inspirar a niñas y niños a desarrollar sus habilidades
-            físicas y valores personales en un entorno seguro y 7motivador.
+            físicas y valores personales en un entorno seguro y motivador.
           </Parrafos>
         </SubSeccion>
       </section>
@@ -120,12 +122,15 @@ const Nosotros = () => {
           <CarouselDemo
             items={[
               { src: Imagen4, alt: "Instalaciones Gym Serra" },
-              { src: Imagen6, alt: "Clases de Gimnasia" },
-              { src: Imagen4, alt: "Entrenamiento Funcional" },
+              { src: Imagen5, alt: "Clases de Gimnasia" },
+              { src: Imagen7, alt: "Clases de Gimnasia" },
+              { src: Imagen8, alt: "Clases de Gimnasia" },
+
+              { src: Imagen3, alt: "Entrenamiento Funcional" },
             ]}
             showThumbnails
             aspect="video"
-            autoPlayDelay={3500}
+            autoPlayDelay={2500}
           />
         </div>
       </section>
@@ -194,7 +199,7 @@ const Nosotros = () => {
                 key={index}
                 className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 border border-gray-100 flex flex-col items-center text-center group"
               >
-                <div className="mb-5 bg-blue-50 p-4 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                <div className="mb-5 bg-blue-50 p-4 rounded-full group-hover:bg-blue-200 group-hover:text-white transition-colors duration-300">
                   <div className="text-blue-600 group-hover:text-white transition-colors duration-300">
                     {valor.icono}
                   </div>

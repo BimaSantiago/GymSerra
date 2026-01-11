@@ -155,7 +155,7 @@ const Contactos: React.FC = () => {
       formData.edad || "-"
     }%0A%0A${formData.mensaje || ""}`;
 
-    // Número de WhatsApp del gimnasio (ajustar según sea necesario)
+    // Número de WhatsApp del gimnasio
     const numeroWhatsApp = "5620770243";
     window.open(`https://wa.me/${numeroWhatsApp}?text=${mensaje}`, "_blank");
   };
@@ -412,11 +412,11 @@ const Contactos: React.FC = () => {
               <div className="flex justify-center gap-4 mt-4">
                 <Badge variant="outline" className="px-4 py-2 bg-blue-500">
                   <Phone className="h-4 w-4 mr-2" />
-                  12345578 (nose)
+                  +52 1 55 8260 6391
                 </Badge>
                 <Badge variant="outline" className="px-4 py-2 bg-blue-500">
                   <Mail className="h-4 w-4 mr-2" />
-                  info@gimnasio.com
+                  contacto@gymserra.com
                 </Badge>
               </div>
             </div>

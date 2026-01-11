@@ -75,9 +75,9 @@ export function PrettyCarousel({
     items && items.length
       ? items
       : Array.from({ length: 5 }).map((_, i) => ({
-        src: `https://picsum.photos/seed/shadcn-${i}/1600/900`,
-        alt: `Placeholder ${i + 1}`,
-      }));
+          src: `https://picsum.photos/seed/shadcn-${i}/1600/900`,
+          alt: `Placeholder ${i + 1}`,
+        }));
 
   const aspectClass = aspect === "square" ? "aspect-square" : "aspect-video";
 
@@ -153,8 +153,8 @@ export function PrettyCarousel({
               </CarouselContent>
 
               {/* Arrow controls */}
-              <CarouselPrevious className=" sm:flex -left-3 md:-left-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
-              <CarouselNext className="hidden sm:flex -right-3 md:-right-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
+              <CarouselPrevious className=" sm:flex -left-3 md:-left-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-800 text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
+              <CarouselNext className="hidden sm:flex -right-3 md:-right-6 h-10 w-10 rounded-full bg-white hover:bg-blue-50 hover:text-blue-800 text-blue-600 hover:border-blue-200 shadow-md transition-colors" />
             </Carousel>
 
             {/* Dots */}
@@ -178,7 +178,7 @@ export function PrettyCarousel({
       </Card>
 
       {/* Pager text */}
-      <div className="py-2 text-center text-sm text-muted-foreground">
+      <div className="py-2 text-center text-sm text-black">
         Página {count ? current + 1 : 0} de {count}
       </div>
     </div>

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  BookCheck,
   Dumbbell,
   PersonStanding,
   Package2,
@@ -44,11 +43,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = React.useState<ActiveUser | null>(null);
   const [loading, setLoading] = React.useState(true);
   const projects = [
-    {
-      name: "Clase de prueba",
-      url: "#",
-      icon: BookCheck,
-    },
     {
       name: "Contactos",
       url: "/dashboard/contactos",
@@ -120,6 +114,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Mensualidades",
           url: "/dashboard/mensualidades",
+        },
+        {
+          title: "Clases de prueba",
+          url: "/dashboard/",
         },
       ],
     },

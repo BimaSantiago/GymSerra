@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Heart, Users, Star, Zap, Baby } from "lucide-react";
+import {
+  Dumbbell,
+  Heart,
+  Users,
+  Star,
+  Zap,
+  Baby,
+  MapPin,
+  Clock,
+} from "lucide-react";
 import Principal from "./Principal";
 import { ArticulosCarousel } from "./ArticulosCarousel";
 import MapaUbicacion from "../layout/Mapa";
@@ -45,16 +54,6 @@ const HomePublic = () => {
             desarrollamos no solo fuerza física, sino también disciplina,
             respeto y confianza.
           </motion.p>
-        </div>
-      </section>
-
-      {/* Productos destacados */}
-      <section className="bg-gradient-to-b from-white to-blue-50/50 py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-10 text-center text-3xl font-bold text-gray-900">
-            Nuestros Productos
-          </h2>
-          <ArticulosCarousel />
         </div>
       </section>
 
@@ -108,7 +107,36 @@ const HomePublic = () => {
         </div>
       </section>
 
-      {/* CTA Noticias */}
+      {/* Uniformes destacados */}
+      <section className="bg-gradient-to-b from-white to-blue-50/50 py-16">
+        <div className="mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Nuestros Uniformes Oficiales
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Viste los colores de GymSerra con orgullo. Uniformes de alta
+              calidad disponibles en nuestro establecimiento.
+            </p>
+          </motion.div>
+          <ArticulosCarousel />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="text-center mt-8"
+          ></motion.div>
+        </div>
+      </section>
+
+      {/* Seccion Noticias */}
       <section className="relative overflow-hidden bg-blue-900 py-16 text-center text-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
@@ -131,12 +159,93 @@ const HomePublic = () => {
           </Link>
         </motion.div>
       </section>
-      {/* Mapa */}
-      <section>
-        <MapaUbicacion />
+
+      {/* Mapa con descripción */}
+      <section className="bg-gray-50 py-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="rounded-2xl overflow-hidden shadow-xl border-2 border-gray-200 mb-8 p-10"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-center mb-8"
+            >
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Visítanos en Nuestro Gimnasio
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
+                Te esperamos en nuestras instalaciones con equipamiento de
+                primera calidad, instructores certificados y un ambiente
+                familiar donde todos son bienvenidos.
+              </p>
+            </motion.div>
+            <MapaUbicacion />
+            {/**Tarjetas ubicacion y horario */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="grid gap-6 sm:grid-cols-2"
+            >
+              <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+                <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                  <MapPin className="h-7 w-7 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-center">
+                  Ubicación
+                </h3>
+                <p className="text-sm text-gray-600 text-center">
+                  Jilotepec, México
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                  <Clock className="h-7 w-7 text-green-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-center">
+                  Abierto de
+                </h3>
+                <p className="text-sm text-gray-600 text-center">
+                  Lunes a Viernes
+                </p>
+              </div>
+            </motion.div>
+            {/**Clase de prueba */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              viewport={{ once: true }}
+              className="mt-8 p-6 bg-blue-900 rounded-2xl text-white text-center shadow-xl"
+            >
+              <h3 className="text-xl font-bold mb-3">
+                ¿Listo para comenzar tu transformación?
+              </h3>
+              <p className="text-blue-100 mb-6">
+                Visítanos y descubre por qué somos el mejor gimnasio de gimnasia
+                artística y parkour en Morelia
+              </p>
+              <Link to="/clases">
+                <Button className="rounded-full bg-white text-blue-800 hover:bg-blue-50 px-8 py-3 font-semibold shadow-lg transition-all hover:-translate-y-0.5">
+                  Agenda tu clase de prueba
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
       </section>
+
       {/* Programas + sección interactiva */}
-      <section className="bg-gradient-to-b from-white to-gray-50 py-20">
+      <section className="bg-gradient-to-b from-gray-50 to-white py-20">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -190,7 +299,7 @@ const HomePublic = () => {
                   <motion.div
                     whileHover={{ scale: 1.08 }}
                     transition={{ type: "spring", stiffness: 200 }}
-                    className="rounded-full bg-blue-50 p-6"
+                    className="rounded-full bg-blue-50 p-6 border text-blue-700"
                   >
                     {programa.icon}
                   </motion.div>
@@ -205,7 +314,7 @@ const HomePublic = () => {
                   <Link to="/clases">
                     <Button
                       variant="ghost"
-                      className="rounded-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-300"
+                      className="rounded-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-300 border"
                     >
                       Ver más
                     </Button>

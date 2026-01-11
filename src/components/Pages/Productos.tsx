@@ -1,406 +1,429 @@
-"use client";
-
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ShoppingBag,
+  Store,
+  Sparkles,
+  Package,
+  Award,
+  Eye,
+} from "lucide-react";
 
-interface Producto {
+interface Articulo {
   idarticulo: number;
   nombre: string;
   descripcion: string;
-  descripcion2: string;
-  stock: number;
-  estado: string;
   img: string;
-
-  // viene del PHP (no obligatorio para esta vista, pero puede servir)
-  ganancia?: number;
-  iva_aplicable?: string;
+  idcategoria: number;
+  categoria: string;
 }
 
-interface ApiListResponse {
-  success: boolean;
-  error?: string;
-  articulos?: any[];
-  total?: number;
-  page?: number;
-  limit?: number;
-}
-
-type TipoArticulo = "venta" | "establecimiento";
-
-type ParsedDesc2 = {
-  tipo: string; // primera parte
-  extra: string; // segunda parte (en ventas = precio)
-};
-
-const API_BASE = "http://localhost/GymSerra/public/api/articulos.php";
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function resolveImgPath(raw: string): string {
-  if (!raw) return "/uploads/articulos/default.jpg";
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith("/")) return raw;
-  return `/${raw}`;
-}
-
-function normalizeProducto(p: any): Producto {
-  return {
-    idarticulo: Number(p?.idarticulo ?? 0),
-    nombre: String(p?.nombre ?? ""),
-    descripcion: String(p?.descripcion ?? ""),
-    descripcion2: String(p?.descripcion2 ?? ""),
-    stock: Number(p?.stock ?? 0),
-    estado: String(p?.estado ?? ""),
-    img: resolveImgPath(String(p?.img ?? "")),
-    ganancia: p?.ganancia != null ? Number(p.ganancia) : undefined,
-    iva_aplicable:
-      p?.iva_aplicable != null ? String(p.iva_aplicable) : undefined,
-  };
-}
-
-function parseDescripcion2(raw: string): ParsedDesc2 {
-  const s = (raw ?? "").trim();
-  if (!s) return { tipo: "establecimiento", extra: "" };
-
-  const separators = ["|", ";", ",", "-", "/"];
-  for (const sep of separators) {
-    const parts = s
-      .split(sep)
-      .map((x) => x.trim())
-      .filter(Boolean);
-    if (parts.length >= 2) {
-      return { tipo: parts[0], extra: parts.slice(1).join(` ${sep} `).trim() };
-    }
-  }
-  // si no hay separador: todo cuenta como tipo
-  return { tipo: s, extra: "" };
-}
-
-function detectTipo(p: Producto): { tipo: TipoArticulo; parsed: ParsedDesc2 } {
-  const parsed = parseDescripcion2(p.descripcion2);
-  const t = parsed.tipo.toLowerCase();
-
-  // regla: si la primera parte contiene “venta” => ventas
-  if (t.includes("venta")) return { tipo: "venta", parsed };
-
-  // todo lo demás => establecimiento
-  return { tipo: "establecimiento", parsed };
-}
-
-function formatPrice(extra: string): string | null {
-  // extra podría venir como "$ 1,200.50" o "1200" etc.
-  const cleaned = (extra || "").replace(/[^\d.,]/g, "").trim();
-  if (!cleaned) return null;
-
-  // intento básico: convertir a número (maneja 1,200.50)
-  const normalized = cleaned.replace(/,/g, "");
-  const n = Number(normalized);
-  if (!Number.isFinite(n)) return null;
-
-  try {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 2,
-    }).format(n);
-  } catch {
-    return `$${n.toFixed(2)}`;
-  }
+interface Categoria {
+  idcategoria: number;
+  nombre: string;
+  descripcion: string;
+  esVenta: boolean;
 }
 
 const Productos: React.FC = () => {
-  const [allProductos, setAllProductos] = useState<Producto[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [productosPorCategoria, setProductosPorCategoria] = useState<{
+    [key: number]: Articulo[];
+  }>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [tab, setTab] = useState<TipoArticulo>("venta");
-
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // paginación por pestaña (client-side)
-  const [limit, setLimit] = useState<number>(9);
-  const [pageVenta, setPageVenta] = useState<number>(1);
-  const [pageEst, setPageEst] = useState<number>(1);
-
-  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+    fetchCategorias();
+  }, []);
 
-  useEffect(() => {
-    setPageVenta(1);
-    setPageEst(1);
-  }, [debouncedSearch, limit]);
-
-  const fetchAll = async () => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
+  const fetchCategorias = async () => {
+    setLoading(true);
     try {
-      setError(null);
-      setLoading(true);
+      const resCategorias = await fetch(
+        "http://localhost/GymSerra/public/api/data.php?action=categoriasProductos"
+      );
+      const dataCategorias = await resCategorias.json();
 
-      // Traemos todo para poder dividir por descripcion2 (ventas/establecimiento)
-      const url = new URL(API_BASE);
-      url.searchParams.set("action", "list");
-      url.searchParams.set("page", "1");
-      url.searchParams.set("limit", "10000");
+      if (dataCategorias.success && dataCategorias.categorias) {
+        setCategorias(dataCategorias.categorias);
 
-      const res = await fetch(url.toString(), {
-        signal: controller.signal,
-        credentials: "include",
-      });
+        // Fetch productos para cada categoría
+        for (const cat of dataCategorias.categorias) {
+          const resProductos = await fetch(
+            `http://localhost/GymSerra/public/api/data.php?action=productosPorCategoria&idcategoria=${cat.idcategoria}&limit=6`
+          );
+          const dataProductos = await resProductos.json();
 
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-
-      let data: ApiListResponse;
-      try {
-        data = (await res.json()) as ApiListResponse;
-      } catch {
-        throw new Error("La API no devolvió un JSON válido.");
+          if (dataProductos.success) {
+            setProductosPorCategoria((prev) => ({
+              ...prev,
+              [cat.idcategoria]: dataProductos.articulos || [],
+            }));
+          }
+        }
       }
-
-      if (!data?.success) {
-        throw new Error(data?.error || "La API respondió con success=false.");
-      }
-
-      const list = Array.isArray(data.articulos) ? data.articulos : [];
-      setAllProductos(list.map(normalizeProducto));
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      setAllProductos([]);
-      setError(e?.message || "Error al conectar con la API de productos.");
+    } catch (error) {
+      console.error("Error al cargar categorías:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const filtered = useMemo(() => {
-    if (!debouncedSearch) return allProductos;
-    const q = debouncedSearch.toLowerCase();
-    return allProductos.filter((p) => {
-      const a = (p.nombre || "").toLowerCase();
-      const b = (p.descripcion || "").toLowerCase();
-      const c = (p.descripcion2 || "").toLowerCase();
-      return a.includes(q) || b.includes(q) || c.includes(q);
-    });
-  }, [allProductos, debouncedSearch]);
-
-  const ventaList = useMemo(() => {
-    return filtered.filter((p) => detectTipo(p).tipo === "venta");
-  }, [filtered]);
-
-  const estList = useMemo(() => {
-    return filtered.filter((p) => detectTipo(p).tipo === "establecimiento");
-  }, [filtered]);
-
-  const totalPagesVenta = Math.max(1, Math.ceil(ventaList.length / limit));
-  const totalPagesEst = Math.max(1, Math.ceil(estList.length / limit));
-
-  const currentPage = tab === "venta" ? pageVenta : pageEst;
-  const totalPages = tab === "venta" ? totalPagesVenta : totalPagesEst;
-
-  const pagedVenta = useMemo(() => {
-    const start = (pageVenta - 1) * limit;
-    return ventaList.slice(start, start + limit);
-  }, [ventaList, pageVenta, limit]);
-
-  const pagedEst = useMemo(() => {
-    const start = (pageEst - 1) * limit;
-    return estList.slice(start, start + limit);
-  }, [estList, pageEst, limit]);
-
-  const showingText = useMemo(() => {
-    const list = tab === "venta" ? ventaList : estList;
-    const p = tab === "venta" ? pageVenta : pageEst;
-
-    if (list.length === 0) return "Sin resultados";
-    const from = (p - 1) * limit + 1;
-    const to = Math.min(p * limit, list.length);
-    return `Mostrando ${from}-${to} de ${list.length}`;
-  }, [tab, ventaList, estList, pageVenta, pageEst, limit]);
-
-  const goToPage = (next: number) => {
-    const clamped = clamp(next, 1, totalPages);
-    if (tab === "venta") setPageVenta(clamped);
-    else setPageEst(clamped);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="h-80 rounded-xl bg-gray-200 animate-pulse" />
+      ))}
+    </div>
+  );
 
   const ProductCard = ({
-    producto,
-    tipo,
+    articulo,
+    esVenta,
   }: {
-    producto: Producto;
-    tipo: TipoArticulo;
-  }) => {
-    // const { parsed } = detectTipo(producto);
-    // const price = tipo === "venta" ? formatPrice(parsed.extra) : null;
-
-    return (
-      <Card className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 bg-white">
-        <div className="relative overflow-hidden">
+    articulo: Articulo;
+    esVenta: boolean;
+  }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+    >
+      <Card className="group h-full overflow-hidden border-2 border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           <img
-            src={producto.img}
-            alt={producto.nombre}
-            className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
+            src={articulo.img || "/uploads/articulos/default.jpg"}
+            alt={articulo.nombre}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={(e) => {
               e.currentTarget.src = "/uploads/articulos/default.jpg";
             }}
           />
-        </div>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-gray-800 text-center">
-            {producto.nombre}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center px-4 pb-5">
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-            {producto.descripcion}
-          </p>
-          <p className="text-xs text-gray-500 mb-2">
-            {producto.descripcion2}
-          </p>
-          <p
-            className={`font-semibold mb-3 ${producto.stock > 0 ? "text-green-600" : "text-red-500 italic"
-              }`}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          <Badge
+            className={`absolute top-3 right-3 ${
+              esVenta
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-blue-500 hover:bg-blue-600"
+            } text-white border-0`}
           >
-            {producto.stock > 0 ? `En stock: ${producto.stock}` : "Sin stock"}
+            {esVenta ? (
+              <>
+                <ShoppingBag className="h-3 w-3 mr-1" />
+                Venta
+              </>
+            ) : (
+              <>
+                <Eye className="h-3 w-3 mr-1" />
+                Disponible
+              </>
+            )}
+          </Badge>
+        </div>
+
+        <CardContent className="p-5">
+          <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            {articulo.nombre}
+          </h3>
+          <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+            {articulo.descripcion}
           </p>
+          <div
+            className={`flex items-center justify-center gap-2 p-3 rounded-lg border ${
+              esVenta
+                ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
+                : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+            }`}
+          >
+            <Store
+              className={`h-4 w-4 ${
+                esVenta ? "text-green-600" : "text-blue-600"
+              }`}
+            />
+            <p
+              className={`text-sm font-semibold ${
+                esVenta ? "text-green-900" : "text-blue-900"
+              }`}
+            >
+              {esVenta ? "Disponible en tienda" : "Equipamiento del gimnasio"}
+            </p>
+          </div>
         </CardContent>
       </Card>
-    );
-  };
-
-  const EmptyState = ({ title }: { title: string }) => (
-    <div className="text-center py-12">
-      <p className="text-gray-500 text-lg">{title}</p>
-    </div>
+    </motion.div>
   );
 
+  const getCategoriaColor = (nombre: string) => {
+    const n = nombre.toLowerCase();
+    if (n.includes("uniform"))
+      return { from: "from-blue-500", to: "to-indigo-600", bg: "bg-blue-500" };
+    if (n.includes("dulc"))
+      return { from: "from-pink-500", to: "to-rose-600", bg: "bg-pink-500" };
+    if (n.includes("mobil") || n.includes("equip"))
+      return {
+        from: "from-purple-500",
+        to: "to-violet-600",
+        bg: "bg-purple-500",
+      };
+    return { from: "from-gray-500", to: "to-gray-600", bg: "bg-gray-500" };
+  };
+
   return (
-    <div className="max-w-7xl mx-auto py-16 px-6 space-y-12">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-3xl font-bold text-center text-gray-800"
-      >
-        Nuestros Productos
-      </motion.h1>
-
-      {/* 🔴 Error */}
-      {error && (
-        <p className="text-center text-red-600 bg-red-50 border border-red-200 p-3 rounded">
-          {error}
-        </p>
-      )}
-
-      {/* ⏳ Cargando */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-[360px] w-full rounded-lg" />
-          ))}
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      {/* Hero Section Mejorado */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+        <div className="absolute inset-0 opacity-20">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.3) 0%, transparent 50%),
+                            radial-gradient(circle at 40% 20%, rgba(251, 146, 60, 0.3) 0%, transparent 50%)`,
+            }}
+          ></div>
         </div>
-      ) : (
-        <Tabs
-          value={tab}
-          onValueChange={(v) => setTab(v as TipoArticulo)}
-          className="w-full"
-        >
-          <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="venta">Venta</TabsTrigger>
-              <TabsTrigger value="establecimiento">Establecimiento</TabsTrigger>
-            </TabsList>
+
+        <div className="relative max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, type: "spring" }}
+              className="inline-flex items-center justify-center mb-8"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <div className="relative bg-white rounded-full p-6 shadow-2xl">
+                  <ShoppingBag className="h-16 w-16 text-indigo-600" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-5xl md:text-7xl font-extrabold mb-6"
+            >
+              <span className="text-white">Productos y </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+                Equipamiento
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-xl md:text-2xl text-blue-200 max-w-3xl mx-auto mb-10 font-light"
+            >
+              Todo lo que necesitas está aquí: uniformes oficiales, snacks y el
+              mejor equipamiento deportivo profesional
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex flex-wrap justify-center gap-4"
+            >
+              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                <Sparkles className="mr-2 h-5 w-5" />
+                Calidad Premium
+              </Badge>
+              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                <Award className="mr-2 h-5 w-5" />
+                Productos Oficiales
+              </Badge>
+              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                <Package className="mr-2 h-5 w-5" />
+                En Stock
+              </Badge>
+            </motion.div>
           </div>
+        </div>
 
-          <TabsContent value="venta" className="space-y-6">
-            {ventaList.length === 0 ? (
-              <EmptyState title="No hay artículos marcados como ventas con este filtro." />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {pagedVenta.map((p, i) => (
-                  <motion.div
-                    key={p.idarticulo}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                  >
-                    <ProductCard producto={p} tipo="venta" />
-                  </motion.div>
-                ))}
+        {/* Decorative wave */}
+        <div className="relative">
+          <svg
+            className="w-full h-20"
+            viewBox="0 0 1440 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 80C1200 80 1320 70 1380 65L1440 60V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {loading ? (
+          <div className="space-y-16">
+            {[1, 2, 3].map((i) => (
+              <div key={i}>
+                <div className="h-12 w-64 bg-gray-200 rounded-lg mb-8 animate-pulse" />
+                <LoadingSkeleton />
               </div>
-            )}
-          </TabsContent>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-20">
+            {categorias.map((categoria, idx) => {
+              const productos =
+                productosPorCategoria[categoria.idcategoria] || [];
+              const colores = getCategoriaColor(categoria.nombre);
 
-          <TabsContent value="establecimiento" className="space-y-6">
-            {estList.length === 0 ? (
-              <EmptyState title="No hay artículos del establecimiento con este filtro." />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {pagedEst.map((p, i) => (
-                  <motion.div
-                    key={p.idarticulo}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                  >
-                    <ProductCard producto={p} tipo="establecimiento" />
-                  </motion.div>
-                ))}
+              return (
+                <motion.section
+                  key={categoria.idcategoria}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: idx * 0.1 }}
+                >
+                  {/* Header de categoría */}
+                  <div className="mb-10">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div
+                        className={`h-1 flex-grow bg-gradient-to-r ${colores.from} ${colores.to} rounded-full`}
+                      />
+                      <h2 className="text-4xl font-bold text-gray-900 whitespace-nowrap">
+                        {categoria.nombre}
+                      </h2>
+                      <div
+                        className={`h-1 flex-grow bg-gradient-to-l ${colores.from} ${colores.to} rounded-full`}
+                      />
+                    </div>
+
+                    {categoria.descripcion && (
+                      <p className="text-center text-lg text-gray-600 max-w-3xl mx-auto">
+                        {categoria.descripcion}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Grid de productos */}
+                  {productos.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {productos.map((producto) => (
+                          <ProductCard
+                            key={producto.idarticulo}
+                            articulo={producto}
+                            esVenta={categoria.esVenta}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Banner informativo */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 }}
+                        className={`p-6 bg-gradient-to-r ${colores.from} ${colores.to} rounded-2xl text-white text-center shadow-xl`}
+                      >
+                        {categoria.esVenta ? (
+                          <>
+                            <Store className="h-8 w-8 mx-auto mb-3" />
+                            <h3 className="text-xl font-bold mb-2">
+                              Adquiere {categoria.nombre.toLowerCase()} en
+                              nuestro establecimiento
+                            </h3>
+                            <p className="text-white/90">
+                              Visítanos y encuentra todo lo que necesitas con
+                              atención personalizada
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-8 w-8 mx-auto mb-3" />
+                            <h3 className="text-xl font-bold mb-2">
+                              Equipamiento profesional disponible
+                            </h3>
+                            <p className="text-white/90">
+                              Nuestro {categoria.nombre.toLowerCase()} está
+                              disponible para todos los alumnos durante sus
+                              clases
+                            </p>
+                          </>
+                        )}
+                      </motion.div>
+                    </>
+                  ) : (
+                    <Card
+                      className={`p-12 text-center bg-gradient-to-br from-gray-50 to-gray-100 border-2 ${colores.bg.replace(
+                        "bg-",
+                        "border-"
+                      )}/30`}
+                    >
+                      <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                      <p className="text-lg text-gray-600">
+                        Próximamente tendremos productos en esta categoría
+                      </p>
+                    </Card>
+                  )}
+                </motion.section>
+              );
+            })}
+          </div>
+        )}
+
+        {/* CTA Final */}
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-20"
+        >
+          <Card className="overflow-hidden border-0 shadow-2xl">
+            <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-12 text-center text-white overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.4) 0%, transparent 50%),
+                                  radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.4) 0%, transparent 50%)`,
+                  }}
+                ></div>
               </div>
-            )}
-          </TabsContent>
 
-          {/* Paginación unificada por pestaña */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <Button
-                variant="secondary"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage <= 1}
-              >
-                Anterior
-              </Button>
-
-              <div className="text-sm text-gray-600">
-                Página <span className="font-medium">{currentPage}</span> de{" "}
-                <span className="font-medium">{totalPages}</span>
+              <div className="relative">
+                <Store className="h-16 w-16 mx-auto mb-6 text-blue-300" />
+                <h2 className="text-4xl font-bold mb-4">
+                  Visítanos y Descubre Más
+                </h2>
+                <p className="text-xl text-blue-200 mb-8 max-w-2xl mx-auto">
+                  Todos nuestros productos están disponibles directamente en el
+                  gimnasio. Nuestro personal te atenderá con gusto.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
+                    <Package className="mr-2 h-5 w-5" />
+                    Productos de calidad
+                  </Badge>
+                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
+                    <Award className="mr-2 h-5 w-5" />
+                    Precios competitivos
+                  </Badge>
+                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Atención personalizada
+                  </Badge>
+                </div>
               </div>
-
-              <Button
-                variant="secondary"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage >= totalPages}
-              >
-                Siguiente
-              </Button>
             </div>
-          )}
-        </Tabs>
-      )}
+          </Card>
+        </motion.section>
+      </div>
     </div>
   );
 };
