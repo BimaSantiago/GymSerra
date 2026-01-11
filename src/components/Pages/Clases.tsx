@@ -13,6 +13,26 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+
 /* ------------------------- Tipos de datos ------------------------- */
 interface PlanPago {
   idplan: number;
@@ -49,9 +69,10 @@ interface Instructor {
   apmaterno: string;
   telefono: string;
   correo: string;
+  avatar?: string | null;
 }
 
-// note: you'll need to make sure the parent container of this component is sized properly
+// Imágenes
 import img1familia from "../../assets/img1familia.svg";
 import img1nosostros from "../../assets/img1nosostros.svg";
 import img1programas from "../../assets/img1programas.svg";
@@ -68,7 +89,6 @@ import img4pilares from "../../assets/img4pilares.svg";
 import imgmision from "../../assets/imgmision (2).svg";
 import imgvision from "../../assets/imgvision.svg";
 
-// note: you'll need to make sure the parent container of this component is sized properly
 const items = [
   img1familia,
   img1nosostros,
@@ -85,7 +105,6 @@ const items = [
   img4pilares,
   imgmision,
   imgvision,
-  // Add more items as needed
 ];
 
 /* ------------------------- Componente principal ------------------------- */
@@ -104,6 +123,24 @@ const Clases: React.FC = () => {
   const [loadingDeportes, setLoadingDeportes] = useState(true);
   const [loadingInstructores, setLoadingInstructores] = useState(true);
 
+  // Estados para clase de prueba
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    curp: "",
+    nombre: "",
+    fechaNacimiento: "",
+    idhorario: "",
+    fechaClase: "",
+    nombreTutor: "",
+    curpTutor: "",
+    telefonoTutor: "",
+    correoTutor: "",
+  });
+  const [esMenor, setEsMenor] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [horariosClasePrueba, setHorariosClasePrueba] = useState<Horario[]>([]);
+
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
   const horas = [
     1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000,
@@ -116,6 +153,29 @@ const Clases: React.FC = () => {
     fetchHorarios();
     fetchInstructores();
   }, []);
+
+  // Calcular edad cuando cambia fecha de nacimiento
+  useEffect(() => {
+    if (formData.fechaNacimiento) {
+      const hoy = new Date();
+      const fechaNac = new Date(formData.fechaNacimiento);
+      const edad = hoy.getFullYear() - fechaNac.getFullYear();
+      const mes = hoy.getMonth() - fechaNac.getMonth();
+
+      if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+        setEsMenor(edad - 1 < 18);
+      } else {
+        setEsMenor(edad < 18);
+      }
+    }
+  }, [formData.fechaNacimiento]);
+
+  // Cargar horarios de Gimnasia Inicial cuando se abre el diálogo
+  useEffect(() => {
+    if (dialogOpen) {
+      fetchHorariosGimnasiaInicial();
+    }
+  }, [dialogOpen]);
 
   const fetchDeportes = async () => {
     setLoadingDeportes(true);
@@ -199,6 +259,20 @@ const Clases: React.FC = () => {
     }
   };
 
+  const fetchHorariosGimnasiaInicial = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost/GymSerra/public/api/clases.php?action=horariosGimnasiaInicial"
+      );
+      const data = await res.json();
+      if (data.success && Array.isArray(data.horarios)) {
+        setHorariosClasePrueba(data.horarios);
+      }
+    } catch (error) {
+      console.error("Error al cargar horarios:", error);
+    }
+  };
+
   /* ------------------------- Utilidades ------------------------- */
   const formatearHora = (h: number) => {
     const hh = Math.floor(h / 100);
@@ -206,6 +280,155 @@ const Clases: React.FC = () => {
     return `${hh.toString().padStart(2, "0")}:${mm
       .toString()
       .padStart(2, "0")}`;
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.curp.trim()) {
+      errors.curp = "CURP es requerido";
+    } else if (formData.curp.length !== 18) {
+      errors.curp = "CURP debe tener 18 caracteres";
+    }
+
+    if (!formData.nombre.trim()) {
+      errors.nombre = "Nombre completo es requerido";
+    }
+
+    if (!formData.fechaNacimiento) {
+      errors.fechaNacimiento = "Fecha de nacimiento es requerida";
+    }
+
+    if (!formData.idhorario) {
+      errors.idhorario = "Debe seleccionar un horario";
+    }
+
+    if (!formData.fechaClase) {
+      errors.fechaClase = "Fecha de clase es requerida";
+    }
+
+    if (esMenor) {
+      if (!formData.nombreTutor.trim()) {
+        errors.nombreTutor = "Nombre del tutor es requerido";
+      }
+
+      if (!formData.curpTutor.trim()) {
+        errors.curpTutor = "CURP del tutor es requerido";
+      } else if (formData.curpTutor.length !== 18) {
+        errors.curpTutor = "CURP del tutor debe tener 18 caracteres";
+      }
+
+      if (!formData.telefonoTutor.trim()) {
+        errors.telefonoTutor = "Teléfono del tutor es requerido";
+      } else if (!/^\d{10}$/.test(formData.telefonoTutor)) {
+        errors.telefonoTutor = "Teléfono debe tener 10 dígitos";
+      }
+
+      if (!formData.correoTutor.trim()) {
+        errors.correoTutor = "Correo del tutor es requerido";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correoTutor)) {
+        errors.correoTutor = "Correo electrónico no válido";
+      }
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async () => {
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const verifyRes = await fetch(
+        "http://localhost/GymSerra/public/api/clases.php?action=verificarAlumno",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ curp: formData.curp }),
+        }
+      );
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyData.success && verifyData.yaRegistrado) {
+        setAlert({
+          type: "error",
+          message: "Este alumno ya tiene una clase de prueba registrada",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      const res = await fetch(
+        "http://localhost/GymSerra/public/api/clases.php?action=registrarClasePrueba",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            esMenor,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setAlert({
+          type: "success",
+          message: "¡Clase de prueba registrada exitosamente!",
+        });
+        setDialogOpen(false);
+        setFormData({
+          curp: "",
+          nombre: "",
+          fechaNacimiento: "",
+          idhorario: "",
+          fechaClase: "",
+          nombreTutor: "",
+          curpTutor: "",
+          telefonoTutor: "",
+          correoTutor: "",
+        });
+        setEsMenor(false);
+      } else {
+        setAlert({
+          type: "error",
+          message: data.error || "Error al registrar clase de prueba",
+        });
+      }
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: "Error de conexión con el servidor",
+      });
+      console.log(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const planesAgrupados = useMemo(() => {
@@ -230,6 +453,15 @@ const Clases: React.FC = () => {
     return grupos;
   }, [instructores]);
 
+  const horariosDisponibles = useMemo(() => {
+    return horariosClasePrueba.map((h) => ({
+      ...h,
+      label: `${h.nivel} | ${dias[h.dia - 1]} ${formatearHora(
+        h.hora_inicio
+      )}-${formatearHora(h.hora_fin)}`,
+    }));
+  }, [horariosClasePrueba]);
+
   const LoadingSkeleton = ({ height = "h-32" }: { height?: string }) => (
     <div className={`${height} w-full animate-pulse rounded-lg bg-gray-200`} />
   );
@@ -237,16 +469,12 @@ const Clases: React.FC = () => {
   /* ------------------------- UI ------------------------- */
   return (
     <div className="relative min-h-screen bg-gray-900">
-      {/* Sticky Background Animation */}
       <div className="relative top-0 h-screen w-full overflow-hidden z-0">
         <GridMotion items={items} />
-        {/* Overlay gradient for better text readability in Hero */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-gray-900/90 z-[1]" />
       </div>
 
-      {/* Main Scrollable Content */}
       <div className="relative z-10 -mt-[100vh]">
-        {/* Hero Section */}
         <section className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
           <motion.div
             initial={{ y: 30, opacity: 0 }}
@@ -283,7 +511,6 @@ const Clases: React.FC = () => {
           </motion.div>
         </section>
 
-        {/* Content Container with Background */}
         <div className="bg-white/95 backdrop-blur-sm shadow-2xl pt-16 pb-16 px-4 md:px-8">
           <div className="mx-auto max-w-7xl">
             {alert && (
@@ -305,7 +532,6 @@ const Clases: React.FC = () => {
               </Alert>
             )}
 
-            {/* Deportes y Planes de Pago */}
             <section id="disciplinas">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -459,6 +685,7 @@ const Clases: React.FC = () => {
                 </div>
               )}
             </section>
+
             {/* Clase de prueba */}
             <section className="mt-24">
               <motion.div
@@ -469,12 +696,304 @@ const Clases: React.FC = () => {
                 className="text-center mb-12"
               >
                 <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                  Clase de prueba
+                  Agenda tu Clase de Prueba
                 </h2>
-                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                  Consulta nuestros horarios organizados por día y disciplina.
-                  Encuentra el horario perfecto que se adapte a tu rutina.
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
+                  ¿Primera vez en GymSerra? Agenda una clase de prueba gratuita
+                  y descubre la gimnasia artística inicial. Solo para nuevos
+                  alumnos.
                 </p>
+
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg rounded-full shadow-lg transition-all hover:-translate-y-1">
+                      <Calendar className="mr-2 h-5 w-5" />
+                      Agendar Clase de Prueba
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold">
+                        Registro para Clase de Prueba
+                      </DialogTitle>
+                      <DialogDescription>
+                        Completa los datos del alumno para agendar su primera
+                        clase de Gimnasia Inicial.
+                        {esMenor && (
+                          <span className="block mt-2 text-amber-600 font-semibold">
+                            ⚠️ El alumno es menor de edad. Se requieren datos
+                            del tutor.
+                          </span>
+                        )}
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-4">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                          Datos del Alumno
+                        </h3>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="curp">CURP del Alumno *</Label>
+                          <Input
+                            id="curp"
+                            placeholder="Ej: ABCD123456HJKLMN01"
+                            value={formData.curp}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "curp",
+                                e.target.value.toUpperCase()
+                              )
+                            }
+                            maxLength={18}
+                            className={formErrors.curp ? "border-red-500" : ""}
+                          />
+                          {formErrors.curp && (
+                            <p className="text-sm text-red-500">
+                              {formErrors.curp}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="nombre">
+                            Nombre Completo del Alumno *
+                          </Label>
+                          <Input
+                            id="nombre"
+                            placeholder="Nombre completo del alumno"
+                            value={formData.nombre}
+                            onChange={(e) =>
+                              handleInputChange("nombre", e.target.value)
+                            }
+                            className={
+                              formErrors.nombre ? "border-red-500" : ""
+                            }
+                          />
+                          {formErrors.nombre && (
+                            <p className="text-sm text-red-500">
+                              {formErrors.nombre}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="fechaNacimiento">
+                            Fecha de Nacimiento *
+                          </Label>
+                          <Input
+                            id="fechaNacimiento"
+                            type="date"
+                            value={formData.fechaNacimiento}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "fechaNacimiento",
+                                e.target.value
+                              )
+                            }
+                            className={
+                              formErrors.fechaNacimiento ? "border-red-500" : ""
+                            }
+                          />
+                          {formErrors.fechaNacimiento && (
+                            <p className="text-sm text-red-500">
+                              {formErrors.fechaNacimiento}
+                            </p>
+                          )}
+                          {esMenor && formData.fechaNacimiento && (
+                            <p className="text-sm text-amber-600 flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              El alumno es menor de edad
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {esMenor && (
+                        <div className="space-y-4 border-t pt-4">
+                          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                            Datos del Tutor
+                          </h3>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="nombreTutor">
+                              Nombre Completo del Tutor *
+                            </Label>
+                            <Input
+                              id="nombreTutor"
+                              placeholder="Nombre completo del tutor"
+                              value={formData.nombreTutor}
+                              onChange={(e) =>
+                                handleInputChange("nombreTutor", e.target.value)
+                              }
+                              className={
+                                formErrors.nombreTutor ? "border-red-500" : ""
+                              }
+                            />
+                            {formErrors.nombreTutor && (
+                              <p className="text-sm text-red-500">
+                                {formErrors.nombreTutor}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="curpTutor">CURP del Tutor *</Label>
+                            <Input
+                              id="curpTutor"
+                              placeholder="Ej: ABCD123456HJKLMN01"
+                              value={formData.curpTutor}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "curpTutor",
+                                  e.target.value.toUpperCase()
+                                )
+                              }
+                              maxLength={18}
+                              className={
+                                formErrors.curpTutor ? "border-red-500" : ""
+                              }
+                            />
+                            {formErrors.curpTutor && (
+                              <p className="text-sm text-red-500">
+                                {formErrors.curpTutor}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="telefonoTutor">
+                              Teléfono del Tutor *
+                            </Label>
+                            <Input
+                              id="telefonoTutor"
+                              placeholder="10 dígitos"
+                              value={formData.telefonoTutor}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "telefonoTutor",
+                                  e.target.value.replace(/\D/g, "")
+                                )
+                              }
+                              maxLength={10}
+                              className={
+                                formErrors.telefonoTutor ? "border-red-500" : ""
+                              }
+                            />
+                            {formErrors.telefonoTutor && (
+                              <p className="text-sm text-red-500">
+                                {formErrors.telefonoTutor}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="correoTutor">
+                              Correo Electrónico del Tutor *
+                            </Label>
+                            <Input
+                              id="correoTutor"
+                              type="email"
+                              placeholder="tutor@ejemplo.com"
+                              value={formData.correoTutor}
+                              onChange={(e) =>
+                                handleInputChange("correoTutor", e.target.value)
+                              }
+                              className={
+                                formErrors.correoTutor ? "border-red-500" : ""
+                              }
+                            />
+                            {formErrors.correoTutor && (
+                              <p className="text-sm text-red-500">
+                                {formErrors.correoTutor}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-4 border-t pt-4">
+                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                          Detalles de la Clase
+                        </h3>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="idhorario">Horario de Clase *</Label>
+                          <Select
+                            value={formData.idhorario}
+                            onValueChange={(value) =>
+                              handleInputChange("idhorario", value)
+                            }
+                          >
+                            <SelectTrigger
+                              className={
+                                formErrors.idhorario ? "border-red-500" : ""
+                              }
+                            >
+                              <SelectValue placeholder="Selecciona un horario de Gimnasia Inicial" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {horariosDisponibles.map((h) => (
+                                <SelectItem
+                                  key={h.idhorario}
+                                  value={h.idhorario.toString()}
+                                >
+                                  {h.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {formErrors.idhorario && (
+                            <p className="text-sm text-red-500">
+                              {formErrors.idhorario}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="fechaClase">
+                            Fecha de la Clase *
+                          </Label>
+                          <Input
+                            id="fechaClase"
+                            type="date"
+                            min={new Date().toISOString().split("T")[0]}
+                            value={formData.fechaClase}
+                            onChange={(e) =>
+                              handleInputChange("fechaClase", e.target.value)
+                            }
+                            className={
+                              formErrors.fechaClase ? "border-red-500" : ""
+                            }
+                          />
+                          {formErrors.fechaClase && (
+                            <p className="text-sm text-red-500">
+                              {formErrors.fechaClase}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setDialogOpen(false)}
+                        disabled={submitting}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {submitting ? "Registrando..." : "Registrar Clase"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </motion.div>
             </section>
 
@@ -654,8 +1173,32 @@ const Clases: React.FC = () => {
                                   />
                                   <CardContent className="pt-6">
                                     <div className="flex items-start gap-4">
+                                      {instructor.avatar ? (
+                                        <img
+                                          src={instructor.avatar}
+                                          alt={`${instructor.nombre} ${instructor.appaterno}`}
+                                          className="w-16 h-16 rounded-full object-cover shrink-0 border-2"
+                                          style={{ borderColor: deporte.color }}
+                                          onError={(e) => {
+                                            e.currentTarget.style.display =
+                                              "none";
+                                            const sibling =
+                                              e.currentTarget
+                                                .nextElementSibling;
+                                            if (
+                                              sibling instanceof HTMLElement
+                                            ) {
+                                              sibling.classList.remove(
+                                                "hidden"
+                                              );
+                                            }
+                                          }}
+                                        />
+                                      ) : null}
                                       <div
-                                        className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0"
+                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0 ${
+                                          instructor.avatar ? "hidden" : ""
+                                        }`}
                                         style={{
                                           backgroundColor: deporte.color,
                                         }}
@@ -677,23 +1220,16 @@ const Clases: React.FC = () => {
                                             <span className="text-gray-500">
                                               📞
                                             </span>
-                                            <a
-                                              href={`tel:${instructor.telefono}`}
-                                              className="hover:text-blue-600 transition-colors"
-                                            >
-                                              {instructor.telefono}
-                                            </a>
+                                            href={`tel:${instructor.telefono}`}
+                                            className="hover:text-blue-600
+                                            transition-colors"
+                                            {instructor.telefono}
                                           </p>
                                           <p className="text-gray-700 flex items-center gap-2 break-all">
                                             <span className="text-gray-500">
                                               ✉️
                                             </span>
-                                            <a
-                                              href={`mailto:${instructor.correo}`}
-                                              className="hover:text-blue-600 transition-colors"
-                                            >
-                                              {instructor.correo}
-                                            </a>
+                                            {instructor.correo}
                                           </p>
                                         </div>
                                       </div>

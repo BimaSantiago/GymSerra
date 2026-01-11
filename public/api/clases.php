@@ -25,8 +25,17 @@ switch ($action) {
   case "horarios":
     getHorarios($conn);
     break;
+  case "horariosGimnasiaInicial":
+    getHorariosGimnasiaInicial($conn);
+    break;
   case "instructores":
     getInstructores($conn);
+    break;
+  case "verificarAlumno":
+    verificarAlumno($conn);
+    break;
+  case "registrarClasePrueba":
+    registrarClasePrueba($conn);
     break;
   default:
     echo json_encode([
@@ -51,6 +60,7 @@ function getDeportes(mysqli $conn): void {
       descripcion,
       color
     FROM deporte
+    WHERE iddeporte != 5
     ORDER BY nombre DESC
   ";
 
@@ -179,8 +189,61 @@ function getHorarios(mysqli $conn): void {
 }
 
 /**
+ * OBTENER HORARIOS DE GIMNASIA INICIAL (iddeporte = 1)
+ * Solo para clase de prueba
+ */
+function getHorariosGimnasiaInicial(mysqli $conn): void {
+  $sql = "
+    SELECT
+      h.idhorario,
+      h.hora_inicio,
+      h.hora_fin,
+      h.dia,
+      h.iddeporte,
+      h.idnivel,
+      d.nombre       AS deporte,
+      d.color        AS color,
+      n.nombre_nivel AS nivel
+    FROM horarios h
+    INNER JOIN deporte d ON d.iddeporte = h.iddeporte
+    INNER JOIN nivel   n ON n.idnivel   = h.idnivel
+    WHERE h.iddeporte = 1
+    ORDER BY h.dia ASC, h.hora_inicio ASC
+  ";
+
+  $res = $conn->query($sql);
+  if (!$res) {
+    echo json_encode([
+      "success" => false,
+      "error"   => "Error al obtener horarios: " . $conn->error,
+    ]);
+    return;
+  }
+
+  $horarios = [];
+  while ($row = $res->fetch_assoc()) {
+    $horarios[] = [
+      "idhorario"   => (int)$row["idhorario"],
+      "hora_inicio" => (int)$row["hora_inicio"],
+      "hora_fin"    => (int)$row["hora_fin"],
+      "dia"         => (int)$row["dia"],
+      "iddeporte"   => (int)$row["iddeporte"],
+      "idnivel"     => (int)$row["idnivel"],
+      "deporte"     => $row["deporte"],
+      "nivel"       => $row["nivel"],
+      "color"       => $row["color"],
+    ];
+  }
+
+  echo json_encode([
+    "success"  => true,
+    "horarios" => $horarios,
+  ]);
+}
+
+/**
  * OBTENER INSTRUCTORES ACTIVOS
- * Devuelve solo instructores con estado 'Activo'
+ * Devuelve solo instructores con estado 'Activo' e incluye avatar
  */
 function getInstructores(mysqli $conn): void {
   $sql = "
@@ -191,7 +254,8 @@ function getInstructores(mysqli $conn): void {
       i.appaterno,
       i.apmaterno,
       i.telefono,
-      i.correo
+      i.correo,
+      i.avatar
     FROM instructores i
     WHERE i.estado = 'Activo'
     ORDER BY i.iddeporte ASC, i.nombre ASC
@@ -216,6 +280,7 @@ function getInstructores(mysqli $conn): void {
       "apmaterno"    => $row["apmaterno"],
       "telefono"     => $row["telefono"],
       "correo"       => $row["correo"],
+      "avatar"       => $row["avatar"] ?? null,
     ];
   }
 
@@ -223,5 +288,208 @@ function getInstructores(mysqli $conn): void {
     "success"      => true,
     "instructores" => $instructores,
   ]);
+}
+
+/**
+ * VERIFICAR SI ALUMNO YA TIENE CLASE DE PRUEBA
+ * Verifica por CURP si el alumno ya está registrado en clase_prueba
+ */
+function verificarAlumno(mysqli $conn): void {
+  $data = json_decode(file_get_contents("php://input"), true) ?? [];
+  $curp = strtoupper(trim($data['curp'] ?? ''));
+
+  if (empty($curp)) {
+    echo json_encode([
+      "success" => false,
+      "error"   => "CURP es requerido"
+    ]);
+    return;
+  }
+
+  // Verificar si existe el alumno
+  $sql = "SELECT idalumno, nombre_completo FROM alumnos WHERE UPPER(curp) = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("s", $curp);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  
+  if ($result->num_rows === 0) {
+    echo json_encode([
+      "success" => true,
+      "existe" => false,
+      "mensaje" => "Alumno no encontrado. Puede registrarse."
+    ]);
+    return;
+  }
+
+  $alumno = $result->fetch_assoc();
+  $idalumno = $alumno['idalumno'];
+
+  // Verificar si ya tiene clase de prueba
+  $sql2 = "SELECT idclase_prueba FROM clase_prueba WHERE idalumno = ?";
+  $stmt2 = $conn->prepare($sql2);
+  $stmt2->bind_param("i", $idalumno);
+  $stmt2->execute();
+  $result2 = $stmt2->get_result();
+
+  if ($result2->num_rows > 0) {
+    echo json_encode([
+      "success" => false,
+      "existe" => true,
+      "yaRegistrado" => true,
+      "mensaje" => "Este alumno ya tiene una clase de prueba registrada."
+    ]);
+    return;
+  }
+
+  echo json_encode([
+    "success" => true,
+    "existe" => true,
+    "yaRegistrado" => false,
+    "idalumno" => $idalumno,
+    "nombre" => $alumno['nombre_completo'],
+    "mensaje" => "Alumno encontrado. Puede agendar clase de prueba."
+  ]);
+}
+
+/**
+ * REGISTRAR CLASE DE PRUEBA
+ * Crea el tutor si es menor, crea el alumno si no existe y registra la clase de prueba
+ */
+function registrarClasePrueba(mysqli $conn): void {
+  $data = json_decode(file_get_contents("php://input"), true) ?? [];
+  
+  $curp = strtoupper(trim($data['curp'] ?? ''));
+  $nombre = trim($data['nombre'] ?? '');
+  $fechaNacimiento = $data['fechaNacimiento'] ?? '';
+  $idhorario = (int)($data['idhorario'] ?? 0);
+  $fechaClase = $data['fechaClase'] ?? '';
+  
+  // Datos del tutor (opcionales, solo si es menor)
+  $esMenor = $data['esMenor'] ?? false;
+  $nombreTutor = trim($data['nombreTutor'] ?? '');
+  $curpTutor = strtoupper(trim($data['curpTutor'] ?? ''));
+  $telefonoTutor = trim($data['telefonoTutor'] ?? '');
+  $correoTutor = trim($data['correoTutor'] ?? '');
+
+  // Validaciones básicas
+  if (empty($curp) || empty($nombre) || empty($fechaNacimiento) || $idhorario <= 0 || empty($fechaClase)) {
+    echo json_encode([
+      "success" => false,
+      "error"   => "Todos los campos obligatorios son requeridos"
+    ]);
+    return;
+  }
+
+  // Validar datos del tutor si es menor
+  if ($esMenor) {
+    if (empty($nombreTutor) || empty($curpTutor) || empty($telefonoTutor) || empty($correoTutor)) {
+      echo json_encode([
+        "success" => false,
+        "error"   => "Los datos del tutor son requeridos para menores de edad"
+      ]);
+      return;
+    }
+  }
+
+  $conn->begin_transaction();
+
+  try {
+    $idtutor = null;
+
+    // Si es menor, crear o buscar tutor
+    if ($esMenor) {
+      // Verificar si ya existe el tutor por CURP
+      $sqlCheckTutor = "SELECT idtutor FROM tutores WHERE UPPER(curp) = ?";
+      $stmtCheckTutor = $conn->prepare($sqlCheckTutor);
+      $stmtCheckTutor->bind_param("s", $curpTutor);
+      $stmtCheckTutor->execute();
+      $resultTutor = $stmtCheckTutor->get_result();
+
+      if ($resultTutor->num_rows > 0) {
+        $rowTutor = $resultTutor->fetch_assoc();
+        $idtutor = $rowTutor['idtutor'];
+      } else {
+        // Crear nuevo tutor
+        $sqlInsertTutor = "INSERT INTO tutores (nombre_completo, curp, telefono, correo, estado_documentos) 
+                           VALUES (?, ?, ?, ?, 'Incompleto')";
+        $stmtInsertTutor = $conn->prepare($sqlInsertTutor);
+        $stmtInsertTutor->bind_param("ssss", $nombreTutor, $curpTutor, $telefonoTutor, $correoTutor);
+        
+        if (!$stmtInsertTutor->execute()) {
+          throw new Exception("Error al crear tutor: " . $stmtInsertTutor->error);
+        }
+        
+        $idtutor = $stmtInsertTutor->insert_id;
+      }
+    }
+
+    // Verificar si ya existe el alumno
+    $sql = "SELECT idalumno FROM alumnos WHERE UPPER(curp) = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $curp);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      $idalumno = $row['idalumno'];
+    } else {
+      // Crear nuevo alumno
+      if ($esMenor && $idtutor) {
+        $sqlInsert = "INSERT INTO alumnos (idtutor, curp, nombre_completo, f_nacimiento, estado) 
+                      VALUES (?, ?, ?, ?, 'Activo')";
+        $stmtInsert = $conn->prepare($sqlInsert);
+        $stmtInsert->bind_param("isss", $idtutor, $curp, $nombre, $fechaNacimiento);
+      } else {
+        $sqlInsert = "INSERT INTO alumnos (curp, nombre_completo, f_nacimiento, estado) 
+                      VALUES (?, ?, ?, 'Activo')";
+        $stmtInsert = $conn->prepare($sqlInsert);
+        $stmtInsert->bind_param("sss", $curp, $nombre, $fechaNacimiento);
+      }
+      
+      if (!$stmtInsert->execute()) {
+        throw new Exception("Error al crear alumno: " . $stmtInsert->error);
+      }
+      
+      $idalumno = $stmtInsert->insert_id;
+    }
+
+    // Verificar que no tenga clase de prueba ya registrada
+    $sqlCheck = "SELECT idclase_prueba FROM clase_prueba WHERE idalumno = ?";
+    $stmtCheck = $conn->prepare($sqlCheck);
+    $stmtCheck->bind_param("i", $idalumno);
+    $stmtCheck->execute();
+    $resultCheck = $stmtCheck->get_result();
+
+    if ($resultCheck->num_rows > 0) {
+      throw new Exception("Este alumno ya tiene una clase de prueba registrada");
+    }
+
+    // Registrar clase de prueba
+    $sqlClase = "INSERT INTO clase_prueba (idalumno, idhorario, fecha_clase, estado) 
+                 VALUES (?, ?, ?, 'Programada')";
+    $stmtClase = $conn->prepare($sqlClase);
+    $stmtClase->bind_param("iis", $idalumno, $idhorario, $fechaClase);
+
+    if (!$stmtClase->execute()) {
+      throw new Exception("Error al registrar clase de prueba: " . $stmtClase->error);
+    }
+
+    $conn->commit();
+
+    echo json_encode([
+      "success" => true,
+      "mensaje" => "Clase de prueba registrada exitosamente",
+      "idclase_prueba" => $stmtClase->insert_id
+    ]);
+
+  } catch (Exception $e) {
+    $conn->rollback();
+    echo json_encode([
+      "success" => false,
+      "error"   => $e->getMessage()
+    ]);
+  }
 }
 ?>

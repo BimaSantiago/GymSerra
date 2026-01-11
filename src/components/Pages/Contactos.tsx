@@ -200,7 +200,7 @@ const Contactos: React.FC = () => {
           <Card className="border-none shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl text-blue-800">
-                <Users className="h-6 w-6 text-blue-500" />
+                <Users className="h-6 w-6 text-green-500" />
                 Selecciona el Deporte de Tu Interés
               </CardTitle>
             </CardHeader>
@@ -262,7 +262,7 @@ const Contactos: React.FC = () => {
           <Card className="border-none shadow-md text-blue-800">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-2xl">
-                <User className="h-6 w-6 text-blue-500" />
+                <User className="h-6 w-6 text-green-500" />
                 Información de Contacto
               </CardTitle>
               <CardDescription>

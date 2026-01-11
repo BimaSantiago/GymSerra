@@ -117,7 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
           title: "Clases de prueba",
-          url: "/dashboard/",
+          url: "/dashboard/clase-prueba",
         },
       ],
     },
