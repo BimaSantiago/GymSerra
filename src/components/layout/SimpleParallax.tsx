@@ -1,4 +1,3 @@
-// SimpleParallax.tsx
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
@@ -16,9 +15,8 @@ const SimpleParallax = () => {
   // Capas con diferentes velocidades
   const yFondo = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]);
   const yArbol = useTransform(scrollYProgress, [0, 1], ["0%", "-28%"]);
-  const ySol = useTransform(scrollYProgress, [0, 1], ["40%", "-130%"]);
   const yAtleta = useTransform(scrollYProgress, [0, 1], ["5%", "-70%"]);
-  const yPasto = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]);
+  /* const yPasto = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]); */
 
   // Movimiento del texto (ligero hacia arriba)
   const yTexto = useTransform(scrollYProgress, [0, 1], ["0%", "-45%"]);
@@ -39,18 +37,9 @@ const SimpleParallax = () => {
         {/* arbol */}
         <motion.div style={{ y: yArbol }} className="absolute inset-0">
           <img
-            src="/img/arbol.png"
+            src="/img/estrellas.png"
             alt="Árbol"
             className="w-full h-full object-cover pointer-events-none"
-          />
-        </motion.div>
-
-        {/* sol */}
-        <motion.div style={{ y: ySol }} className="absolute inset-0">
-          <img
-            src="/img/sol.png"
-            alt="Sol"
-            className="w-full object-cover pointer-events-none"
           />
         </motion.div>
 
@@ -63,14 +52,14 @@ const SimpleParallax = () => {
           />
         </motion.div>
 
-        {/* pasto */}
+        {/* pasto 
         <motion.div style={{ y: yPasto }} className="absolute inset-0">
           <img
             src="/img/pasto.png"
             alt="Pasto"
             className="w-full h-full object-cover pointer-events-none"
           />
-        </motion.div>
+        </motion.div> */}
 
         <motion.div
           style={{ y: yTexto, opacity: opacityTexto }}
