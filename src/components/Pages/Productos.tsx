@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   ShoppingBag,
   Store,
-  Sparkles,
   Package,
-  Award,
   Eye,
+  Sparkles,
+  TrendingUp,
+  Gift,
+  Star,
 } from "lucide-react";
 
 interface Articulo {
@@ -49,7 +51,6 @@ const Productos: React.FC = () => {
       if (dataCategorias.success && dataCategorias.categorias) {
         setCategorias(dataCategorias.categorias);
 
-        // Fetch productos para cada categoría
         for (const cat of dataCategorias.categorias) {
           const resProductos = await fetch(
             `http://localhost/GymSerra/public/api/data.php?action=productosPorCategoria&idcategoria=${cat.idcategoria}&limit=6`
@@ -91,9 +92,10 @@ const Productos: React.FC = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.4 }}
+      whileHover={{ y: -8 }}
     >
-      <Card className="group h-full overflow-hidden border-2 border-gray-200 hover:border-blue-400 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <Card className="group h-full overflow-hidden border-2 border-gray-200 hover:border-blue-900 hover:shadow-2xl transition-all duration-300">
+        <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           <img
             src={articulo.img || "/uploads/articulos/default.jpg"}
             alt={articulo.nombre}
@@ -102,14 +104,14 @@ const Productos: React.FC = () => {
               e.currentTarget.src = "/uploads/articulos/default.jpg";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           <Badge
             className={`absolute top-3 right-3 ${
               esVenta
-                ? "bg-green-500 hover:bg-green-600"
-                : "bg-blue-500 hover:bg-blue-600"
-            } text-white border-0`}
+                ? "bg-green-800 hover:bg-green-900"
+                : "bg-blue-900 hover:bg-blue-950"
+            } text-white border-0 shadow-lg`}
           >
             {esVenta ? (
               <>
@@ -126,22 +128,22 @@ const Productos: React.FC = () => {
         </div>
 
         <CardContent className="p-5">
-          <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-900 transition-colors">
             {articulo.nombre}
           </h3>
           <p className="text-sm text-gray-600 line-clamp-3 mb-4">
             {articulo.descripcion}
           </p>
           <div
-            className={`flex items-center justify-center gap-2 p-3 rounded-lg border ${
+            className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 ${
               esVenta
-                ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
-                : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+                ? "bg-green-50 border-green-800"
+                : "bg-blue-50 border-blue-900"
             }`}
           >
             <Store
               className={`h-4 w-4 ${
-                esVenta ? "text-green-600" : "text-blue-600"
+                esVenta ? "text-green-800" : "text-blue-900"
               }`}
             />
             <p
@@ -157,104 +159,153 @@ const Productos: React.FC = () => {
     </motion.div>
   );
 
-  const getCategoriaColor = (nombre: string) => {
-    const n = nombre.toLowerCase();
-    if (n.includes("uniform"))
-      return { from: "from-blue-500", to: "to-indigo-600", bg: "bg-blue-500" };
-    if (n.includes("dulc"))
-      return { from: "from-pink-500", to: "to-rose-600", bg: "bg-pink-500" };
-    if (n.includes("mobil") || n.includes("equip"))
-      return {
-        from: "from-purple-500",
-        to: "to-violet-600",
-        bg: "bg-purple-500",
-      };
-    return { from: "from-gray-500", to: "to-gray-600", bg: "bg-gray-500" };
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Hero Section Mejorado */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="absolute inset-0 opacity-20">
+    <div className="min-h-screen bg-white">
+      {/* Hero Section Renovado */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
+        {/* Patrón de fondo animado */}
+        <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                            radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.3) 0%, transparent 50%),
-                            radial-gradient(circle at 40% 20%, rgba(251, 146, 60, 0.3) 0%, transparent 50%)`,
+              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px)`,
             }}
           ></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
-          <div className="text-center">
+        <div className="relative max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Contenido izquierdo */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ duration: 0.8, type: "spring" }}
-              className="inline-flex items-center justify-center mb-8"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-white"
             >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                <div className="relative bg-white rounded-full p-6 shadow-2xl">
-                  <ShoppingBag className="h-16 w-16 text-indigo-600" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, type: "spring" }}
+                className="inline-block mb-6"
+              >
+                <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-yellow-300" />
+                    <span className="font-semibold">Productos GymSerra</span>
+                  </div>
                 </div>
+              </motion.div>
+
+              <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+                Todo lo que
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-400">
+                  Necesitas en un
+                </span>
+                Solo Lugar
+              </h1>
+
+              <p className="text-xl text-blue-100 mb-8 leading-relaxed">
+                Descubre nuestra selección de uniformes, snacks deliciosos y el
+                mejor equipamiento deportivo. ¡Todo disponible en nuestro
+                gimnasio!
+              </p>
+
+              <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                >
+                  <ShoppingBag className="h-8 w-8 text-green-300 mb-2" />
+                  <div className="text-2xl font-bold">10+</div>
+                  <div className="text-sm text-blue-200">Productos</div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                >
+                  <TrendingUp className="h-8 w-8 text-yellow-300 mb-2" />
+                  <div className="text-2xl font-bold">Premium</div>
+                  <div className="text-sm text-blue-200">Calidad</div>
+                </motion.div>
               </div>
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-5xl md:text-7xl font-extrabold mb-6"
-            >
-              <span className="text-white">Productos y </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
-                Equipamiento
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-xl md:text-2xl text-blue-200 max-w-3xl mx-auto mb-10 font-light"
-            >
-              Todo lo que necesitas está aquí: uniformes oficiales, snacks y el
-              mejor equipamiento deportivo profesional
-            </motion.p>
-
+            {/* Tarjetas flotantes derecha */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-wrap justify-center gap-4"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative hidden lg:block"
             >
-              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
-                <Sparkles className="mr-2 h-5 w-5" />
-                Calidad Premium
-              </Badge>
-              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
-                <Award className="mr-2 h-5 w-5" />
-                Productos Oficiales
-              </Badge>
-              <Badge className="bg-white/10 backdrop-blur-md text-white px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
-                <Package className="mr-2 h-5 w-5" />
-                En Stock
-              </Badge>
+              <div className="relative h-[500px]">
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute top-0 right-0 w-64"
+                >
+                  <Card className="bg-white shadow-2xl border-2 border-green-700 overflow-hidden">
+                    <div className="h-32 bg-gradient-to-br from-blue-900 to-blue-800 flex items-center justify-center">
+                      <ShoppingBag className="h-16 w-16 text-white" />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-bold text-lg mb-2 text-green-700">
+                        Uniformes Oficiales
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Diseños exclusivos para todos los niveles
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                  className="absolute top-32 left-0 w-64"
+                >
+                  <Card className="bg-white shadow-2xl border-2 border-blue-800 overflow-hidden">
+                    <div className="h-32 bg-gradient-to-br from-green-800 to-green-700 flex items-center justify-center">
+                      <Gift className="h-16 w-16 text-white" />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-bold text-lg mb-2 text-blue-900">
+                        Dulcería Saludable
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Snacks nutritivos después del entrenamiento
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                  className="absolute bottom-0 right-12 w-64"
+                >
+                  <Card className="bg-white shadow-2xl border-2 overflow-hidden border-green-800">
+                    <div className="h-32 bg-gradient-to-br from-blue-800 to-blue-900 flex items-center justify-center">
+                      <Package className="h-16 w-16 text-white" />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-bold text-lg mb-2 text-green-700">
+                        Equipamiento Pro
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Material de primera calidad
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
 
-        {/* Decorative wave */}
+        {/* Wave decorativa */}
         <div className="relative">
-          <svg
-            className="w-full h-20"
-            viewBox="0 0 1440 120"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg className="w-full h-16" viewBox="0 0 1440 120" fill="none">
             <path
               d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 80C1200 80 1320 70 1380 65L1440 60V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z"
               fill="white"
@@ -278,7 +329,7 @@ const Productos: React.FC = () => {
             {categorias.map((categoria, idx) => {
               const productos =
                 productosPorCategoria[categoria.idcategoria] || [];
-              const colores = getCategoriaColor(categoria.nombre);
+              const isVenta = categoria.esVenta;
 
               return (
                 <motion.section
@@ -292,13 +343,17 @@ const Productos: React.FC = () => {
                   <div className="mb-10">
                     <div className="flex items-center gap-4 mb-4">
                       <div
-                        className={`h-1 flex-grow bg-gradient-to-r ${colores.from} ${colores.to} rounded-full`}
+                        className={`h-1 flex-grow ${
+                          isVenta ? "bg-green-800" : "bg-blue-900"
+                        } rounded-full`}
                       />
                       <h2 className="text-4xl font-bold text-gray-900 whitespace-nowrap">
                         {categoria.nombre}
                       </h2>
                       <div
-                        className={`h-1 flex-grow bg-gradient-to-l ${colores.from} ${colores.to} rounded-full`}
+                        className={`h-1 flex-grow ${
+                          isVenta ? "bg-green-800" : "bg-blue-900"
+                        } rounded-full`}
                       />
                     </div>
 
@@ -308,7 +363,41 @@ const Productos: React.FC = () => {
                       </p>
                     )}
                   </div>
-
+                  {/* Banner informativo */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className={`p-8 mb-6 ${
+                      isVenta ? "bg-green-800" : "bg-blue-900"
+                    } rounded-2xl text-white text-center shadow-xl`}
+                  >
+                    {categoria.esVenta ? (
+                      <>
+                        <Store className="h-10 w-10 mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold mb-3">
+                          Adquiere {categoria.nombre.toLowerCase()} en nuestro
+                          establecimiento
+                        </h3>
+                        <p className="text-white/90 text-lg">
+                          Visítanos y encuentra todo lo que necesitas con
+                          atención personalizada
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-10 w-10 mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold mb-3">
+                          Equipamiento profesional disponible
+                        </h3>
+                        <p className="text-white/90 text-lg">
+                          Nuestro {categoria.nombre.toLowerCase()} está
+                          disponible para todos los alumnos durante sus clases
+                        </p>
+                      </>
+                    )}
+                  </motion.div>
                   {/* Grid de productos */}
                   {productos.length > 0 ? (
                     <>
@@ -321,49 +410,9 @@ const Productos: React.FC = () => {
                           />
                         ))}
                       </div>
-
-                      {/* Banner informativo */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3 }}
-                        className={`p-6 bg-gradient-to-r ${colores.from} ${colores.to} rounded-2xl text-white text-center shadow-xl`}
-                      >
-                        {categoria.esVenta ? (
-                          <>
-                            <Store className="h-8 w-8 mx-auto mb-3" />
-                            <h3 className="text-xl font-bold mb-2">
-                              Adquiere {categoria.nombre.toLowerCase()} en
-                              nuestro establecimiento
-                            </h3>
-                            <p className="text-white/90">
-                              Visítanos y encuentra todo lo que necesitas con
-                              atención personalizada
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-8 w-8 mx-auto mb-3" />
-                            <h3 className="text-xl font-bold mb-2">
-                              Equipamiento profesional disponible
-                            </h3>
-                            <p className="text-white/90">
-                              Nuestro {categoria.nombre.toLowerCase()} está
-                              disponible para todos los alumnos durante sus
-                              clases
-                            </p>
-                          </>
-                        )}
-                      </motion.div>
                     </>
                   ) : (
-                    <Card
-                      className={`p-12 text-center bg-gradient-to-br from-gray-50 to-gray-100 border-2 ${colores.bg.replace(
-                        "bg-",
-                        "border-"
-                      )}/30`}
-                    >
+                    <Card className="p-12 text-center bg-gray-50 border-2 border-gray-200">
                       <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                       <p className="text-lg text-gray-600">
                         Próximamente tendremos productos en esta categoría
@@ -385,40 +434,28 @@ const Productos: React.FC = () => {
           className="mt-20"
         >
           <Card className="overflow-hidden border-0 shadow-2xl">
-            <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-12 text-center text-white overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    backgroundImage: `radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.4) 0%, transparent 50%),
-                                  radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.4) 0%, transparent 50%)`,
-                  }}
-                ></div>
-              </div>
-
-              <div className="relative">
-                <Store className="h-16 w-16 mx-auto mb-6 text-blue-300" />
-                <h2 className="text-4xl font-bold mb-4">
-                  Visítanos y Descubre Más
-                </h2>
-                <p className="text-xl text-blue-200 mb-8 max-w-2xl mx-auto">
-                  Todos nuestros productos están disponibles directamente en el
-                  gimnasio. Nuestro personal te atenderá con gusto.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
-                    <Package className="mr-2 h-5 w-5" />
-                    Productos de calidad
-                  </Badge>
-                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
-                    <Award className="mr-2 h-5 w-5" />
-                    Precios competitivos
-                  </Badge>
-                  <Badge className="bg-white/10 backdrop-blur-md px-6 py-3 text-base border border-white/20">
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Atención personalizada
-                  </Badge>
-                </div>
+            <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 p-12 text-center text-white">
+              <Store className="h-16 w-16 mx-auto mb-6 text-green-300" />
+              <h2 className="text-4xl font-bold mb-4">
+                Visítanos y Descubre Más
+              </h2>
+              <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                Todos nuestros productos están disponibles directamente en el
+                gimnasio. Nuestro personal te atenderá con gusto.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 ">
+                <Badge className="bg-white/10 text-white backdrop-blur-md px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                  <Package className="mr-2 h-5 w-5" />
+                  Productos de calidad
+                </Badge>
+                <Badge className="bg-white/10 text-white backdrop-blur-md px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                  <Star className="mr-2 h-5 w-5" />
+                  Precios competitivos
+                </Badge>
+                <Badge className="bg-white/10 text-white backdrop-blur-md px-6 py-3 text-base border border-white/20 hover:bg-white/20 transition-all">
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Atención personalizada
+                </Badge>
               </div>
             </div>
           </Card>

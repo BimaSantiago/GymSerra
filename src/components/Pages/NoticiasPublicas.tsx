@@ -613,7 +613,7 @@ const NoticiasPublicas = () => {
                   <Card className="h-full shadow-lg hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-300 border-2 border-gray-200 rounded-xl overflow-hidden bg-white transition-all duration-300 hover:-translate-y-2 group">
                     <CardHeader className="p-0 relative overflow-hidden">
                       <img
-                        src={API_BASE + n.imagen}
+                        src={API_BASE + "/" + n.imagen}
                         alt={n.titulo}
                         className="h-56 w-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />

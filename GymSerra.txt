@@ -338,7 +338,8 @@ CREATE TABLE instructores(
   telefono VARCHAR(20) NOT NULL,
   correo VARCHAR(255) NOT NULL,
   estado ENUM('Activo','Inactivo') DEFAULT 'Activo',
-  fecha_creacion DATE
+  fecha_creacion DATE,
+  avatar VARCHAR(250)
 );
 
 INSERT INTO deporte (nombre, descripcion, color) VALUES
@@ -463,7 +464,9 @@ INSERT INTO unidad_medida (clave, descripcion, tipo) VALUES
 -- Categorías principales
 INSERT INTO categorias (nombre, id_padre, orden) VALUES
 ('Equipo de Gimnasia Artística', NULL, 1),
-('Accesorios y Consumo', NULL, 2);
+('Accesorios y Consumo', NULL, 2),
+('Uniformes',NULL,1),
+('Dulceria',NULL,1);
 
 -- Subcategorías
 INSERT INTO categorias (nombre, id_padre, orden) VALUES
