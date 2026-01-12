@@ -97,7 +97,7 @@ interface DeleteResponse {
   error?: string;
 }
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 const startOfToday = (): Date => {
   const now = new Date();

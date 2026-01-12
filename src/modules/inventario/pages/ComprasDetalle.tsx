@@ -145,7 +145,7 @@ const ComprasDetalle: React.FC = () => {
   const fetchProveedores = async (): Promise<void> => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/proveedores.php?action=list"
+        "https://academiagymserra.garzas.store/api/proveedores.php?action=list"
       );
       const data = await res.json();
       if (Array.isArray(data.proveedores)) {
@@ -164,7 +164,7 @@ const ComprasDetalle: React.FC = () => {
   const fetchArticulos = async (): Promise<void> => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/articulos.php?action=list&page=1&limit=1000&search="
+        "https://academiagymserra.garzas.store/api/articulos.php?action=list&page=1&limit=1000&search="
       );
       const data = await res.json();
       if (Array.isArray(data.articulos)) setArticulos(data.articulos);
@@ -177,7 +177,7 @@ const ComprasDetalle: React.FC = () => {
     if (!initialId) return;
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/compras.php?action=detalle&idcompra=${initialId}`
+        `https://academiagymserra.garzas.store/api/compras.php?action=detalle&idcompra=${initialId}`
       );
       const data: ApiDetalleResponse = await res.json();
       if (data.success && data.info) {
@@ -344,7 +344,7 @@ const ComprasDetalle: React.FC = () => {
 
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/compras.php?action=save",
+        "https://academiagymserra.garzas.store/api/compras.php?action=save",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

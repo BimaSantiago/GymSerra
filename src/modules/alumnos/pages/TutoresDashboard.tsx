@@ -27,7 +27,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Pencil, History } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 interface Tutor {
   idtutor: number;

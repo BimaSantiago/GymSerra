@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 interface Categoria {
   idcategoria: number;

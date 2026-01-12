@@ -63,7 +63,7 @@ const AlumnosDashboard = () => {
 
   const fetchAlumnos = async () => {
     const response = await fetch(
-      `http://localhost/GymSerra/public/api/alumnos.php?action=list&page=${page}&limit=${limit}&search=${search}`
+      `https://academiagymserra.garzas.store/api/alumnos.php?action=list&page=${page}&limit=${limit}&search=${search}`
     );
     const data = await response.json();
     setAlumnos(data.alumnos);
@@ -82,8 +82,8 @@ const AlumnosDashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const url = isEditing
-      ? "http://localhost/GymSerra/public/api/alumnos.php?action=update"
-      : "http://localhost/GymSerra/public/api/alumnos.php?action=create";
+      ? "https://academiagymserra.garzas.store/api/alumnos.php?action=update"
+      : "https://academiagymserra.garzas.store/api/alumnos.php?action=create";
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -108,7 +108,7 @@ const AlumnosDashboard = () => {
 
   const handleEdit = async (idalumno: number) => {
     const response = await fetch(
-      `http://localhost/GymSerra/public/api/alumnos.php?action=get&idalumno=${idalumno}`
+      `https://academiagymserra.garzas.store/api/alumnos.php?action=get&idalumno=${idalumno}`
     );
     const data = await response.json();
     if (data.success) {

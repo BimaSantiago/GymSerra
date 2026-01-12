@@ -60,7 +60,7 @@ interface Venta {
   total: number;
 }
 
-const API_BASE = "http://localhost/GymSerra/public/api/corte_caja.php";
+const API_BASE = "https://academiagymserra.garzas.store/api/corte_caja.php";
 
 function formatMoney(n: number): string {
   return new Intl.NumberFormat("es-MX", {

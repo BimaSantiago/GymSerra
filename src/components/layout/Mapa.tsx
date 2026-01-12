@@ -1,5 +1,3 @@
-import React from "react";
-
 const MapaUbicacion = () => {
   return (
     <div className="flex items-center justify-center pb-8">

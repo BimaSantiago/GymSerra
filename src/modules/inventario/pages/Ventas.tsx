@@ -61,7 +61,7 @@ const Ventas: React.FC = () => {
   const fetchVentas = async (): Promise<void> => {
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/ventas.php?action=list&page=${page}&limit=${limit}&search=${encodeURIComponent(
+        `https://academiagymserra.garzas.store/api/ventas.php?action=list&page=${page}&limit=${limit}&search=${encodeURIComponent(
           search
         )}`
       );

@@ -54,7 +54,7 @@ import img1pilares from "../../assets/img1pilares.svg";
 // Importamos estilos
 import "./noticias.css";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 // Interfaces
 interface Noticia {

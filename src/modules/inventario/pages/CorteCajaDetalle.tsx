@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, Clock3, ShoppingCart, RotateCcw, Ban } from "lucide-react";
 
-const API_BASE = "http://localhost/GymSerra/public/api/corte_caja.php";
+const API_BASE = "https://academiagymserra.garzas.store/api/corte_caja.php";
 
 type CorteTipoUI = "X" | "Z";
 type CorteInfo = {
@@ -79,8 +79,7 @@ const CorteCajaDetalle: React.FC = () => {
   const idcorteParam = searchParams.get("idcorte");
 
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [alert, setAlert] = useState<{
+  const [, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);

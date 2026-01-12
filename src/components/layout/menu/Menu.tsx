@@ -17,7 +17,7 @@ const Menu = () => {
   return (
     <nav className="bg-blue-900 text-white py-3 px-4 fixed w-full z-50 shadow-lg">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-wide">GymSerra</h2>
+        <h2 className="text-xl font-bold tracking-wide">Gym Serra</h2>
         <Button
           className="md:hidden focus:outline-none bg-green-800 text-center justify-center items-center"
           onClick={toggleMenu}
@@ -55,7 +55,7 @@ const Menu = () => {
             "Clases y horarios",
             "Eventos y Noticias",
             "Otros Servicios",
-            "Contactanos",
+            "Contáctanos",
           ]}
           paths={[
             "/sobre-nosotros",

@@ -118,7 +118,7 @@ const Instructores: React.FC = () => {
   const fetchInstructores = async (): Promise<void> => {
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/instructores.php?action=list&page=${page}&limit=${limit}&search=${encodeURIComponent(
+        `https://academiagymserra.garzas.store/api/instructores.php?action=list&page=${page}&limit=${limit}&search=${encodeURIComponent(
           search
         )}&estado=${tab === "activos" ? "Activo" : "Inactivo"}`
       );
@@ -137,7 +137,7 @@ const Instructores: React.FC = () => {
   const fetchDeportes = async (): Promise<void> => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/instructores.php?action=deportes"
+        "https://academiagymserra.garzas.store/api/instructores.php?action=deportes"
       );
       const data = await res.json();
       if (data.success) {
@@ -194,8 +194,8 @@ const Instructores: React.FC = () => {
 
     try {
       const url = isEditing
-        ? "http://localhost/GymSerra/public/api/instructores.php?action=update"
-        : "http://localhost/GymSerra/public/api/instructores.php?action=create";
+        ? "https://academiagymserra.garzas.store/api/instructores.php?action=update"
+        : "https://academiagymserra.garzas.store/api/instructores.php?action=create";
 
       const payload = isEditing
         ? { ...formData, idinstructor: instructorSeleccionado?.idinstructor }
@@ -239,7 +239,7 @@ const Instructores: React.FC = () => {
     setProcessing(true);
     try {
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/instructores.php?action=toggleEstado&idinstructor=${instructorParaAccion.idinstructor}`,
+        `https://academiagymserra.garzas.store/api/instructores.php?action=toggleEstado&idinstructor=${instructorParaAccion.idinstructor}`,
         { method: "POST" }
       );
       const data = await res.json();

@@ -44,7 +44,7 @@ const Productos: React.FC = () => {
     setLoading(true);
     try {
       const resCategorias = await fetch(
-        "http://localhost/GymSerra/public/api/data.php?action=categoriasProductos"
+        "https://academiagymserra.garzas.store/api/data.php?action=categoriasProductos"
       );
       const dataCategorias = await resCategorias.json();
 
@@ -53,7 +53,7 @@ const Productos: React.FC = () => {
 
         for (const cat of dataCategorias.categorias) {
           const resProductos = await fetch(
-            `http://localhost/GymSerra/public/api/data.php?action=productosPorCategoria&idcategoria=${cat.idcategoria}&limit=6`
+            `https://academiagymserra.garzas.store/api/data.php?action=productosPorCategoria&idcategoria=${cat.idcategoria}&limit=6`
           );
           const dataProductos = await resProductos.json();
 
@@ -301,16 +301,6 @@ const Productos: React.FC = () => {
               </div>
             </motion.div>
           </div>
-        </div>
-
-        {/* Wave decorativa */}
-        <div className="relative">
-          <svg className="w-full h-16" viewBox="0 0 1440 120" fill="none">
-            <path
-              d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 80C1200 80 1320 70 1380 65L1440 60V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z"
-              fill="white"
-            />
-          </svg>
         </div>
       </section>
 

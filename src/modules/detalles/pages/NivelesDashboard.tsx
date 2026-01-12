@@ -39,7 +39,7 @@ interface Deporte {
   nombre: string;
 }
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 const NivelesDashboard: React.FC = () => {
   const [niveles, setNiveles] = useState<Nivel[]>([]);

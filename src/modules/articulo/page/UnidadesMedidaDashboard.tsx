@@ -27,7 +27,7 @@ interface UnidadMedida {
   tipo: string | null;
 }
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 const UnidadesMedidaDashboard: React.FC = () => {
   const [unidades, setUnidades] = useState<UnidadMedida[]>([]);

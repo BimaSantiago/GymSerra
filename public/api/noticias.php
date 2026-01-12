@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Origin: https://academiagymserra.garzas.store");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -279,7 +279,7 @@ function handleImageUpload(?array $file, ?string $currentPath = null): array {
     return [false, "Error al mover el archivo subido"];
   }
 
-  // ruta relativa que consumirá el front: http://localhost/GymSerra/public/ + imagen
+  // ruta relativa que consumirá el front: https://academiagymserra.garzas.store/ + imagen
   $relativePath = "uploads/noticias/" . $filename;
 
   return [true, $relativePath];

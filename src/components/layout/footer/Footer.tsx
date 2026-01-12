@@ -2,6 +2,7 @@ import ItemFooter from "./ItemFooter";
 import {
   Facebook,
   Instagram,
+  ContactRound,
   Phone,
   Mail,
   MapPin,
@@ -66,7 +67,7 @@ const Footer = () => {
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
               <ShoppingBag className="h-4 w-4 text-gray-100" />
-              <a href="/productos">Productos</a>
+              <a href="/productos">Otros servicio</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
               <Dumbbell className="h-4 w-4 text-gray-100" />
@@ -81,8 +82,8 @@ const Footer = () => {
               <a href="/sobre-nosotros">Sobre Nosotros</a>
             </li>
             <li className="flex items-center gap-2 hover:text-white transition">
-              <Info className="h-4 w-4 text-gray-100" />
-              <a href="/contactos">Contactanos</a>
+              <ContactRound className="h-4 w-4 text-gray-100" />
+              <a href="/contactos">Contáctanos</a>
             </li>
           </ul>
         </div>
@@ -104,7 +105,7 @@ const Footer = () => {
       {/* Línea inferior */}
       <div className="mt-10 border-t border-blue-800 pt-6 text-center text-sm text-blue-200">
         © {new Date().getFullYear()}{" "}
-        <span className="text-white font-semibold">GymSerra</span>.
+        <span className="text-white font-semibold">Gym Serra</span>.
       </div>
     </footer>
   );

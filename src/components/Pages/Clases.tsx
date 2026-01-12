@@ -181,7 +181,7 @@ const Clases: React.FC = () => {
     setLoadingDeportes(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=deportes"
+        "https://academiagymserra.garzas.store/api/clases.php?action=deportes"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.deportes)) {
@@ -203,7 +203,7 @@ const Clases: React.FC = () => {
     setLoadingPlanes(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=planes"
+        "https://academiagymserra.garzas.store/api/clases.php?action=planes"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.planes)) {
@@ -225,7 +225,7 @@ const Clases: React.FC = () => {
     setLoadingHorarios(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=horarios"
+        "https://academiagymserra.garzas.store/api/clases.php?action=horarios"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.horarios)) {
@@ -244,7 +244,7 @@ const Clases: React.FC = () => {
     setLoadingInstructores(true);
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=instructores"
+        "https://academiagymserra.garzas.store/api/clases.php?action=instructores"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.instructores)) {
@@ -262,7 +262,7 @@ const Clases: React.FC = () => {
   const fetchHorariosGimnasiaInicial = async () => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=horariosGimnasiaInicial"
+        "https://academiagymserra.garzas.store/api/clases.php?action=horariosGimnasiaInicial"
       );
       const data = await res.json();
       if (data.success && Array.isArray(data.horarios)) {
@@ -359,7 +359,7 @@ const Clases: React.FC = () => {
 
     try {
       const verifyRes = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=verificarAlumno",
+        "https://academiagymserra.garzas.store/api/clases.php?action=verificarAlumno",
         {
           method: "POST",
           headers: {
@@ -381,7 +381,7 @@ const Clases: React.FC = () => {
       }
 
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/clases.php?action=registrarClasePrueba",
+        "https://academiagymserra.garzas.store/api/clases.php?action=registrarClasePrueba",
         {
           method: "POST",
           headers: {
@@ -706,14 +706,14 @@ const Clases: React.FC = () => {
 
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg rounded-full shadow-lg transition-all hover:-translate-y-1">
+                    <Button className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg rounded-full shadow-lg transition-all hover:-translate-y-1 cursor-pointer">
                       <Calendar className="mr-2 h-5 w-5" />
                       Agendar Clase de Prueba
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="bg-gray-50 text-black overflow-y-auto max-h-[85dvh]">
                     <DialogHeader>
-                      <DialogTitle className="text-2xl font-bold">
+                      <DialogTitle className="text-2xl font-bold text-black">
                         Registro para Clase de Prueba
                       </DialogTitle>
                       <DialogDescription>
@@ -978,16 +978,17 @@ const Clases: React.FC = () => {
 
                     <DialogFooter>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setDialogOpen(false)}
                         disabled={submitting}
+                        className="hover:bg-gray-200 hover:text-black"
                       >
                         Cancelar
                       </Button>
                       <Button
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-500"
                       >
                         {submitting ? "Registrando..." : "Registrar Clase"}
                       </Button>
@@ -1217,12 +1218,6 @@ const Clases: React.FC = () => {
                                         </p>
                                         <div className="space-y-2 text-sm">
                                           <p className="text-gray-700 flex items-center gap-2">
-                                            <span className="text-gray-500">
-                                              📞
-                                            </span>
-                                            href={`tel:${instructor.telefono}`}
-                                            className="hover:text-blue-600
-                                            transition-colors"
                                             {instructor.telefono}
                                           </p>
                                           <p className="text-gray-700 flex items-center gap-2 break-all">

@@ -29,7 +29,7 @@ import {
 import { Pencil, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 interface PlanPago {
   idplan: number;

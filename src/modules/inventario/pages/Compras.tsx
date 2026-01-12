@@ -52,7 +52,7 @@ const Compras: React.FC = () => {
       });
 
       const res = await fetch(
-        `http://localhost/GymSerra/public/api/compras.php?${params.toString()}`
+        `https://academiagymserra.garzas.store/api/compras.php?${params.toString()}`
       );
       const data: ApiResponse = await res.json();
 

@@ -76,7 +76,7 @@ interface ApiResponse {
   error?: string;
 }
 
-const API_BASE = "http://localhost/GymSerra/public/api/";
+const API_BASE = "https://academiagymserra.garzas.store/api/";
 
 const ClasesPrueba: React.FC = () => {
   const [clasesPrueba, setClasesPrueba] = useState<ClasePrueba[]>([]);

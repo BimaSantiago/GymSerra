@@ -72,7 +72,7 @@ const Contactos: React.FC = () => {
   const fetchDeportes = async (): Promise<void> => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/contactos.php?action=deportes"
+        "https://academiagymserra.garzas.store/api/contactos.php?action=deportes"
       );
       const data = await res.json();
       if (data.success) {
@@ -107,7 +107,7 @@ const Contactos: React.FC = () => {
 
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/contactos.php?action=create",
+        "https://academiagymserra.garzas.store/api/contactos.php?action=create",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

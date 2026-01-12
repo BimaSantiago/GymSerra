@@ -46,7 +46,7 @@ export function ArticulosCarousel() {
       try {
         // Obtener uniformes de categoría 3
         const res = await fetch(
-          "http://localhost/GymSerra/public/api/data.php?action=carruselUniformes"
+          "https://academiagymserra.garzas.store/api/data.php?action=carruselUniformes"
         );
         const data = await res.json();
         if (data.success && Array.isArray(data.articulos)) {

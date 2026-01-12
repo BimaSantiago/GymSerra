@@ -66,8 +66,8 @@ interface Mensualidad {
   estado: string | null;
 }
 
-const API_MENS = "http://localhost/GymSerra/public/api/mensualidades.php";
-const API_PLANES = "http://localhost/GymSerra/public/api/plan_pago.php";
+const API_MENS = "https://academiagymserra.garzas.store/api/mensualidades.php";
+const API_PLANES = "https://academiagymserra.garzas.store/api/plan_pago.php";
 
 const safeLower = (v: unknown): string => (v ?? "").toString().toLowerCase();
 

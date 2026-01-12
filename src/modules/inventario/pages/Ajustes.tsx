@@ -57,7 +57,7 @@ const Ajustes = () => {
       if (dateEnd) params.append("dateEnd", dateEnd);
 
       const response = await fetch(
-        `http://localhost/GymSerra/public/api/ajustes.php?${params.toString()}`
+        `https://academiagymserra.garzas.store/api/ajustes.php?${params.toString()}`
       );
       const data: ApiResponse = await response.json();
 

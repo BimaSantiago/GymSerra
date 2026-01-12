@@ -39,7 +39,7 @@ import {
   Plus,
 } from "lucide-react";
 
-const API_BASE = "http://localhost/GymSerra/public/api";
+const API_BASE = "https://academiagymserra.garzas.store/api";
 
 interface Articulo {
   idarticulo: number;

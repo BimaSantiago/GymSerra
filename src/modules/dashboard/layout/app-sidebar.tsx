@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavProjects } from "@/modules/dashboard/layout/nav-projects";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 type ActiveUser = {
   iduser: number;

@@ -6,7 +6,7 @@ import {
   type AuthUser,
 } from "./AuthContextBase";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normalizeUserFromApi = (raw: any): AuthUser => {

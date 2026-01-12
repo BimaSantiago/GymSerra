@@ -55,7 +55,7 @@ interface MetaResponse {
   error?: string;
 }
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 const HorariosDashboard: React.FC = () => {
   const [horarios, setHorarios] = useState<Horario[]>([]);

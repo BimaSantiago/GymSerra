@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const API_BASE = "http://localhost/GymSerra/public";
+const API_BASE = "https://academiagymserra.garzas.store";
 
 interface Cliente {
   idcliente: number;

@@ -65,7 +65,7 @@ const EventCalendar: React.FC = () => {
   const fetchEventos = async (): Promise<void> => {
     try {
       const res = await fetch(
-        "http://localhost/GymSerra/public/api/eventos.php?action=list"
+        "https://academiagymserra.garzas.store/api/eventos.php?action=list"
       );
       const data = await res.json();
       if (data.success) setEventos(data.eventos);

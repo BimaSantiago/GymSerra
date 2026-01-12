@@ -72,7 +72,7 @@ const UsersDashboard = () => {
     message: string;
   } | null>(null);
 
-  const API_URL = "http://localhost/GymSerra/public/api/users.php";
+  const API_URL = "https://academiagymserra.garzas.store/api/users.php";
 
   /* ==================== FETCH ==================== */
   const fetchUsers = async () => {
@@ -159,7 +159,7 @@ const UsersDashboard = () => {
       };
       setForm(u);
       setPreview(
-        u.avatar ? `http://localhost/GymSerra/public/${u.avatar}` : null
+        u.avatar ? `https://academiagymserra.garzas.store/${u.avatar}` : null
       );
       setIsEditing(true);
       setIsDialogOpen(true);
@@ -421,7 +421,7 @@ const UsersDashboard = () => {
               <TableCell>
                 {u.avatar ? (
                   <img
-                    src={`http://localhost/GymSerra/public/${u.avatar}`}
+                    src={`https://academiagymserra.garzas.store/${u.avatar}`}
                     alt="avatar"
                     className="h-12 w-12 rounded-full object-cover border"
                   />
