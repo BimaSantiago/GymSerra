@@ -428,7 +428,7 @@ const EventDashboard: React.FC = () => {
       )}
 
       {/* Calendario */}
-      <div className="rounded-xl border border-muted-foreground bg-card shadow-sm p-4 text-white">
+      <div className="rounded-xl border border-muted-foreground bg-card shadow-sm p-4 text-primary">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"

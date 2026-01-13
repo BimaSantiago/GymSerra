@@ -226,7 +226,7 @@ const HorariosDashboard: React.FC = () => {
       {alert && (
         <Alert
           variant={alert.type === "success" ? "default" : "destructive"}
-          className="rounded-lg shadow-sm  border-gray-200"
+          className="rounded-lg shadow-sm  border-mutedtext-muted-foreground"
         >
           {alert.type === "success" ? (
             <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -244,7 +244,7 @@ const HorariosDashboard: React.FC = () => {
 
       {/* Tabla principal */}
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-200 text-sm text-center bg-card">
+        <table className="min-w-full border border-mutedtext-muted-foreground text-sm text-center bg-card">
           <thead>
             <tr>
               <th className="border p-2">Hora</th>
@@ -318,7 +318,7 @@ const HorariosDashboard: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label className="text-sm font-medium text-gray-200">
+              <Label className="text-sm font-medium text-muted-foreground">
                 Deporte
               </Label>
               <Select
@@ -327,7 +327,7 @@ const HorariosDashboard: React.FC = () => {
                   setForm({ ...form, iddeporte: Number(v), idnivel: 0 })
                 }
               >
-                <SelectTrigger className="mt-1 rounded-lg border-gray-200">
+                <SelectTrigger className="mt-1 rounded-lg border-mutedtext-muted-foreground">
                   <SelectValue placeholder="Selecciona un deporte" />
                 </SelectTrigger>
                 <SelectContent>
@@ -341,12 +341,12 @@ const HorariosDashboard: React.FC = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-200">Nivel</Label>
+              <Label className="text-sm font-medium text-muted-foreground">Nivel</Label>
               <Select
                 value={form.idnivel ? String(form.idnivel) : ""}
                 onValueChange={(v) => setForm({ ...form, idnivel: Number(v) })}
               >
-                <SelectTrigger className="mt-1 rounded-lg border-gray-200">
+                <SelectTrigger className="mt-1 rounded-lg border-mutedtext-muted-foreground">
                   <SelectValue placeholder="Selecciona un nivel" />
                 </SelectTrigger>
                 <SelectContent>
