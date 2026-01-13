@@ -15,12 +15,12 @@ const SimpleParallax = () => {
   // Capas con diferentes velocidades
   const yFondo = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]);
   const yArbol = useTransform(scrollYProgress, [0, 1], ["0%", "-28%"]);
-  const yAtleta = useTransform(scrollYProgress, [0, 1], ["5%", "-70%"]);
+  const yAtleta = useTransform(scrollYProgress, [0, 1], ["-2%", "-70%"]);
   /* const yPasto = useTransform(scrollYProgress, [0, 1], ["0%", "-22%"]); */
 
   // Movimiento del texto (ligero hacia arriba)
-  const yTexto = useTransform(scrollYProgress, [0, 1], ["0%", "-45%"]);
-  const opacityTexto = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  /*const yTexto = useTransform(scrollYProgress, [0, 1], ["0%", "-45%"]);
+  const opacityTexto = useTransform(scrollYProgress, [0, 0.8], [1, 0]);*/
 
   return (
     <section ref={containerRef} className="relative">
@@ -61,10 +61,11 @@ const SimpleParallax = () => {
           />
         </motion.div> */}
 
-        <motion.div
+       {/* <motion.div
           style={{ y: yTexto, opacity: opacityTexto }}
           className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-20 px-4"
-        >
+        > */}
+        {/*
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -105,9 +106,10 @@ const SimpleParallax = () => {
               </Button>
             </Link>
           </motion.div>
-        </motion.div>
+        </motion.div>  */}
       </div>
     </section>
+   
   );
 };
 
