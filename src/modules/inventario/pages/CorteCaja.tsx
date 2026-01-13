@@ -372,8 +372,8 @@ const CorteCaja = () => {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold ">Cortes de Caja</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-3xl font-bold text-primary/80">Cortes de Caja</h1>
+            <p className="text-sidebar-ring mt-1">
               Gestión de turnos y cierres de día
             </p>
           </div>

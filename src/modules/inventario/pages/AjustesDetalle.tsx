@@ -353,7 +353,7 @@ const AjustesDetalle: React.FC = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex justify-between mb-4">
-        <h2 className="text-2xl font-bold">{titulo}</h2>
+        <h1 className="text-2xl font-bold text-primary/80">{titulo}</h1>
         <Button
           onClick={() => navigate("/dashboard/ajustes")}
           variant="outline"

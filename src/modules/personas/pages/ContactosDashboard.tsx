@@ -112,7 +112,7 @@ const ContactosDashboard: React.FC = () => {
 
       {/* Título y Filtro */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-gray-200">Buzón de Contactos</h2>
+        <h1 className="text-2xl font-bold text-primary/80">Buzón de Contactos</h1>
         <Input
           placeholder="Buscar por nombre, teléfono o deporte..."
           value={search}

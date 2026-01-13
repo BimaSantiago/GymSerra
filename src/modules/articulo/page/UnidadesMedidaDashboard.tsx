@@ -197,7 +197,7 @@ const UnidadesMedidaDashboard: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
                   Clave
                 </Label>
                 <Input
@@ -212,7 +212,7 @@ const UnidadesMedidaDashboard: React.FC = () => {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
                   Descripción
                 </Label>
                 <Input
@@ -226,7 +226,7 @@ const UnidadesMedidaDashboard: React.FC = () => {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 mb-1.5 block">
+                <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
                   Tipo (opcional)
                 </Label>
                 <Input
@@ -291,7 +291,7 @@ const UnidadesMedidaDashboard: React.FC = () => {
         <Button
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
-          className="bg-gray-800 hover:bg-gray-600 text-white font-medium"
+          className="bg-gray-800 hover:bg-mutedtext-muted-foreground text-white font-medium"
         >
           Anterior
         </Button>
@@ -301,7 +301,7 @@ const UnidadesMedidaDashboard: React.FC = () => {
         <Button
           disabled={page === totalPages || totalPages === 0}
           onClick={() => setPage(page + 1)}
-          className="bg-gray-800 hover:bg-gray-600 text-white font-medium"
+          className="bg-gray-800 hover:bg-mutedtext-muted-foreground text-white font-medium"
         >
           Siguiente
         </Button>

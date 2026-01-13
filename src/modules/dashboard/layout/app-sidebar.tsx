@@ -22,6 +22,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavProjects } from "@/modules/dashboard/layout/nav-projects";
+import { ModeToggle } from "./mode-toggle";
 
 const API_BASE = "https://academiagymserra.garzas.store";
 
@@ -223,6 +224,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={navMain} />
         <NavProjects projects={projects} />
       </SidebarContent>
+
+      <ModeToggle />
 
       <SidebarRail />
     </Sidebar>

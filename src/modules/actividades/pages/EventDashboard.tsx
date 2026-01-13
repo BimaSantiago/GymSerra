@@ -385,9 +385,9 @@ const EventDashboard: React.FC = () => {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-200">
+        <h1 className="text-2xl font-semibold text-primary/80">
           Calendario de eventos
-        </h2>
+        </h1>
         <Button
           onClick={() => {
             const today = new Date().toISOString().split("T")[0];
@@ -428,7 +428,7 @@ const EventDashboard: React.FC = () => {
       )}
 
       {/* Calendario */}
-      <div className="rounded-xl border border-gray-200 bg-card shadow-sm p-4 text-white">
+      <div className="rounded-xl border border-muted-foreground bg-card shadow-sm p-4 text-white">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -456,7 +456,7 @@ const EventDashboard: React.FC = () => {
 
       {/* Leyenda */}
       {deportes.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-accent shadow-sm p-4">
+        <div className="rounded-xl border border-muted-foreground bg-accent shadow-sm p-4">
           <h3 className="text-sm font-medium text-gray-100 mb-2">Leyenda</h3>
           <div className="flex flex-wrap gap-4 text-sm text-gray-100">
             {deportes.map((d) => (
@@ -474,7 +474,7 @@ const EventDashboard: React.FC = () => {
 
       {/* Detalles */}
       <Dialog open={openDetails} onOpenChange={setOpenDetails}>
-        <DialogContent className="sm:max-w-[420px] border border-gray-200 shadow-s rounded-lg">
+        <DialogContent className="sm:max-w-[420px] border border-muted-foreground shadow-s rounded-lg">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-gray-50">
               Detalles del evento
@@ -527,9 +527,9 @@ const EventDashboard: React.FC = () => {
 
       {/* Confirmar eliminar */}
       <AlertDialog open={openConfirmDelete} onOpenChange={setOpenConfirmDelete}>
-        <AlertDialogContent className="border border-gray-200 shadow-sm rounded-lg">
+        <AlertDialogContent className="border border-muted-foreground shadow-sm rounded-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base text-gray-200">
+            <AlertDialogTitle className="text-base text-muted-foreground">
               ¿Eliminar este evento?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-gray-100">
@@ -552,9 +552,9 @@ const EventDashboard: React.FC = () => {
 
       {/* Formulario */}
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="sm:max-w-[480px] border border-gray-200 shadow-sm rounded-lg">
+        <DialogContent className="sm:max-w-[480px] border border-muted-foreground shadow-sm rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-gray-200">
+            <DialogTitle className="text-base font-semibold text-muted-foreground">
               {selectedEvent ? "Editar evento" : "Nuevo evento"}
             </DialogTitle>
           </DialogHeader>

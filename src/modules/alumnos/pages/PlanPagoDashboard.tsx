@@ -270,9 +270,9 @@ const PlanPagoDashboard: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-200">
+        <h1 className="text-2xl font-semibold tracking-tight text-primary/80">
           Planes de Pago
-        </h2>
+        </h1>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

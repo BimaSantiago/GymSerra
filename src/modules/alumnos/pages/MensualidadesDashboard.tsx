@@ -359,7 +359,7 @@ const MensualidadesDashboard: React.FC = () => {
     <div className="p-6 space-y-6">
       {/* Header + buscador + botón */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h2 className="text-2xl font-semibold">Control de Mensualidades</h2>
+        <h1 className="text-2xl font-semibold text-primary/80">Control de Mensualidades</h1>
 
         <div className="flex items-center gap-2 min-w-1/3">
           <div className="relative">

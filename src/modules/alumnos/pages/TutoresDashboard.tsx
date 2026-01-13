@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -717,10 +718,10 @@ const TutoresDashboard: React.FC = () => {
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-primary/80">
               Gestión de Tutores y Alumnos
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-ring">
               Administra tutores, alumnos y sus registros.
             </p>
           </div>
@@ -934,7 +935,7 @@ const TutoresDashboard: React.FC = () => {
 
         {/* TAB NUEVOS ALUMNOS (sin fecha de pago) */}
         <TabsContent value="nuevos">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-ring mb-4">
             Nuevos alumnos: aquellos sin registros de mensualidad.
           </p>
           <Table>
@@ -1361,7 +1362,7 @@ const TutoresDashboard: React.FC = () => {
                 </div>
               </div>
               {wizardError && (
-                <p className="mt-3 text-sm text-red-200">{wizardError}</p>
+                <p className="mt-3 text-sm text-red-400">{wizardError}</p>
               )}
             </div>
           </div>
@@ -1391,11 +1392,11 @@ const TutoresDashboard: React.FC = () => {
           </DialogHeader>
 
           {historialLoading ? (
-            <p className="text-sm text-gray-600">Cargando historial...</p>
+            <p className="text-sm text-ring">Cargando historial...</p>
           ) : historialError ? (
             <p className="text-sm text-red-500">{historialError}</p>
           ) : historialMensualidades.length === 0 ? (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-ring">
               Este alumno no tiene mensualidades registradas.
             </p>
           ) : (
@@ -1606,7 +1607,7 @@ const TutoresDashboard: React.FC = () => {
             </div>
 
             {alumnoForm.idtutor ? (
-              <p className="pt-2 text-sm text-gray-600">
+              <p className="pt-2 text-sm text-ring">
                 Tutor actual:{" "}
                 {alumnoForm.nombre_tutor
                   ? alumnoForm.nombre_tutor
@@ -1614,7 +1615,7 @@ const TutoresDashboard: React.FC = () => {
               </p>
             ) : (
               <div className="pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-ring mb-2">
                   Este alumno no tiene tutor asignado.
                 </p>
                 <Button

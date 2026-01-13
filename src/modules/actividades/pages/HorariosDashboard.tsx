@@ -221,7 +221,7 @@ const HorariosDashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold ">Horario Semanal</h2>
+      <h1 className="text-2xl font-semibold text-primary/80">Horario Semanal</h1>
 
       {alert && (
         <Alert
@@ -305,7 +305,7 @@ const HorariosDashboard: React.FC = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-lg font-medium text-gray-50">
+            <DialogTitle className="text-lg font-medium text-primary">
               {form.idhorario ? "Editar Horario" : "Nuevo Horario"} (
               {formatearHora(form.hora_inicio)} - {formatearHora(form.hora_fin)}
               )

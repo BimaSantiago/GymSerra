@@ -148,16 +148,16 @@ const HomePage: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-200">
+          <h1 className="text-3xl font-bold tracking-tight text-primary/80">
             Dashboard
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Bienvenido al sistema de gestión Gym Serra
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-400">Último corte</p>
-          <p className="text-lg font-semibold text-gray-200">
+          <p className="text-sm text-muted-foreground">Último corte</p>
+          <p className="text-lg font-semibold text-primary/80">
             {new Date().toLocaleDateString("es-MX", {
               day: "numeric",
               month: "long",
@@ -186,16 +186,16 @@ const HomePage: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
+            <CardTitle className="text-sm font-medium text-primary/80">
               Total Alumnos
             </CardTitle>
             <Users className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-100">
+            <div className="text-2xl font-bold text-sidebar-ring">
               {estadisticas.total_alumnos}
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {estadisticas.alumnos_activos} activos ({tasaActividad}%)
             </p>
           </CardContent>
@@ -203,31 +203,31 @@ const HomePage: React.FC = () => {
 
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
+            <CardTitle className="text-sm font-medium text-primary/80">
               Ingresos del Mes
             </CardTitle>
             <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-100">
+            <div className="text-2xl font-bold text-sidebar-ring">
               {formatCurrency(totalIngresos)}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Mensualidades + Ventas</p>
+            <p className="text-xs text-muted-foreground mt-1">Mensualidades + Ventas</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-500/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
+            <CardTitle className="text-sm font-medium text-primary/80">
               Mensualidades
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-yellow-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-100">
+            <div className="text-2xl font-bold text-sidebar-ring">
               {estadisticas.mensualidades_pagadas}
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {estadisticas.mensualidades_pendientes} pendientes,{" "}
               {estadisticas.mensualidades_vencidas} vencidas
             </p>
@@ -236,16 +236,16 @@ const HomePage: React.FC = () => {
 
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-200">
+            <CardTitle className="text-sm font-medium text-primary/80">
               Inventario
             </CardTitle>
             <Package className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-100">
+            <div className="text-2xl font-bold text-sidebar-ring">
               {estadisticas.articulos_activos}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Artículos activos</p>
+            <p className="text-xs text-muted-foreground mt-1">Artículos activos</p>
           </CardContent>
         </Card>
       </div>
@@ -261,7 +261,7 @@ const HomePage: React.FC = () => {
         <TabsContent value="ingresos" className="space-y-4">
           <Card className="border-gray-700">
             <CardHeader>
-              <CardTitle className="text-gray-200">
+              <CardTitle className="text-primary/80">
                 Ingresos Mensuales (Últimos 6 meses)
               </CardTitle>
             </CardHeader>
@@ -300,28 +300,28 @@ const HomePage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card className="border-gray-700">
               <CardHeader>
-                <CardTitle className="text-gray-200 text-base">
+                <CardTitle className="text-primary/80 text-base">
                   Desglose de Ingresos
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Mensualidades</span>
-                  <span className="text-sm font-semibold text-gray-200">
+                  <span className="text-sm text-muted-foreground">Mensualidades</span>
+                  <span className="text-sm font-semibold text-primary/80">
                     {formatCurrency(estadisticas.total_mensualidades_mes)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     Ventas de artículos
                   </span>
-                  <span className="text-sm font-semibold text-gray-200">
+                  <span className="text-sm font-semibold text-primary/80">
                     {formatCurrency(estadisticas.total_ventas_mes)}
                   </span>
                 </div>
                 <div className="border-t border-gray-700 pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold text-gray-200">
+                    <span className="text-base font-semibold text-primary/80">
                       Total
                     </span>
                     <span className="text-base font-bold text-green-400">
@@ -334,14 +334,14 @@ const HomePage: React.FC = () => {
 
             <Card className="border-gray-700">
               <CardHeader>
-                <CardTitle className="text-gray-200 text-base">
+                <CardTitle className="text-primary/80 text-base">
                   Estado de Pagos
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Pagadas</span>
+                    <span className="text-muted-foreground">Pagadas</span>
                     <span className="text-green-400 font-semibold">
                       {estadisticas.mensualidades_pagadas}
                     </span>
@@ -355,7 +355,7 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Pendientes</span>
+                    <span className="text-muted-foreground">Pendientes</span>
                     <span className="text-yellow-400 font-semibold">
                       {estadisticas.mensualidades_pendientes}
                     </span>
@@ -363,7 +363,7 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Vencidas</span>
+                    <span className="text-muted-foreground">Vencidas</span>
                     <span className="text-red-400 font-semibold">
                       {estadisticas.mensualidades_vencidas}
                     </span>
@@ -378,7 +378,7 @@ const HomePage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card className="border-gray-700">
               <CardHeader>
-                <CardTitle className="text-gray-200">
+                <CardTitle className="text-primary/80">
                   Distribución por Deporte
                 </CardTitle>
               </CardHeader>
@@ -413,7 +413,7 @@ const HomePage: React.FC = () => {
 
             <Card className="border-gray-700">
               <CardHeader>
-                <CardTitle className="text-gray-200">
+                <CardTitle className="text-primary/80">
                   Estadísticas de Alumnos
                 </CardTitle>
               </CardHeader>
@@ -421,10 +421,10 @@ const HomePage: React.FC = () => {
                 {alumnosPorDeporte.map((deporte, idx) => (
                   <div key={idx} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">
+                      <span className="text-sm text-muted-foreground">
                         {deporte.deporte}
                       </span>
-                      <span className="text-sm font-semibold text-gray-200">
+                      <span className="text-sm font-semibold text-primary/80">
                         {deporte.total} alumnos
                       </span>
                     </div>
@@ -449,7 +449,7 @@ const HomePage: React.FC = () => {
         <TabsContent value="mensualidades" className="space-y-4">
           <Card className="border-gray-700">
             <CardHeader>
-              <CardTitle className="text-gray-200">
+              <CardTitle className="text-primary/80">
                 Resumen de Mensualidades
               </CardTitle>
             </CardHeader>
@@ -460,26 +460,26 @@ const HomePage: React.FC = () => {
                     <div className="flex justify-center">
                       <CheckCircle2 className="h-8 w-8 text-green-400" />
                     </div>
-                    <p className="text-2xl font-bold text-gray-100">
+                    <p className="text-2xl font-bold text-sidebar-ring">
                       {estadisticas.mensualidades_pagadas}
                     </p>
-                    <p className="text-sm text-gray-400">Pagadas</p>
+                    <p className="text-sm text-muted-foreground">Pagadas</p>
                   </div>
                   <div className="space-y-2 text-center">
                     <div className="flex justify-center">
                       <AlertCircle className="h-8 w-8 text-red-400" />
                     </div>
-                    <p className="text-2xl font-bold text-gray-100">
+                    <p className="text-2xl font-bold text-sidebar-ring">
                       {estadisticas.mensualidades_vencidas}
                     </p>
-                    <p className="text-sm text-gray-400">Vencidas</p>
+                    <p className="text-sm text-muted-foreground">Vencidas</p>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-gray-700">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-400">Tasa de Cobro</span>
-                    <span className="text-sm font-semibold text-gray-200">
+                    <span className="text-sm text-muted-foreground">Tasa de Cobro</span>
+                    <span className="text-sm font-semibold text-primary/80">
                       {tasaPago}%
                     </span>
                   </div>
@@ -492,7 +492,7 @@ const HomePage: React.FC = () => {
                 </div>
 
                 <div className="pt-4">
-                  <p className="text-lg font-semibold text-gray-200">
+                  <p className="text-lg font-semibold text-primary/80">
                     Total recaudado este mes
                   </p>
                   <p className="text-3xl font-bold text-green-400 mt-2">
@@ -508,7 +508,7 @@ const HomePage: React.FC = () => {
       {/* Próximos eventos */}
       <Card className="border-gray-700">
         <CardHeader>
-          <CardTitle className="text-gray-200 flex items-center gap-2">
+          <CardTitle className="text-primary/80 flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Recordatorios
           </CardTitle>
@@ -517,10 +517,10 @@ const HomePage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-200">
+                <p className="text-sm font-medium text-primary/80">
                   Próximos eventos programados
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Revisa el calendario de eventos
                 </p>
               </div>

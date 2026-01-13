@@ -72,6 +72,7 @@ const AlumnosDashboard = () => {
 
   useEffect(() => {
     fetchAlumnos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {

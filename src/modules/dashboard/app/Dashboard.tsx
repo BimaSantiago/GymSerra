@@ -33,52 +33,58 @@ import HomePage from "@/modules/dashboard/pages/HomeDashboard";
 import Instructores from "@/modules/personas/pages/Instructores";
 import ContactosDashboard from "@/modules/personas/pages/ContactosDashboard";
 import ClasesPruebaDashboard from "@/modules/alumnos/pages/ClasesPrueba";
+import { ThemeProvider } from "../layout/theme-provider";
+
+
 export default function Page() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
+    <ThemeProvider>
+      
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1 fixed" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4 fixed"
+              />
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <Routes>
+              <Route index element={<HomePage />} />
+              <Route path="/alumnos" element={<AlumnosDashboard />} />
+              <Route path="/articulo" element={<ArticulosDashboard />} />
+              <Route path="/horarios" element={<HorariosDashboard />} />
+              <Route path="/niveles" element={<NivelesDashboard />} />
+              <Route path="/tutores" element={<TutoresDashboard />} />
+              <Route path="/proveedores" element={<ProveedoresDashboard />} />
+              <Route path="/compras" element={<Compras />} />
+              <Route path="/comprasDetalle" element={<ComprasDetalle />} />
+              <Route path="/planPago" element={<PlanPagoDashboard />} />
+              <Route path="/mensualidades" element={<MensualidadesDashboard />} />
+              <Route path="/users" element={<UsersDashboard />} />
+              <Route path="/ventas" element={<Ventas />} />
+              <Route path="/ventasDetalle" element={<VentasDetalle />} />
+              <Route path="/ajustes" element={<Ajustes />} />
+              <Route path="/ajustesDetalle" element={<AjustesDetalle />} />
+              <Route path="/eventoDashboard" element={<EventDashboard />} />
+              <Route path="/noticiasDashboard" element={<NoticiasDashboard />} />
+              <Route path="/deportesDashboard" element={<DeportesDashboard />} />
+              <Route path="/unidades" element={<UnidadesMedidaDashboard />} />
+              <Route path="/categorias" element={<CategoriasDashboard />} />
+              <Route path="/clientes" element={<ClientesDashboard />} />
+              <Route path="/corteCaja" element={<CorteCaja />} />
+              <Route path="/corteCajaDetalle" element={<CorteCajaDetalle />} />
+              <Route path="/instructores" element={<Instructores />} />
+              <Route path="/contactos" element={<ContactosDashboard />} />
+              <Route path="/clase-prueba" element={<ClasesPruebaDashboard />} />
+            </Routes>
           </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Routes>
-            <Route index element={<HomePage />} />
-            <Route path="/alumnos" element={<AlumnosDashboard />} />
-            <Route path="/articulo" element={<ArticulosDashboard />} />
-            <Route path="/horarios" element={<HorariosDashboard />} />
-            <Route path="/niveles" element={<NivelesDashboard />} />
-            <Route path="/tutores" element={<TutoresDashboard />} />
-            <Route path="/proveedores" element={<ProveedoresDashboard />} />
-            <Route path="/compras" element={<Compras />} />
-            <Route path="/comprasDetalle" element={<ComprasDetalle />} />
-            <Route path="/planPago" element={<PlanPagoDashboard />} />
-            <Route path="/mensualidades" element={<MensualidadesDashboard />} />
-            <Route path="/users" element={<UsersDashboard />} />
-            <Route path="/ventas" element={<Ventas />} />
-            <Route path="/ventasDetalle" element={<VentasDetalle />} />
-            <Route path="/ajustes" element={<Ajustes />} />
-            <Route path="/ajustesDetalle" element={<AjustesDetalle />} />
-            <Route path="/eventoDashboard" element={<EventDashboard />} />
-            <Route path="/noticiasDashboard" element={<NoticiasDashboard />} />
-            <Route path="/deportesDashboard" element={<DeportesDashboard />} />
-            <Route path="/unidades" element={<UnidadesMedidaDashboard />} />
-            <Route path="/categorias" element={<CategoriasDashboard />} />
-            <Route path="/clientes" element={<ClientesDashboard />} />
-            <Route path="/corteCaja" element={<CorteCaja />} />
-            <Route path="/corteCajaDetalle" element={<CorteCajaDetalle />} />
-            <Route path="/instructores" element={<Instructores />} />
-            <Route path="/contactos" element={<ContactosDashboard />} />
-            <Route path="/clase-prueba" element={<ClasesPruebaDashboard />} />
-          </Routes>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

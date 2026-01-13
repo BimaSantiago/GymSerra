@@ -190,9 +190,9 @@ const Ajustes = () => {
 
       {/* Encabezado principal */}
       <div className="flex justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-200">
+        <h1 className="text-2xl font-bold text-primary/80">
           Ajustes de Inventario
-        </h2>
+        </h1>
         <Button
           onClick={handleNuevoAjuste}
           className="bg-gray-800 text-white hover:bg-gray-700 rounded-lg flex items-center gap-2"
@@ -205,7 +205,7 @@ const Ajustes = () => {
       {/* Filtro de fechas */}
       <div className="flex flex-wrap gap-4 mb-6 bg-accent p-4 rounded-xl shadow-sm">
         <div>
-          <label className="block text-sm font-medium text-gray-100">
+          <label className="block text-sm font-medium text-primary/80">
             Desde
           </label>
           <Input
@@ -216,7 +216,7 @@ const Ajustes = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-100">
+          <label className="block text-sm font-medium text-primary/80">
             Hasta
           </label>
           <Input
