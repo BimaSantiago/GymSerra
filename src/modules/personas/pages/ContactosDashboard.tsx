@@ -149,7 +149,7 @@ const ContactosDashboard: React.FC = () => {
                   </span>
                 </TableCell>
                 <TableCell
-                  className="max-w-xs truncate text-gray-300"
+                  className="max-w-xs truncate text-muted-foreground"
                   title={c.mensaje}
                 >
                   {c.mensaje}
@@ -181,7 +181,7 @@ const ContactosDashboard: React.FC = () => {
         >
           Anterior
         </Button>
-        <span className="text-sm text-gray-600">
+        <span>
           Página {page} de {totalPages}
         </span>
         <Button

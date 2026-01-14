@@ -404,7 +404,7 @@ const PlanPagoDashboard: React.FC = () => {
       )}
 
       {deportesConPlanes.length === 0 ? (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-card-foreground0">
           No hay planes de pago registrados todavía.
         </p>
       ) : (
@@ -441,7 +441,7 @@ const PlanPagoDashboard: React.FC = () => {
               >
                 <Card className="rounded-xl border shadow-sm hover:shadow-md transition-shadow">
                   <CardHeader>
-                    <CardTitle className="text-base font-semibold text-gray-50 flex items-center gap-2">
+                    <CardTitle className="text-base font-semibold text-card-foreground flex items-center gap-2">
                       Planes de {d.nombre}
                     </CardTitle>
                   </CardHeader>
@@ -478,7 +478,7 @@ const PlanPagoDashboard: React.FC = () => {
                         </TableBody>
                       </Table>
                     ) : (
-                      <p className="text-sm text-gray-100">
+                      <p className="text-sm text-card-foreground">
                         No hay planes registrados para este deporte.
                       </p>
                     )}

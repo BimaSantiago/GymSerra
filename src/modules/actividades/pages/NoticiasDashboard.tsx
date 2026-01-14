@@ -414,7 +414,7 @@ const NoticiasDashboard: React.FC = () => {
 
       {/* Confirmación de eliminación */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-xl shadow-2xl border border-gray-200">
+        <AlertDialogContent className="rounded-xl shadow-2xl border border-mutetext-muted-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
               ¿Eliminar noticia?
@@ -538,7 +538,7 @@ const NoticiasDashboard: React.FC = () => {
                 </div>
 
                 {isEventMenuOpen && (
-                  <div className="absolute z-50 mt-1 w-full  border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 mt-1 w-full  border border-mutetext-muted-foreground rounded-lg shadow-xl max-h-60 overflow-y-auto">
                     <Command>
                       <CommandList>
                         {filteredEventos.length > 0 ? (
@@ -611,11 +611,9 @@ const NoticiasDashboard: React.FC = () => {
               />
             </CardHeader>
             <CardContent className="p-2">
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                {n.titulo}
-              </h3>
-              <p className="text-sm text-gray-300">{n.descripcion}</p>
-              <div className="mt-4 text-sm text-gray-300 space-y-1">
+              <h3 className="text-lg font-semibold text-primary/80 mb-2">{n.titulo}</h3>
+              <p className="text-sm text-muted-foreground">{n.descripcion}</p>
+              <div className="mt-4 text-sm text-muted-foreground space-y-1">
                 <div className="flex items-center gap-2">
                   <Dumbbell className="h-4 w-4 text-gray-400" />{" "}
                   <span>{n.deporte}</span>
@@ -634,8 +632,8 @@ const NoticiasDashboard: React.FC = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center px-4 py-1">
-              <p className="text-xs text-gray-200">
-                Publicado: {new Date(n.fecha_publicacion).toLocaleDateString()}
+              <p className="text-xs text-muted-foreground">
+                {new Date(n.fecha_publicacion).toLocaleDateString()}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -655,7 +653,7 @@ const NoticiasDashboard: React.FC = () => {
               </div>
             </CardFooter>
           </Card>
-        ))}
+        ))} 
       </div>
 
       {/* Paginación */}
@@ -667,7 +665,7 @@ const NoticiasDashboard: React.FC = () => {
         >
           Anterior
         </Button>
-        <span className="text-gray-300">
+        <span>
           Página {page} de {totalPages}
         </span>
         <Button

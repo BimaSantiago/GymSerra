@@ -659,7 +659,7 @@ const MensualidadesDashboard: React.FC = () => {
           Anterior
         </Button>
 
-        <span className="text-sm text-gray-100">
+        <span>
           Página {page} de {totalPages}
         </span>
 

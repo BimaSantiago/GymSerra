@@ -457,8 +457,8 @@ const EventDashboard: React.FC = () => {
       {/* Leyenda */}
       {deportes.length > 0 && (
         <div className="rounded-xl border border-muted-foreground bg-accent shadow-sm p-4">
-          <h3 className="text-sm font-medium text-gray-100 mb-2">Leyenda</h3>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-100">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Leyenda</h3>
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {deportes.map((d) => (
               <span key={d.iddeporte} className="flex items-center gap-2">
                 <span
@@ -476,12 +476,12 @@ const EventDashboard: React.FC = () => {
       <Dialog open={openDetails} onOpenChange={setOpenDetails}>
         <DialogContent className="sm:max-w-[420px] border border-muted-foreground shadow-s rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-gray-50">
+            <DialogTitle className="text-base font-semibold text-ring">
               Detalles del evento
             </DialogTitle>
           </DialogHeader>
           {selectedEvent && (
-            <div className="space-y-2 text-sm text-gray-100">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <p>
                 <strong>Deporte:</strong> {selectedEvent.deporte}
               </p>
@@ -532,7 +532,7 @@ const EventDashboard: React.FC = () => {
             <AlertDialogTitle className="text-base text-muted-foreground">
               ¿Eliminar este evento?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-gray-100">
+            <AlertDialogDescription className="text-sm text-muted-foreground">
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>

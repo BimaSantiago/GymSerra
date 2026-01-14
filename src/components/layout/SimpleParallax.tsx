@@ -1,8 +1,8 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+//import { Link } from "react-router-dom";
+//import { Button } from "@/components/ui/button";
+//import { ArrowRight } from "lucide-react";
 
 const SimpleParallax = () => {
   const containerRef = useRef<HTMLDivElement>(null);
